@@ -32,7 +32,9 @@ class Organization(object):
             name = cls.NAME_PREFIX + str(time.time())
         response = api.api_create_organization(name)
         response = response.strip('"') # guid is returned together with quotation marks
-        return cls(name=name, guid=response)
+        org = cls(name=name, guid=response)
+        cls.TEST_ORGS.append(org)
+        return org
 
     @classmethod
     def get_list(cls):
@@ -48,7 +50,7 @@ class Organization(object):
     @classmethod
     def delete_test_orgs(cls):
         while len(cls.TEST_ORGS) > 0:
-            org = cls.TEST_ORGS.pop()
+            org = cls.TEST_ORGS[0]
             org.delete()
 
     def rename(self, new_name):
