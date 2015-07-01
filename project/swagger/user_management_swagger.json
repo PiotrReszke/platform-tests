@@ -1,0 +1,89 @@
+{
+  "info": {"version": "1.0.0", "title": "User Management API"},
+  "paths": {
+    "/rest/orgs": {
+      "get": {
+        "operationId": "get_organizations",
+        "summary": "Get organizations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {"type": "array", "items": {"$ref": "OrganizationInfo"}}
+          },
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+      },
+	  "post": {
+        "operationId": "create_organization",
+        "parameters": [{"name": "body", "in": "body", "schema": {"$ref": "OrganizationName"}}],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "201": {"description": "Created", "schema": {"type": "string"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+	  }
+	},
+    "/rest/orgs/{organization_guid}": {
+      "delete": {
+        "operationId": "delete_organization",
+        "parameters": [{"name": "organization_guid", "in": "path", "required": "true", "type": "string"}],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "201": {"description": "Created", "schema": {"type": "string"}},
+          "204": {"description": "No Content", "schema": {"type": "string"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+      }
+    },
+    "/rest/orgs/{organization_guid}/name": {
+      "put": {
+        "operationId": "rename_organization",
+        "parameters": [
+          {"name": "organization_guid", "in": "path"},
+          {"name": "body", "in": "body", "schema": {"$ref": "OrganizationName"}}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "201": {"description": "Created", "schema": {"type": "string"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "OrganizationName": {
+      "properties": {"name": {"type": "string"}}
+    },
+    "OrganizationInfo": {
+      "properties": {
+        "guid": {"type": "string"},
+        "name": {"type": "string"},
+        "manager": {"type": "boolean"},
+        "spaces": {
+          "type": "array",
+          "items": {"$ref": "SpaceInfo"}
+        }
+      }
+    },
+    "SpaceInfo": {
+      "properties": {
+        "guid": {"type": "string"},
+        "name": {"type": "string"}
+      }
+    }
+  },
+  "security": [{"default": []}],
+  "swagger": "2.0",
+  "consumes": ["application/json"]
+}
