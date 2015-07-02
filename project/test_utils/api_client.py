@@ -6,6 +6,7 @@ from pyswagger.core import BaseClient
 from requests import Session, Request
 
 from test_utils.logger import get_logger
+from test_utils.config import get_config_value
 
 
 logger = get_logger("api client")
@@ -111,16 +112,20 @@ class ApiClient(object):
 
     def __init__(self, application):
         self._application = application
-        self._domain = os.environ["TEST_ENVIRONMENT"]
-        username = os.environ["TEST_USERNAME"]
-        password = os.environ["TEST_PASSWORD"]
+        self._domain = get_config_value("TEST_ENVIRONMENT")
+        username = get_config_value("TEST_USERNAME")
+        password = get_config_value("TEST_PASSWORD")
         self._token = self.get_token(username, password)
         self._app = SwaggerApp.create(self.API_SCHEMA_PATH)
         self._client = Client(*self.api_endpoint, authorization_token=self._token)
 
     @property
     def login_endpoint(self):
-        return ("https", "login.run.{}".format(self._domain))
+        if self._domain == "gotapaas.eu":
+            prefix = "login.run"
+        else:
+            prefix = "login"
+        return ("https", "{}.{}".format(prefix, self._domain))
 
     @property
     def api_endpoint(self):

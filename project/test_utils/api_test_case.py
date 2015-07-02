@@ -1,8 +1,8 @@
 import functools
 import unittest
 
-from test_utils.user_management.organization import Organization
 from test_utils.api_client import UnexpectedResponseError
+from test_utils.user_management.organization import Organization
 
 
 class ApiTestCase(unittest.TestCase):

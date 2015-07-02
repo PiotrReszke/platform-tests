@@ -1,3 +1,4 @@
-requests
+configobj
 pyswagger
+requests
 teamcity-messages
