@@ -1,8 +1,11 @@
 #!/bin/bash
 
-pyvenv-3.4 --without-pip ~/virtualenvs/pyvenv_api_tests &&
-source ~/virtualenvs/pyvenv_api_tests/bin/activate &&
+REQUIREMENTS=`find . -name requirements.txt`
+PYVENV=~/virtualenvs/pyvenv_api_tests
+
+pyvenv-3.4 --without-pip $PYVENV &&
+source $PYVENV/bin/activate &&
 curl https://bootstrap.pypa.io/get-pip.py | python &&
-~/virtualenvs/pyvenv_api_tests/bin/pip install -r requirements.txt &&
+$PYVENV/bin/pip install -r $REQUIREMENTS &&
 deactivate
 
