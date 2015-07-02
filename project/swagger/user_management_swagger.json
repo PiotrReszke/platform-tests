@@ -4,11 +4,10 @@
     "/rest/orgs": {
       "get": {
         "operationId": "get_organizations",
-        "summary": "Get organizations",
         "responses": {
           "200": {
             "description": "OK",
-            "schema": {"type": "array", "items": {"$ref": "OrganizationInfo"}}
+            "schema": {"type": "array", "items": {"$ref": "Organization"}}
           },
           "401": {"description": "Unauthorized", "schema": {"type": "string"}},
           "403": {"description": "Forbidden", "schema": {"type": "string"}},
@@ -18,7 +17,7 @@
       },
 	  "post": {
         "operationId": "create_organization",
-        "parameters": [{"name": "body", "in": "body", "schema": {"$ref": "OrganizationName"}}],
+        "parameters": [{"name": "body", "in": "body", "schema": {"$ref": "OrgNameRequest"}}],
         "responses": {
           "200": {"description": "OK", "schema": {"type": "string"}},
           "201": {"description": "Created", "schema": {"type": "string"}},
@@ -35,7 +34,6 @@
         "parameters": [{"name": "organization_guid", "in": "path", "required": "true", "type": "string"}],
         "responses": {
           "200": {"description": "OK", "schema": {"type": "string"}},
-          "201": {"description": "Created", "schema": {"type": "string"}},
           "204": {"description": "No Content", "schema": {"type": "string"}},
           "401": {"description": "Unauthorized", "schema": {"type": "string"}},
           "403": {"description": "Forbidden", "schema": {"type": "string"}},
@@ -47,8 +45,128 @@
       "put": {
         "operationId": "rename_organization",
         "parameters": [
-          {"name": "organization_guid", "in": "path"},
-          {"name": "body", "in": "body", "schema": {"$ref": "OrganizationName"}}
+          {"name": "organization_guid", "in": "path", "required": "true", "type": "string"},
+          {"name": "body", "in": "body", "schema": {"$ref": "OrgNameRequest"}}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "201": {"description": "Created", "schema": {"type": "string"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+      }
+    },
+    "/rest/orgs/{organization_guid}/users": {
+      "get": {
+        "operationId": "get_organization_users",
+        "parameters": [{"name": "organization_guid", "in": "path", "required": "true", "type": "string"}],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "User"}}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+      },
+      "post": {
+        "operationId": "create_organization_user",
+        "parameters": [
+          {"name": "organization_guid", "in": "path", "required": "true", "type": "string"},
+          {"name": "body", "in": "body", "schema": {"$ref": "UserRequest"}}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"$ref": "User"}},
+          "201": {"description": "Created", "schema": {"type": "string"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+      }
+    },
+    "/rest/orgs/{organization_guid}/users/{user_guid}": {
+      "delete": {
+        "operationId": "delete_organization_user",
+        "parameters": [
+          {"name": "organization_guid", "in": "path", "required": "true", "type": "string"},
+          {"name": "user_guid", "in": "path", "required": "true", "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "204": {"description": "No Content", "schema": {"type": "string"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+      },
+      "put": {
+        "operationId": "update_organization_user",
+        "parameters": [
+          {"name": "organization_guid", "in": "path", "required": "true", "type": "string"},
+          {"name": "user_guid", "in": "path", "required": "true", "type": "string"},
+          {"name": "body", "in": "body", "schema": {"$ref": "UserRequest"}}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "201": {"description": "Created", "schema": {"type": "string"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+      }
+    },
+    "rest/spaces/{space_guid}/users": {
+      "get": {
+        "operationId": "get_space_users",
+        "parameters": [{"name": "space_guid", "in": "path", "required": "true", "type": "string"}],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "User"}}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+      },
+      "post": {
+        "operationId": "create_space_user",
+        "parameters": [
+          {"name": "space_guid", "in": "path", "required": "true", "type": "string"},
+          {"name": "body", "in": "body", "schema": {"$ref": "UserRequest"}}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "201": {"description": "Created", "schema": {"type": "string"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+      }
+    },
+    "rest/spaces/{space_guid}/users/{user_guid}": {
+      "delete": {
+        "operationId": "delete_space_user",
+        "parameters": [
+          {"name": "space_guid", "in": "path", "required": "true", "type": "string"},
+          {"name": "user_guid", "in": "path", "required": "true", "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "204": {"description": "No Content", "schema": {"type": "string"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "default": {"description": "Unexpected error", "schema": {"type": "string"}}
+        }
+      },
+      "put": {
+        "operationId": "update_space_user",
+        "parameters": [
+          {"name": "space_guid", "in": "path", "required": "true", "type": "string"},
+          {"name": "user_guid", "in": "path", "required": "true", "type": "string"},
+          {"name": "body", "in": "body", "schema": {"$ref": "UserRequest"}}
         ],
         "responses": {
           "200": {"description": "OK", "schema": {"type": "string"}},
@@ -62,10 +180,10 @@
     }
   },
   "definitions": {
-    "OrganizationName": {
+    "OrgNameRequest": {
       "properties": {"name": {"type": "string"}}
     },
-    "OrganizationInfo": {
+    "Organization": {
       "properties": {
         "guid": {"type": "string"},
         "name": {"type": "string"},
@@ -80,6 +198,21 @@
       "properties": {
         "guid": {"type": "string"},
         "name": {"type": "string"}
+      }
+    },
+    "UserRequest": {
+      "properties": {
+        "org_guid": {"type": "string"},
+        "roles": {"type": "array", "items": {"type": "string"}},
+        "username": {"type": "string"}
+      }
+    },
+    "User": {
+      "properties": {
+        "guid": {"type": "string"},
+        "org_guid": {"type": "string"},
+        "roles": {"type": "array", "items": {"type": "string", "enum": ["managers", "auditors", "billing_managers"]}},
+        "username": {"type": "string"}
       }
     }
   },
