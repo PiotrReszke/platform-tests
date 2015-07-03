@@ -3,12 +3,12 @@
   "paths": {
     "rest/das/requests": {
       "get": {
-        "operationId": "add_request",
+        "operationId": "get_requests",
         "parameters": [{"name": "orgs", "in": "query", "schema": {"type": "string"}}],
         "responses": {"200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "Request"}}}}
       },
       "post": {
-        "operationId": "get_requests",
+        "operationId": "create_request",
         "parameters": [{"name": "body", "in": "body", "schema": {"$ref": "Request"}}],
         "responses": {
           "200": {"description": "Created", "schema": {"type": "string"}},
