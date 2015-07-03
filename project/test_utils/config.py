@@ -31,6 +31,7 @@ def get_test_setting(key):
     if key in ["TEST_ENVIRONMENT", "TEST_USERNAME"]:
         value = CONFIG["TEST_SETTINGS"].get(key)
         if value is None:
-            value = os.environ.get("TEST_ENVIRONMENT")
+            value = os.environ.get(key)
         return value
+
 

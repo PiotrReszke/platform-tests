@@ -1,0 +1,117 @@
+{
+  "info": {"version": "1.0.0", "title": "Data Catalog API"},
+  "paths": {
+    "/rest/datasets": {
+      "get": {
+        "operationId": "search_datasets",
+        "parameters": [
+          {"name": "query", "in": "formData", "schema": {"$ref": "QueryObject"}},
+          {"name": "orgs", "in": "formData", "type": "array", "items": {"type": "string"}},
+          {"name": "onlyPrivate", "in": "formData", "type": "boolean"},
+          {"name": "onlyPublic", "in": "formData", "type": "boolean"}
+        ],
+        "responses": {"200": {"description": "OK", "schema": {"$ref": "SearchHits"}}
+        }
+      }
+    },
+    "/rest/datasets/{entry_id}": {
+      "delete": {
+        "operationId": "delete_entry",
+        "parameters": [],
+        "responses": {}
+      },
+      "get": {
+        "operationId": "get_entry",
+        "parameters": [{"name": "entry_id", "in": "path", "required": "true", "type": "string"}],
+        "responses": {"200": {"description": "OK", "schema": {"$ref": "QueryHit"}}}
+      },
+      "post": {
+        "operationId": "update_entry",
+        "parameters": [
+          {"name": "entry_id", "in": "path", "required": "true", "type": "string"},
+          {"name": "body", "in": "body", "schema": {"$ref": "SearchHit"}}
+        ],
+        "responses": {"200": {"description": "Attributes Updated", "schema": {"type": "string"}}}
+      },
+      "put": {
+        "operationId": "put_entry_in_index",
+        "parameters": [
+          {"name": "entry_id", "in": "path", "required": "true", "type": "string"},
+          {"name": "body", "in": "body", "schema": {"$ref": "SearchHit"}}
+        ],
+        "responses": {"200": {"description": "Attributes Updated", "schema": {"type": "string"}}}
+      }
+    },
+    "/rest/datasets/count": {
+      "get": {
+        "operationId": "count_datasets",
+        "parameters": [
+          {"name": "orgs", "in": "formData", "type": "array", "items": {"type": "string"}},
+          {"name": "onlyPrivate", "in": "formData", "type": "boolean"},
+          {"name": "onlyPublic", "in": "formData", "type": "boolean"}
+        ],
+        "responses": {
+          "responses": {
+            "200": {"description": "Data set count returned", "schema": {"type": "integer", "format": "int32"}}
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "QueryObject": {
+      "properties": {
+        "query": {"type": "text"},
+        "filters": {"type": "array", "items": {"$ref": "QueryFilter"}},
+        "from": {"type": "integer", "format": "int32"},
+        "size": {"type": "integer", "format": "int32"}
+      }
+    },
+    "QueryFilter": {
+      "properties": {
+        "^": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "SearchHits": {
+      "properties": {
+        "hits": {"type": "array", "items": {"$ref": "SearchHit"}},
+        "categories": {"type": "array", "items": {"type": "string"}},
+        "total": {"type": "integer", "format": "int32"},
+        "formats": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "SearchHit": {
+      "properties": {
+        "format": {"type": "string", "enum": ["CSV", "PDF"]},
+        "dataSample": {"type": "string"},
+        "category": {
+          "type": "string",
+          "enum": ["agriculture", "business", "climate", "consumer", "ecosystems", "education", "energy", "finance", "manufacturing", "other", "science"]
+        },
+        "isPublic": {"type": "boolean"},
+        "id": {"type": "string"},
+        "storeType": {"type": "string"},
+        "recordCount": {"type": "integer", "format": "int32"},
+        "creationTime": {"type": "string"},
+        "sourceUri": {"type": "string"},
+        "orgUUID": {"type": "string"},
+        "title": {"type": "string"},
+        "size": {"type": "integer", "format": "int32"},
+        "targetUri": {"type": "string"}
+      }
+    },
+    "QueryHit": {
+      "properties": {
+        "found": {"type": "boolean"},
+        "_type": {"type": "string"},
+        "_index": {"type": "string"},
+        "_id": {"type": "string"},
+        "_source": {"$ref": "SearchHit"},
+        "_version": {"type": "integer", "format": "int32"}
+      }
+    }
+  },
+  "security": [{"default": []}],
+  "swagger": "2.0",
+  "consumes": ["application/json"]
+}

@@ -15,11 +15,11 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Platform API Automated Tests")
     parser.add_argument("-e",
                         "--environment",
-                        default=CONFIG["DEFAULT"]["TEST_ENVIRONMENT"],
+                        default=CONFIG["DEFAULT_SETTINGS"]["TEST_ENVIRONMENT"],
                         help="environment where tests are to be run, e.g. gotapaas.com")
     parser.add_argument("-u",
                         "--username",
-                        default=CONFIG["DEFAULT"]["TEST_USERNAME"],
+                        default=CONFIG["DEFAULT_SETTINGS"]["TEST_USERNAME"],
                         help="username for logging into Cloud Foundry")
     return parser.parse_args()
 
