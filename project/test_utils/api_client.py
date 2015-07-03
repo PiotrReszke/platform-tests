@@ -13,18 +13,15 @@ class Client(BaseClient):
     """Modeled after pyswagger Client"""
 
     __schemes__ = {'http', 'https'}
-    PROXIES = {
-        "https": "proxy-mu.intel.com:911",
-        "http": "proxy-mu.intel.com:911"
-    }
 
-    def __init__(self, scheme, hostname, authorization_token=None):
+    def __init__(self, scheme, hostname, authorization_token=None, proxy=None):
         super(Client, self).__init__()
         self.__s = Session()
         # self.__s.verify = False
         self._host = hostname
         self._scheme = scheme
         self._auth_token = authorization_token
+        self._proxies = {"https": proxy, "http": proxy} if proxy is not None else proxy
 
     def request(self, req_and_resp, opt=None):
         opt = {} if opt is None else opt
@@ -60,7 +57,7 @@ class Client(BaseClient):
         if self._auth_token is not None:
             sw_request.header.update({"Authorization": self._auth_token})
         request = self.__s.prepare_request(request)
-        self.__s.proxies = self.PROXIES
+        self.__s.proxies = self._proxies
         response = self.__s.send(request)
         self.__log_request(request.method, request.url, request.headers, request.body)
         sw_response.apply_with(status=response.status_code, header=response.headers, raw=response.text)
@@ -108,12 +105,13 @@ class ApiClient(object):
     def __init__(self, application_name):
         self._application = application_name
         self._domain = config.get_test_setting("TEST_ENVIRONMENT")
+        self._proxy = config.get_proxy()
         username = config.get_test_setting("TEST_USERNAME")
         password = config.get_password(self._domain, username)
         self._token = self.get_token(username, password)
         api_schema = config.get_schema_path(application_name)
         self._app = SwaggerApp.create(api_schema)
-        self._client = Client(*self.api_endpoint, authorization_token=self._token)
+        self._client = Client(*self.api_endpoint, authorization_token=self._token, proxy=self._proxy)
 
     @property
     def api_endpoint(self):
@@ -125,7 +123,7 @@ class ApiClient(object):
         login_token = config.get_login_token(self._domain)
         login_endpoint = ("https", config.CONFIG["LOGIN_ENDPOINT"][self._domain])
         self._app = SwaggerApp.create(self.LOGIN_SCHEMA_PATH)
-        self._client = Client(*login_endpoint, authorization_token=login_token)
+        self._client = Client(*login_endpoint, authorization_token=login_token, proxy=self._proxy)
         response = self.call("get_token", username=username, password=password)
         return "Bearer {}".format(response["access_token"])
 

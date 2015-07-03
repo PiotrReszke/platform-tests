@@ -23,7 +23,7 @@
         "parameters": [{"name": "organization_guid", "in": "path", "required": "true", "type": "string"}],
         "responses": {
           "200": {"description": "OK", "schema": {"type": "string"}},
-          "204": {"description": "No Content", "schema": {"type": "string"}},
+          "204": {"description": "No Content", "schema": {"type": "string"}}
         }
       }
     },
@@ -36,7 +36,7 @@
         ],
         "responses": {
           "200": {"description": "OK", "schema": {"type": "string"}},
-          "201": {"description": "Created", "schema": {"type": "string"}},
+          "201": {"description": "Created", "schema": {"type": "string"}}
         }
       }
     },

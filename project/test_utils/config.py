@@ -26,6 +26,12 @@ def get_schema_path(app_name):
         raise KeyError("Schema path for {} is not defined".format(app_name))
 
 
+def get_proxy():
+    proxy = CONFIG["TEST_SETTINGS"]["proxy"]
+    if proxy != "":
+        return proxy
+
+
 # workaround to allow running tests both from command line, and using PyCharm's Unittest runner
 def get_test_setting(key):
     if key in ["TEST_ENVIRONMENT", "TEST_USERNAME"]:
