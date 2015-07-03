@@ -36,12 +36,14 @@ class ApiTestCase(unittest.TestCase):
                                                                               status, error_message))
 
 
-def cleanup_after_failed_setup(func):
-    @functools.wraps(func)
-    def wrapped(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except:
-            Organization.delete_test_orgs()
-            raise
-    return wrapped
+def cleanup_after_failed_setup(cleanup_method):
+    def wrapper(func):
+        @functools.wraps(func)
+        def wrapped(*args, **kwargs):
+            try:
+                func(*args, **kwargs)
+            except:
+                cleanup_method()
+                raise
+        return wrapped
+    return wrapper

@@ -1,6 +1,6 @@
 import time
 
-from test_utils import api_calls as api
+import test_utils.user_management.api_calls as api
 
 
 class User(object):
