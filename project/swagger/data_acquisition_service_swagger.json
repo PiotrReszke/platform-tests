@@ -1,0 +1,55 @@
+{
+  "info": {"version": "1.0.0", "title": "Data Acquisition Service API"},
+  "paths": {
+    "rest/das/requests": {
+      "get": {
+        "operationId": "add_request",
+        "parameters": [{"name": "orgs", "in": "query", "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "Request"}}}}
+      },
+      "post": {
+        "operationId": "get_requests",
+        "parameters": [{"name": "body", "in": "body", "schema": {"$ref": "Request"}}],
+        "responses": {
+          "200": {"description": "Created", "schema": {"type": "string"}},
+          "201": {"description": "OK", "schema": {"$ref": "Request"}}
+        }
+      }
+    },
+    "rest/das/requests/{request_id}": {
+      "get": {
+        "operationId": "get_request",
+        "parameters": [{"name": "request_id", "in": "path", "required": "true", "type": "string"}],
+        "responses": {"responses": {"200": {"description": "OK", "schema": {"$ref": "Request"}}}}
+      },
+      "delete": {
+        "operationId": "delete_request",
+        "parameters": [{"name": "request_id", "in": "path", "required": "true", "type": "string"}],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "204": {"description": "No Content", "schema": {"type": "string"}}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Request": {
+      "properties": {
+        "publicRequest":  {"type": "boolean"},
+        "timestamps": {"type": "array", "items": {"type": "string"}},
+        "title": {"type": "string"},
+        "category": {"type": "string"},
+        "idInObjectStore": {"type": "string"},
+        "userId": {"type": "integer", "format": "int32"},
+        "token": {"type": "string"},
+        "orgUUID": {"type": "string"},
+        "source": {"type": "string"},
+        "id": {"type": "string"},
+        "state": {"type": "string"}
+      }
+    }
+  },
+  "security": [{"default": []}],
+  "swagger": "2.0",
+  "consumes": ["application/json"]
+}

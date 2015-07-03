@@ -61,7 +61,7 @@
   "definitions": {
     "QueryObject": {
       "properties": {
-        "query": {"type": "text"},
+        "query": {"type": "string"},
         "filters": {"type": "array", "items": {"$ref": "QueryFilter"}},
         "from": {"type": "integer", "format": "int32"},
         "size": {"type": "integer", "format": "int32"}
