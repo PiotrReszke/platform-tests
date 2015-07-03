@@ -2,5 +2,5 @@
 *.pyc
 *.pyo
 *.log
-project/test_utils/config.ini
+*.secret.ini
 *__pycache__/

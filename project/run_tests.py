@@ -16,7 +16,7 @@ def parse_arguments():
     parser.add_argument("-e",
                         "--environment",
                         default=CONFIG["DEFAULT"]["TEST_ENVIRONMENT"],
-                        help="environment where tests are to be run, e.g. demo-gotapaas.com")
+                        help="environment where tests are to be run, e.g. gotapaas.com")
     parser.add_argument("-u",
                         "--username",
                         default=CONFIG["DEFAULT"]["TEST_USERNAME"],
@@ -31,7 +31,6 @@ if __name__ == "__main__":
     logger.info("[TEST_ENVIRONMENT={}]".format(CONFIG["TEST_SETTINGS"]["TEST_ENVIRONMENT"]))
     CONFIG["TEST_SETTINGS"]["TEST_USERNAME"] = args.username
     logger.info("[TEST_USERNAME={}]".format(CONFIG["TEST_SETTINGS"]["TEST_USERNAME"]))
-    CONFIG["TEST_SETTINGS"]["TEST_PASSWORD"] = CONFIG["TEST_PASSWORD"][args.environment][args.username]
 
     if is_running_under_teamcity():
         runner = TeamcityTestRunner()

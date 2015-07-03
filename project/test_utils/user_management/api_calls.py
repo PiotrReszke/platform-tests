@@ -10,7 +10,7 @@ __CLIENT = None
 def __get_api_client():
     global __CLIENT
     if __CLIENT is None:
-        __CLIENT = ApiClient(application="user-management")
+        __CLIENT = ApiClient(application_name="user-management")
     return __CLIENT
 
 # ------------------------------------- Orgs Controller ------------------------------------- #

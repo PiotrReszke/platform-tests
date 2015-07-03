@@ -1,12 +1,9 @@
-import json
-import os
-
 from pyswagger import SwaggerApp
 from pyswagger.core import BaseClient
 from requests import Session, Request
 
 from test_utils.logger import get_logger
-from test_utils.config import get_config_value
+import test_utils.config as config
 
 
 logger = get_logger("api client")
@@ -106,35 +103,29 @@ class UnexpectedResponseError(Exception):
 
 class ApiClient(object):
 
-    API_SCHEMA_PATH = "swagger/user_management_swagger.json"
     LOGIN_SCHEMA_PATH = "swagger/login_swagger.json"
-    LOGIN_TOKEN = "Basic Y2Y6"
 
-    def __init__(self, application):
-        self._application = application
-        self._domain = get_config_value("TEST_ENVIRONMENT")
-        username = get_config_value("TEST_USERNAME")
-        password = get_config_value("TEST_PASSWORD")
+    def __init__(self, application_name):
+        self._application = application_name
+        self._domain = config.get_test_setting("TEST_ENVIRONMENT")
+        username = config.get_test_setting("TEST_USERNAME")
+        password = config.get_password(self._domain, username)
         self._token = self.get_token(username, password)
-        self._app = SwaggerApp.create(self.API_SCHEMA_PATH)
+        api_schema = config.get_schema_path(application_name)
+        self._app = SwaggerApp.create(api_schema)
         self._client = Client(*self.api_endpoint, authorization_token=self._token)
 
     @property
-    def login_endpoint(self):
-        if self._domain == "gotapaas.eu":
-            prefix = "login.run"
-        else:
-            prefix = "login"
-        return ("https", "{}.{}".format(prefix, self._domain))
-
-    @property
     def api_endpoint(self):
-        return ("http", "{}.apps.{}".format(self._application, self._domain))
+        path = "{}.{}".format(self._application, config.CONFIG["API_ENDPOINT"][self._domain])
+        return ("http", path)
 
     def get_token(self, username, password):
         logger.info("-------------------- Retrieve token for user {} --------------------".format(username))
+        login_token = config.get_login_token(self._domain)
+        login_endpoint = ("https", config.CONFIG["LOGIN_ENDPOINT"][self._domain])
         self._app = SwaggerApp.create(self.LOGIN_SCHEMA_PATH)
-        self._client = Client(*self.login_endpoint, authorization_token=self.LOGIN_TOKEN)
+        self._client = Client(*login_endpoint, authorization_token=login_token)
         response = self.call("get_token", username=username, password=password)
         return "Bearer {}".format(response["access_token"])
 
