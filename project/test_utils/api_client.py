@@ -14,8 +14,10 @@ class Client(BaseClient):
 
     __schemes__ = {'http', 'https'}
 
-    def __init__(self, scheme, hostname, authorization_token=None, proxy=None):
+    def __init__(self, scheme, hostname, authorization_token=None, proxy=None, obscure_from_log=None):
+        """In obscure_logged_data pass an iterable containing strings which are to be obscured from logs"""
         super(Client, self).__init__()
+        self._obscure_from_log = [] if obscure_from_log is None else obscure_from_log
         self.__s = Session()
         # self.__s.verify = False
         self._host = hostname
@@ -71,6 +73,10 @@ class Client(BaseClient):
     def __log_request(self, method, url, headers="", data="", params=None):
         if params is not None:
             url += "?" + "&".join(["%s=%s" % (k, v) for k, v in params.items()])
+        for s in self._obscure_from_log:
+            data = data.replace(s, "[SECRET]")
+        if "Authorization" in headers:
+            headers["Authorization"] = "[SECRET]"
         msg = [
             "\n----------------Request------------------",
             "URL: " + method + " " + str(url),
@@ -123,7 +129,7 @@ class ApiClient(object):
         login_token = config.get_login_token(self._domain)
         login_endpoint = ("https", config.CONFIG["LOGIN_ENDPOINT"][self._domain])
         self._app = SwaggerApp.create(self.LOGIN_SCHEMA_PATH)
-        self._client = Client(*login_endpoint, authorization_token=login_token, proxy=self._proxy)
+        self._client = Client(*login_endpoint, authorization_token=login_token, proxy=self._proxy, obscure_from_log=[password])
         response = self.call("get_token", username=username, password=password)
         return "Bearer {}".format(response["access_token"])
 
