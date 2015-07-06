@@ -27,13 +27,16 @@ class ApiTestCase(unittest.TestCase):
                 self.fail(self._formatMessage(msg, standardMsg))
 
     def assertRaisesUnexpectedResponse(self, status, error_message, callableObj, *args, **kwargs):
+        """If error message does not need to be checked, pass None"""
         with self.assertRaises(UnexpectedResponseError) as e:
             callableObj(*args, **kwargs)
-        self.assertEqual([e.exception.status, e.exception.error_message],
-                         [status, error_message],
-                         "Error is {0} \"{1}\", expected {2} \"{3}\"".format(e.exception.status,
-                                                                              e.exception.error_message,
-                                                                              status, error_message))
+        if error_message is not None:
+            error = [e.exception.status, e.exception.error_message]
+            expected = [status, error_message]
+            self.assertEqual(error, expected, "Error is {0} \"{1}\", expected {2} \"{3}\"".format(*(error+expected)))
+        else:
+            self.assertEqual(e.exception.status, status,
+                             "Error status is {0}, expected {1}".format(e.exception.status, status))
 
 
 def cleanup_after_failed_setup(cleanup_method):

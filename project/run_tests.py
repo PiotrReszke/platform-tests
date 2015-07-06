@@ -16,7 +16,7 @@ def parse_arguments():
     parser.add_argument("-e",
                         "--environment",
                         default=CONFIG["DEFAULT_SETTINGS"]["TEST_ENVIRONMENT"],
-                        help="environment where tests are to be run, e.g. gotapaas.com")
+                        help="environment where tests are to be run, e.g. gotapaas.eu")
     parser.add_argument("-u",
                         "--username",
                         default=CONFIG["DEFAULT_SETTINGS"]["TEST_USERNAME"],
