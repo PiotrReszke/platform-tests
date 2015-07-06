@@ -9,14 +9,22 @@ SECRET.read("test_utils/.secret.ini")
 
 
 def get_password(environment, username):
-    try:
-        return SECRET[environment][username]
-    except KeyError:
-        raise KeyError("Password for {} on {} is not specified.".format(username, environment))
+    settings_password = CONFIG["TEST_SETTINGS"].get("TEST_PASSWORD")
+    if settings_password is not None:
+        return settings_password
+    else:
+        try:
+            return SECRET[environment][username]
+        except KeyError:
+            raise KeyError("Password for {} on {} is not specified.".format(username, environment))
 
 
 def get_login_token(environment):
-    return SECRET[environment]["login_token"]
+    settings_token = CONFIG["TEST_SETTINGS"].get("LOGIN_TOKEN")
+    if settings_token is not None:
+        return settings_token
+    else:
+        return SECRET[environment]["login_token"]
 
 
 def get_schema_path(app_name):

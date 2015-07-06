@@ -22,7 +22,14 @@ def parse_arguments():
                         default=CONFIG["DEFAULT_SETTINGS"]["TEST_USERNAME"],
                         help="username for logging into Cloud Foundry")
     parser.add_argument("-p",
-                        "--proxy",
+                        "--password",
+                        default=None,
+                        help="password matching environment and username")
+    parser.add_argument("-l",
+                        "--login-token",
+                        default=None,
+                        help="authorization token for cf login")
+    parser.add_argument("--proxy",
                         default="",
                         help="set proxy for api client")
     return parser.parse_args()
@@ -33,6 +40,10 @@ def set_config(args):
     logger.info("[TEST_ENVIRONMENT={}]".format(CONFIG["TEST_SETTINGS"]["TEST_ENVIRONMENT"]))
     CONFIG["TEST_SETTINGS"]["TEST_USERNAME"] = args.username
     logger.info("[TEST_USERNAME={}]".format(CONFIG["TEST_SETTINGS"]["TEST_USERNAME"]))
+    if args.password is not None:
+        CONFIG["TEST_SETTINGS"]["TEST_PASSWORD"] = args.password
+    if args.login_token is not None:
+        CONFIG["TEST_SETTINGS"]["LOGIN_TOKEN"] = args.login_token
     CONFIG["TEST_SETTINGS"]["proxy"] = args.proxy
     if args.proxy != "":
         logger.info("[using {}]".format(args.proxy))
