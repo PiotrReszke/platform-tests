@@ -56,7 +56,8 @@
         ],
         "responses": {
           "200": {"description": "OK", "schema": {"$ref": "User"}},
-          "201": {"description": "Created", "schema": {"type": "string"}}
+          "201": {"description": "Created", "schema": {"type": "string"}},
+          "400": {"description": "Error", "schema": {"type": "string"}}
         }
       }
     },

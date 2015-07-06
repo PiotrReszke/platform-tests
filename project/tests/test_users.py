@@ -33,7 +33,7 @@ class TestOrganizationUsers(ApiTestCase):
         self.assertInList(expected_user, users)
 
     def test_create_organization_user_incorrect_role(self):
-        self.assertRaisesUnexpectedResponse(400, None, User.create_via_organization,
+        self.assertRaisesUnexpectedResponse(400, "", User.create_via_organization,
                                             organization_guid=self.organization.guid, roles=["i-don't-exist"])
 
     def test_update_organization_user_add_role(self):
