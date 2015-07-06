@@ -49,5 +49,7 @@ if __name__ == "__main__":
         runner = TeamcityTestRunner()
     else:
         runner = unittest.TextTestRunner(verbosity=3)
-    suite = unittest.TestSuite(unittest.TestLoader().loadTestsFromName("tests.test_organization"))
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    suite.addTests(loader.discover("tests"))
     runner.run(suite)
