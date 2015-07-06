@@ -45,8 +45,6 @@ class TestOrganization(ApiTestCase):
         expected_orgs = old_orgs + new_orgs
         orgs = Organization.get_list()
         self.assertTrue(len(orgs), len(expected_orgs))
-        x = sorted(orgs)
-        y = sorted(expected_orgs)
         self.assertListEqual(sorted(orgs), sorted(expected_orgs))
 
 
