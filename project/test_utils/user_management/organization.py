@@ -1,8 +1,10 @@
+import functools
 import time
 
 import test_utils.user_management.api_calls as api
 
 
+@functools.total_ordering
 class Organization(object):
 
     NAME_PREFIX = "test-org-"
@@ -19,12 +21,8 @@ class Organization(object):
     def __eq__(self, other):
         return (self.name == other.name and self.guid == other.guid and sorted(self.spaces) == sorted(other.spaces))
 
-    def __cmp__(self, other):
-        if self.guid < other.guid:
-            return -1
-        if self.guid > other.guid:
-            return 1
-        return 0
+    def __lt__(self, other):
+        return self.guid < other.guid
 
     @classmethod
     def create(cls, name=None):
@@ -62,6 +60,7 @@ class Organization(object):
         return api.api_delete_organization(self.guid)
 
 
+@functools.total_ordering
 class Space(object):
 
     def __init__(self, name, guid):
@@ -74,11 +73,7 @@ class Space(object):
     def __eq__(self, other):
         return (self.name == other.name and self.guid == other.guid)
 
-    def __cmp__(self, other):
-        if self.guid < other.guid:
-            return -1
-        if self.guid > other.guid:
-            return 1
-        return 0
+    def __lt__(self, other):
+        return self.guid < other.guid
 
 

@@ -1,8 +1,10 @@
+import functools
 import time
 
 import test_utils.user_management.api_calls as api
 
 
+@functools.total_ordering
 class User(object):
 
     def __init__(self, guid, username, roles=None, organization_guid=None, space_guid=None):
@@ -19,12 +21,8 @@ class User(object):
         return (self.username == other.username and self.guid == other.guid and sorted(self.roles) == sorted(other.roles) and
                 self.organization_guid == other.organization_guid and self.space_guid == other.space_guid)
 
-    def __cmp__(self, other):
-        if self.guid < other.guid:
-            return -1
-        if self.guid > other.guid:
-            return 1
-        return 0
+    def __lt__(self, other):
+        return self.guid < other.guid
 
     @staticmethod
     def get_default_username(prefix="test-user-"):
