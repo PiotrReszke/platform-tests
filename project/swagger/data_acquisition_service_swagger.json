@@ -1,10 +1,10 @@
 {
   "info": {"version": "1.0.0", "title": "Data Acquisition Service API"},
   "paths": {
-    "rest/das/requests": {
+    "/rest/das/requests": {
       "get": {
         "operationId": "get_requests",
-        "parameters": [{"name": "orgs", "in": "query", "schema": {"type": "string"}}],
+        "parameters": [{"name": "orgs", "in": "query", "type": "string"}],
         "responses": {"200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "Request"}}}}
       },
       "post": {
@@ -16,7 +16,7 @@
         }
       }
     },
-    "rest/das/requests/{request_id}": {
+    "/rest/das/requests/{request_id}": {
       "get": {
         "operationId": "get_request",
         "parameters": [{"name": "request_id", "in": "path", "required": "true", "type": "string"}],

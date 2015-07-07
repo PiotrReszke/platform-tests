@@ -5,3 +5,5 @@ from test_utils.logger import get_logger
 from test_utils.user_management.organization import Organization, Space
 from test_utils.user_management.user import User
 
+from test_utils.data_acquisition_service.transfer import Transfer
+
