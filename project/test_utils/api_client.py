@@ -1,3 +1,5 @@
+import time
+
 from pyswagger import SwaggerApp
 from pyswagger.core import BaseClient
 from requests import Session, Request
@@ -107,17 +109,20 @@ class UnexpectedResponseError(Exception):
 class ApiClient(object):
 
     LOGIN_SCHEMA_PATH = "swagger/login_swagger.json"
+    TOKEN = None
+    TOKEN_RETRIEVAL_TIME = 0
+    TOKEN_EXPIRY_TIME = 298 # (in seconds) 5 minutes minus 2s buffer
 
     def __init__(self, application_name):
         self._application = application_name
         self._domain = config.TEST_SETTINGS["TEST_ENVIRONMENT"]
         self._proxy = config.TEST_SETTINGS["TEST_PROXY"]
-        username = config.TEST_SETTINGS["TEST_USERNAME"]
-        password = config.TEST_SETTINGS["TEST_PASSWORD"]
-        self._token = self.get_token(username, password)
+        self._username = config.TEST_SETTINGS["TEST_USERNAME"]
+        self._password = config.TEST_SETTINGS["TEST_PASSWORD"]
+        self._get_token()
         api_schema = config.APP_SCHEMAS[application_name]
         self._app = SwaggerApp.create(api_schema)
-        self._client = Client(*self.api_endpoint, authorization_token=self._token, proxy=self._proxy)
+        self._client = Client(*self.api_endpoint, authorization_token=self.TOKEN, proxy=self._proxy)
 
     @property
     def api_endpoint(self):
@@ -128,22 +133,37 @@ class ApiClient(object):
     def login_endpoint(self):
         return ("https", config.CONFIG[self._domain]["login_endpoint"])
 
-    def get_token(self, username, password):
-        logger.info("-------------------- Retrieve token for user {} --------------------".format(username))
+    def _get_token(self):
+        logger.info("-------------------- Retrieve token for user {} --------------------".format(self._username))
         login_token = config.TEST_SETTINGS["TEST_LOGIN_TOKEN"]
-        self._app = SwaggerApp.create(self.LOGIN_SCHEMA_PATH)
-        self._client = Client(*self.login_endpoint, authorization_token=login_token, proxy=self._proxy, obscure_from_log=[password])
-        response = self.call("get_token", username=username, password=password)
-        return "Bearer {}".format(response["access_token"])
+        app = SwaggerApp.create(self.LOGIN_SCHEMA_PATH)
+        client = Client(*self.login_endpoint, authorization_token=login_token, proxy=self._proxy, obscure_from_log=[self._password])
+        operation = app.op["get_token"](username=self._username, password=self._password)
+        response = client.request(operation)
+        self.TOKEN_RETRIEVAL_TIME = time.time()
+        self._verify_response_status(operation, response)
+        self.TOKEN = "Bearer {}".format(response.data["access_token"])
 
-    def call(self, operation_id, **kwargs):
-        operation = self._app.op[operation_id](**kwargs)
+    def switch_user(self, username, password):
+        self._username = username
+        self._password = password
+        self._get_token()
+
+    def _verify_response_status(self, operation, response):
         expected_responses = (operation)[1]._SwaggerResponse__op._Operation__responses
-        response = self._client.request(operation)
         if response.status/100 != 2 or (str(response.status) not in expected_responses):
             error_message = response.data
             msg = "Unexpected response: {0} '{1}', expected: {2}".format(response.status, response.raw,
                                                                          ",".join(expected_responses.keys()))
             raise UnexpectedResponseError(status=response.status, error_message=error_message, message=msg)
-        else:
-            return response.data
+
+    def call(self, operation_id, **kwargs):
+        # check that token has not expired
+        now = time.time()
+        if now - self.TOKEN_RETRIEVAL_TIME > self.TOKEN_EXPIRY_TIME:
+            self._get_token()
+        operation = self._app.op[operation_id](**kwargs)
+        response = self._client.request(operation)
+        self._verify_response_status(operation, response)
+        return response.data
+

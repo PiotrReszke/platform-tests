@@ -88,5 +88,3 @@ if len(sys.argv) > 3:
                            login_token=__args.login_token)
 
 
-x = 0
-
