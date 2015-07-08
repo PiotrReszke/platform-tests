@@ -1,5 +1,5 @@
 from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger
-from test_utils import Organization, Transfer
+from test_utils import Organization, Transfer, User
 
 
 logger = get_logger("test data transfer")
@@ -11,6 +11,7 @@ class TestDataTransfer(ApiTestCase):
     @cleanup_after_failed_setup(Organization.delete_test_orgs)
     def setUpClass(cls):
         cls.org = Organization.create()
+
 
     def test_get_transfers(self):
         transfers = Transfer.get_list(orgs=[self.org])

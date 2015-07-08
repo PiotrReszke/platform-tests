@@ -110,26 +110,29 @@ class ApiClient(object):
 
     def __init__(self, application_name):
         self._application = application_name
-        self._domain = config.get_test_setting("TEST_ENVIRONMENT")
-        self._proxy = config.get_proxy()
-        username = config.get_test_setting("TEST_USERNAME")
-        password = config.get_password(self._domain, username)
+        self._domain = config.TEST_SETTINGS["TEST_ENVIRONMENT"]
+        self._proxy = config.TEST_SETTINGS["TEST_PROXY"]
+        username = config.TEST_SETTINGS["TEST_USERNAME"]
+        password = config.TEST_SETTINGS["TEST_PASSWORD"]
         self._token = self.get_token(username, password)
-        api_schema = config.get_schema_path(application_name)
+        api_schema = config.APP_SCHEMAS[application_name]
         self._app = SwaggerApp.create(api_schema)
         self._client = Client(*self.api_endpoint, authorization_token=self._token, proxy=self._proxy)
 
     @property
     def api_endpoint(self):
-        path = "{}.{}".format(self._application, config.CONFIG["API_ENDPOINT"][self._domain])
+        path = "{}.{}".format(self._application, config.CONFIG[self._domain]["api_endpoint"])
         return ("http", path)
+
+    @property
+    def login_endpoint(self):
+        return ("https", config.CONFIG[self._domain]["login_endpoint"])
 
     def get_token(self, username, password):
         logger.info("-------------------- Retrieve token for user {} --------------------".format(username))
-        login_token = config.get_login_token(self._domain)
-        login_endpoint = ("https", config.CONFIG["LOGIN_ENDPOINT"][self._domain])
+        login_token = config.TEST_SETTINGS["TEST_LOGIN_TOKEN"]
         self._app = SwaggerApp.create(self.LOGIN_SCHEMA_PATH)
-        self._client = Client(*login_endpoint, authorization_token=login_token, proxy=self._proxy, obscure_from_log=[password])
+        self._client = Client(*self.login_endpoint, authorization_token=login_token, proxy=self._proxy, obscure_from_log=[password])
         response = self.call("get_token", username=username, password=password)
         return "Bearer {}".format(response["access_token"])
 

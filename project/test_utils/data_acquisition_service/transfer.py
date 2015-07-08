@@ -30,7 +30,7 @@ class Transfer(object):
     @classmethod
     def create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=None):
         if title is None:
-            title = "test-title-{}".format(time.time())
+            title = "test-transfer-{}".format(time.time())
         api_response = api.api_create_das_request(category=category, is_public=is_public, org_guid=org_guid, source=source,
                                                   title=title, user_id=user_id)
         return cls(category=category, id=api_response["id"], id_in_object_store=api_response["idInObjectStore"],
