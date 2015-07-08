@@ -6,7 +6,7 @@ import test_utils.data_acquisition_service.api_calls as api
 class Transfer(object):
 
     def __init__(self, category=None, id=None, id_in_object_store=None, is_public=None, org_guid=None, source=None,
-                 state=None, token=None, timestamps=None, title=None, user_id=None):
+                 state=None, token=None, timestamps=None, title=None, user_id=0):
         self.category = category
         self.id = id
         self.id_in_object_store = id_in_object_store
@@ -22,10 +22,10 @@ class Transfer(object):
     @classmethod
     def _from_api_response(cls, api_response):
         return cls(category=api_response["category"], id=api_response["id"],
-                   id_in_object_store=api_response["idInObjectStore"], is_public=api_response["is_public"],
-                   org_guid=api_response["org_guid"], source=api_response["source"], state=api_response["state"],
+                   id_in_object_store=api_response["idInObjectStore"], is_public=api_response["publicRequest"],
+                   org_guid=api_response["orgUUID"], source=api_response["source"], state=api_response["state"],
                    token=api_response["token"], timestamps=["timestamps"], title=api_response["title"],
-                   user_id=api_response["user_id"])
+                   user_id=api_response["userId"])
 
     @classmethod
     def create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=None):

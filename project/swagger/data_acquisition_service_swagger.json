@@ -11,8 +11,8 @@
         "operationId": "create_request",
         "parameters": [{"name": "body", "in": "body", "schema": {"$ref": "Request"}}],
         "responses": {
-          "200": {"description": "Created", "schema": {"type": "string"}},
-          "201": {"description": "OK", "schema": {"$ref": "Request"}}
+          "201": {"description": "Created", "schema": {"type": "string"}},
+          "202": {"description": "OK", "schema": {"$ref": "Request"}}
         }
       }
     },
@@ -20,7 +20,7 @@
       "get": {
         "operationId": "get_request",
         "parameters": [{"name": "request_id", "in": "path", "required": "true", "type": "string"}],
-        "responses": {"responses": {"200": {"description": "OK", "schema": {"$ref": "Request"}}}}
+        "responses": {"200": {"description": "OK", "schema": {"$ref": "Request"}}}
       },
       "delete": {
         "operationId": "delete_request",

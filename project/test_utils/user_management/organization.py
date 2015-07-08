@@ -2,6 +2,8 @@ import functools
 import time
 
 import test_utils.user_management.api_calls as api
+import test_utils.config as config
+from test_utils.user_management.user import User
 
 
 @functools.total_ordering
@@ -58,6 +60,12 @@ class Organization(object):
     def delete(self):
         self.TEST_ORGS.remove(self)
         return api.api_delete_organization(self.guid)
+
+    def add_admin(self, roles=("managers",)):
+        """Add admin user to the organization"""
+        admin_guid = config.CONFIG[config.TEST_SETTINGS["TEST_ENVIRONMENT"]]["admin_guid"]
+        admin = User(guid=admin_guid, username="admin")
+        admin.add_to_organization(self.guid, list(roles))
 
 
 @functools.total_ordering

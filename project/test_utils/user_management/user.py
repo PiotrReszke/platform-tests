@@ -59,6 +59,9 @@ class User(object):
                              organization_guid=user_data["org_guid"], space_guid=space_guid))
         return users
 
+    def add_to_organization(self, organization_guid, roles):
+        api.api_create_organization_user(organization_guid, self.username, roles)
+
     def update_via_organization(self, new_roles=None):
         if new_roles is not None:
             self.roles = new_roles

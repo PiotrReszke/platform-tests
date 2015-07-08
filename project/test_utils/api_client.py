@@ -151,7 +151,7 @@ class ApiClient(object):
 
     def _verify_response_status(self, operation, response):
         expected_responses = (operation)[1]._SwaggerResponse__op._Operation__responses
-        if response.status/100 != 2 or (str(response.status) not in expected_responses):
+        if response.status//100 != 2 or (str(response.status) not in expected_responses):
             error_message = response.data
             msg = "Unexpected response: {0} '{1}', expected: {2}".format(response.status, response.raw,
                                                                          ",".join(expected_responses.keys()))

@@ -34,9 +34,11 @@ def api_create_das_request(category=None, id=None, id_in_object_store=None, is_p
 
 def api_get_das_request(request_id):
     """GET /rest/das/requests/{request_id}"""
+    logger.info("------------------ Get request {} ------------------".format(request_id))
     return __get_api_client().call("get_request", request_id=request_id)
 
 
 def api_delete_das_request(request_id):
     """DELETE /rest/das/requests/{request_id}"""
+    logger.info("------------------ Delete request {} ------------------".format(request_id))
     return __get_api_client().call("delete_request", request_id=request_id)
