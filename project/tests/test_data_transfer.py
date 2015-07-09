@@ -1,5 +1,5 @@
 from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger
-from test_utils import Organization, Transfer, User
+from test_utils import Organization, Transfer
 
 
 logger = get_logger("test data transfer")
@@ -21,6 +21,7 @@ class TestDataTransfer(ApiTestCase):
         data_source = "http://fake-csv-server.apps.gotapaas.eu/fake-csv/100"
         expected_transfer = Transfer.create(source=data_source, org_guid=self.org.guid)
         transfer = Transfer.get(expected_transfer.id)
-        x = 0
+        self.assertTransfersEqual(transfer, expected_transfer)
+
 
 

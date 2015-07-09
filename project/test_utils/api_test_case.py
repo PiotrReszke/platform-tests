@@ -3,6 +3,7 @@ import unittest
 
 from test_utils.api_client import UnexpectedResponseError
 from test_utils.user_management.organization import Organization
+from test_utils.data_acquisition_service.transfer import Transfer
 
 
 class ApiTestCase(unittest.TestCase):
@@ -37,15 +38,15 @@ class ApiTestCase(unittest.TestCase):
         else:
             self.assertEqual(e.exception.status, status,
                              "Error status is {0}, expected {1}".format(e.exception.status, status))
-    #
-    # def assertDasRequestsEqual(self, request, expected_request, *compared_attributes):
-    #     if len(compared_attributes) == 0:
-    #         compared_attributes = []
-    #     for attribute_name in compared_attributes:
-    #         attribute = getattr(request, attribute_name)
-    #         expected_attribute = getattr(expected_request, attribute_name)
-    #         self.assertEqual(attribute, expected_attribute,
-    #                          "request {0}: {1}, expected {2}".format(attribute_name, attribute, expected_attribute))
+
+    def assertTransfersEqual(self, transfer, expected_transfer, *compared_attributes):
+        if len(compared_attributes) == 0:
+            compared_attributes = Transfer.COMPARABLE_ATTRIBUTES
+        for attribute_name in compared_attributes:
+            attribute = getattr(transfer, attribute_name)
+            expected_attribute = getattr(expected_transfer, attribute_name)
+            self.assertEqual(attribute, expected_attribute,
+                             "transfer.{0} = {1}, expected: {2}".format(attribute_name, attribute, expected_attribute))
 
 
 def cleanup_after_failed_setup(cleanup_method):

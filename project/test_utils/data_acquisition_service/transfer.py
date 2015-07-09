@@ -1,12 +1,16 @@
+import functools
 import time
 
 import test_utils.data_acquisition_service.api_calls as api
 
-
+@functools.total_ordering
 class Transfer(object):
 
+    COMPARABLE_ATTRIBUTES = ["category", "id", "id_in_object_store", "is_public", "organization_guid", "source", "state",
+                             "token", "timestamps", "title", "user_id"]
+
     def __init__(self, category=None, id=None, id_in_object_store=None, is_public=None, org_guid=None, source=None,
-                 state=None, token=None, timestamps=None, title=None, user_id=0):
+                 state=None, token=None, timestamps=None, title=None, user_id=None):
         self.category = category
         self.id = id
         self.id_in_object_store = id_in_object_store
@@ -19,6 +23,15 @@ class Transfer(object):
         self.title = title
         self.user_id = user_id
 
+    def __eq__(self, other):
+        return all([getattr(self, attribute) == getattr(other, attribute) for attribute in self.COMPARABLE_ATTRIBUTES])
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __repr__(self):
+        return "{0} (id={1}, title={2})".format(self.__class__.__name__, self.id, self.title)
+
     @classmethod
     def _from_api_response(cls, api_response):
         return cls(category=api_response["category"], id=api_response["id"],
@@ -28,7 +41,7 @@ class Transfer(object):
                    user_id=api_response["userId"])
 
     @classmethod
-    def create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=None):
+    def create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=0):
         if title is None:
             title = "test-transfer-{}".format(time.time())
         api_response = api.api_create_das_request(category=category, is_public=is_public, org_guid=org_guid, source=source,
