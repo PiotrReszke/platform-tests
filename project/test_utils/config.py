@@ -31,7 +31,7 @@ __SECRET = configparser.ConfigParser()
 __SECRET.read("test_utils/.secret.ini")
 
 
-def __update_test_settings(test_environment=None, test_username=None, proxy=None, password=None, login_token=None):
+def update_test_settings(test_environment=None, test_username=None, proxy=None, password=None, login_token=None):
     TEST_SETTINGS["TEST_ENVIRONMENT"] = test_environment or TEST_SETTINGS["TEST_ENVIRONMENT"]
     TEST_SETTINGS["TEST_USERNAME"] = test_username or TEST_SETTINGS["TEST_USERNAME"]
     TEST_SETTINGS["TEST_PROXY"] = proxy
@@ -43,7 +43,7 @@ def __update_test_settings(test_environment=None, test_username=None, proxy=None
     TEST_SETTINGS["TEST_LOGIN_TOKEN"] = login_token or secret_login_token
 
 
-def __parse_arguments():
+def parse_arguments():
     parser = argparse.ArgumentParser(description="Platform API Automated Tests")
     parser.add_argument("-e",
                         "--environment",
@@ -69,22 +69,14 @@ def __parse_arguments():
 
 TEST_SETTINGS = {}
 # default settings
-__update_test_settings(test_environment="gotapaas.eu", test_username="admin", proxy="proxy-mu.intel.com:911")
+update_test_settings(test_environment="gotapaas.eu", test_username="admin", proxy="proxy-mu.intel.com:911")
 # change settings when tests are run with PyCharm runner using environment variables
-__update_test_settings(test_environment=os.environ.get("TEST_ENVIRONMENT"),
+update_test_settings(test_environment=os.environ.get("TEST_ENVIRONMENT"),
                        test_username=os.environ.get("TEST_USERNAME"),
                        proxy=(os.environ.get("TEST_PROXY") or TEST_SETTINGS["TEST_PROXY"]),
                        password=os.environ.get("TEST_PASSWORD"),
                        login_token=os.environ.get("TEST_LOGIN_TOKEN"))
 
-# workaround to be able to run tests both from command line, and using PyCharm runner
-if len(sys.argv) > 3:
-    # change settings if tests are run from command line
-    __args = __parse_arguments()
-    __update_test_settings(test_environment=__args.environment,
-                           test_username=__args.username,
-                           proxy=__args.proxy,
-                           password=__args.password,
-                           login_token=__args.login_token)
+
 
 
