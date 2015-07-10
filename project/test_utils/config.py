@@ -64,6 +64,9 @@ def parse_arguments():
     parser.add_argument("--proxy",
                         default=None,
                         help="set proxy for api client")
+    parser.add_argument("--test",
+                        default=None,
+                        help="choose a group of tests which should be executed")
     return parser.parse_args()
 
 
@@ -76,6 +79,8 @@ update_test_settings(test_environment=os.environ.get("TEST_ENVIRONMENT"),
                        proxy=(os.environ.get("TEST_PROXY") or TEST_SETTINGS["TEST_PROXY"]),
                        password=os.environ.get("TEST_PASSWORD"),
                        login_token=os.environ.get("TEST_LOGIN_TOKEN"))
+
+
 
 
 
