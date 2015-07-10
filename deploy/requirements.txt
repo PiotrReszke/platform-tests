@@ -2,3 +2,4 @@ pyswagger
 requests
 spur
 teamcity-messages
+websocket

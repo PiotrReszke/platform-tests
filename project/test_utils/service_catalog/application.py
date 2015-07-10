@@ -79,8 +79,17 @@ class Application(object):
 
     def cf_push(self, organization, space):
         cf_cli.cf_target(organization, space)
-        shell_commands.cd(self.local_path)
-        cf_cli.cf_push()
+        output = cf_cli.cf_push(self.local_path, self.local_jar)
+        self.TEST_APPS.append(self)
+        for line in output.split("\n"):
+            if line[0:5] == "urls:":
+                self.urls = (re.split(r'urls: ', line)[1],)
+
+    def cf_env(self):
+        output = cf_cli.cf_env(self.name)
+        start = re.search("^\{$", output, re.MULTILINE).start()
+        end = re.search("^\}$", output, re.MULTILINE).end()
+        return json.loads(output[start:end])
 
     def change_name_in_manifest(self, new_name):
         self.manifest["applications"]["name"] = new_name

@@ -1,3 +1,5 @@
+import subprocess
+
 from test_utils import get_logger
 
 
@@ -9,6 +11,4 @@ def log_command(command, replace=None):
     if replace is not None:
         msg = msg.replace(*replace)
     logger.info(msg)
-
-
 

@@ -56,6 +56,7 @@ def update_test_settings(test_environment=None, test_username=None, proxy=None, 
     TEST_SETTINGS["GITHUB_AUTH"] = github_auth or TEST_SETTINGS.get("GITHUB_AUTH")
 
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Platform API Automated Tests")
     parser.add_argument("-e",
@@ -110,7 +111,6 @@ update_test_settings(test_environment=os.environ.get("TEST_ENVIRONMENT"),
                      password=os.environ.get("TEST_PASSWORD"),
                      login_token=os.environ.get("TEST_LOGIN_TOKEN"),
                      github_auth=(os.environ.get("GITHUB_USERNAME", os.environ.get("GITHUB_PASSWORD"))))
-
 
 
 

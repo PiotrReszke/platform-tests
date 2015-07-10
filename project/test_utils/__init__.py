@@ -12,3 +12,4 @@ from test_utils.cli.cloud_foundry_cli import cf_login
 from test_utils.service_catalog.application import Application, github_get_file_content
 from test_utils.service_catalog.marketplace import Marketplace
 
+

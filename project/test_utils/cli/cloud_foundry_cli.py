@@ -1,7 +1,9 @@
 import subprocess
 
 import test_utils.config as config
+
 from test_utils.cli.shell_commands import log_command
+
 from test_utils import get_logger
 
 logger = get_logger("cloud_foundry_cli")
@@ -26,32 +28,46 @@ def cf_target(organization=None, space=None):
     subprocess.check_call(command)
 
 
-def cf_push(app_name=None):
-    command = ["cf", "push"]
-    if app_name is not None:
-        command += [app_name]
+def cf_push(local_path, local_jar):
+    command = ["cf", "push", "-f", local_path, "-p", local_jar]
     log_command(command)
-    subprocess.check_call(command)
-
+    return subprocess.check_output(command).decode()
 
 def cf_apps():
     command = ["cf", "apps"]
     log_command(command)
-    return subprocess.check_output(["cf", "apps"]).decode()
-
+    return subprocess.check_output(command).decode()
 
 def cf_curl(path, http_method):
     command = ["cf", "curl", path, "-X", http_method]
     return subprocess.check_output(command).decode()
-
 
 def cf_marketplace():
     command = ["cf", "marketplace"]
     log_command(command)
     return subprocess.check_output(["cf", "marketplace"]).decode()
 
-
 def cf_services(space_guid):
     command = ["cf", "curl", "v2/spaces/{0}/services".format(space_guid)]
     log_command(command)
-    return subprocess.check_output(["cf", "curl", "v2/spaces/{0}/services".format(space_guid)]).decode()
+    return subprocess.check_output(command).decode()
+
+def cf_cs(service, instance, plans="shared"):
+    command = ["cf", "cs", service, plans, instance]
+    log_command(command)
+    subprocess.check_call(command)
+
+def cf_stop(app_name):
+    command = ["cf", "stop", app_name]
+    log_command(command)
+    subprocess.check_call(command)
+
+def cf_start(app_name):
+    command = ["cf", "start", app_name]
+    log_command(command)
+    subprocess.check_call(command)
+
+def delete_application(app_name):
+    command = ["cf", "delete", "-f", app_name]
+    log_command(command)
+    subprocess.check_call(command)
