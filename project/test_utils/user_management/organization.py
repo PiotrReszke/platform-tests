@@ -64,7 +64,8 @@ class Organization(object):
     def add_admin(self, roles=("managers",)):
         """Add admin user to the organization"""
         admin_guid = config.CONFIG[config.TEST_SETTINGS["TEST_ENVIRONMENT"]]["admin_guid"]
-        admin = User(guid=admin_guid, username="admin")
+        admin_username = config.CONFIG[config.TEST_SETTINGS["TEST_ENVIRONMENT"]]["admin_username"]
+        admin = User(guid=admin_guid, username=admin_username)
         admin.add_to_organization(self.guid, list(roles))
 
 

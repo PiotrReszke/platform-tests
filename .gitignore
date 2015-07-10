@@ -3,4 +3,5 @@
 *.pyo
 *.log
 *.secret.ini
+*.yml
 *__pycache__/

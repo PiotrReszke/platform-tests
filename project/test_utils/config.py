@@ -1,23 +1,25 @@
 import argparse
 import configparser
 import os
-import sys
-
-__all__ = ["APP_SCHEMAS", "TEST_SETTINGS", "CONFIG"]
 
 # configuration variables depending on the environment
 CONFIG = {
     "gotapaas.eu": {
         "api_endpoint": "apps.gotapaas.eu",
         "login_endpoint": "login.run.gotapaas.eu",
-        "admin_guid": "13c32424-23f4-44f7-bbb9-60763bfab4bc"
+        "cf_endpoint": "api.run.gotapaas.eu",
+        "admin_guid": "13c32424-23f4-44f7-bbb9-60763bfab4bc",
+        "admin_username": "admin"
     },
     "demo-gotapaas.com": {
         "api_endpoint": "demo-gotapaas.com",
         "login_endpoint": "login.demo-gotapaas.com",
-        "admin_guid": ""
+        "cf_endpoint": "api.gotapaas.com",
+        "admin_guid": "284b34e8-6c23-4d64-afd1-952a394df501",
+        "admin_username": "tester-admin"
     }
 }
+
 
 # schema paths for each application
 APP_SCHEMAS = {
@@ -26,12 +28,17 @@ APP_SCHEMAS = {
     "das": "swagger/data_acquisition_service_swagger.json"
 }
 
+
 # passwords and other secrets
 __SECRET = configparser.ConfigParser()
 __SECRET.read("test_utils/.secret.ini")
 
 
-def update_test_settings(test_environment=None, test_username=None, proxy=None, password=None, login_token=None):
+TEST_SETTINGS = {}
+
+
+def update_test_settings(test_environment=None, test_username=None, proxy=None, password=None, login_token=None,
+                         github_auth=()):
     TEST_SETTINGS["TEST_ENVIRONMENT"] = test_environment or TEST_SETTINGS["TEST_ENVIRONMENT"]
     TEST_SETTINGS["TEST_USERNAME"] = test_username or TEST_SETTINGS["TEST_USERNAME"]
     TEST_SETTINGS["TEST_PROXY"] = proxy
@@ -41,6 +48,7 @@ def update_test_settings(test_environment=None, test_username=None, proxy=None, 
         secret_login_token = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]]["login_token"]
     TEST_SETTINGS["TEST_PASSWORD"] = password or secret_password
     TEST_SETTINGS["TEST_LOGIN_TOKEN"] = login_token or secret_login_token
+    TEST_SETTINGS["GITHUB_AUTH"] = github_auth or TEST_SETTINGS["GITHUB_AUTH"]
 
 
 def parse_arguments():
@@ -67,18 +75,33 @@ def parse_arguments():
     parser.add_argument("--test",
                         default=None,
                         help="choose a group of tests which should be executed")
+    parser.add_argument("--github-username",
+                        default=None,
+                        help="username in GitHub")
+    parser.add_argument("--github-password",
+                        default=None,
+                        help="password matching GitHub username")
     return parser.parse_args()
 
 
-TEST_SETTINGS = {}
+def get_config_value(key):
+    """Return config value for current environment"""
+    test_environment = TEST_SETTINGS["TEST_ENVIRONMENT"]
+    return CONFIG[test_environment][key]
+
+
 # default settings
-update_test_settings(test_environment="gotapaas.eu", test_username="admin", proxy="proxy-mu.intel.com:911")
+update_test_settings(test_environment="gotapaas.eu",
+                     test_username="admin",
+                     proxy="proxy-mu.intel.com:911",
+                     github_auth=(__SECRET["github"]["username"], __SECRET["github"]["password"]))
 # change settings when tests are run with PyCharm runner using environment variables
 update_test_settings(test_environment=os.environ.get("TEST_ENVIRONMENT"),
-                       test_username=os.environ.get("TEST_USERNAME"),
-                       proxy=(os.environ.get("TEST_PROXY") or TEST_SETTINGS["TEST_PROXY"]),
-                       password=os.environ.get("TEST_PASSWORD"),
-                       login_token=os.environ.get("TEST_LOGIN_TOKEN"))
+                     test_username=os.environ.get("TEST_USERNAME"),
+                     proxy=(os.environ.get("TEST_PROXY") or TEST_SETTINGS["TEST_PROXY"]),
+                     password=os.environ.get("TEST_PASSWORD"),
+                     login_token=os.environ.get("TEST_LOGIN_TOKEN"),
+                     github_auth=(os.environ.get("GITHUB_USERNAME", os.environ.get("GITHUB_PASSWORD"))))
 
 
 

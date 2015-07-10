@@ -21,7 +21,8 @@ if __name__ == "__main__":
                                 test_username=args.username,
                                 proxy=args.proxy,
                                 password=args.password,
-                                login_token=args.login_token)
+                                login_token=args.login_token,
+                                github_auth=(args.github_username, args.github_password))
 
     if not '--test' in sys.argv:
         test_dir = "tests/"
