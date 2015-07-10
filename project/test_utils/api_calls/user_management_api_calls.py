@@ -1,4 +1,4 @@
-from ..logger import get_logger
+from test_utils.logger import get_logger
 
 
 logger = get_logger("user management calls")
@@ -104,3 +104,22 @@ def api_update_space_user(client, org_guid, space_guid, user_guid, new_username=
     return client.call(APP_NAME, "update_space_user", space_guid=space_guid, user_guid=user_guid, body=body)
 
 
+# ------------------------------------- Registrations Controller ------------------------------------- #
+
+def api_invite_user(client, email):
+    """POST /rest/invitations"""
+    logger.info("-------------------- Invite user {} --------------------".format(email))
+    body = {
+        "email": email
+    }
+    return client.call(APP_NAME, "invite_user", body=body)
+
+
+def api_register_org_and_user(client, code, org_name, password):
+    """POST /rest/registrations"""
+    logger.info("--------------- Register organization {} with password {} ---------------".format(org_name, password))
+    body = {
+        "org": org_name,
+        "password": password
+    }
+    return client.call(APP_NAME, "register_org_and_user", code=code, body=body)

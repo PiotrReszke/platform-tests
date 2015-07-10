@@ -13,12 +13,10 @@ from test_utils.logger import get_logger
 from test_utils import config
 from test_utils.objects.user import get_admin_client
 
-
 logger = get_logger("application")
 
 
 __all__ = ["Application", "github_get_file_content"]
-
 
 
 def github_get_file_content(repository, path, owner="intel-data"):
@@ -31,6 +29,7 @@ def github_get_file_content(repository, path, owner="intel-data"):
     encoding = response.encoding
     response_content = response.content.decode(encoding)
     return base64.b64decode(json.loads(response_content)["content"])
+
 
 class Application(object):
 

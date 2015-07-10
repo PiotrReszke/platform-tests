@@ -1,6 +1,7 @@
 import functools
 import time
 
+from test_utils import config
 import test_utils.api_calls.user_management_api_calls as api
 from test_utils.objects.user import get_admin_user, get_admin_client
 
@@ -14,6 +15,8 @@ class Organization(object):
 
     NAME_PREFIX = "test-org-"
     TEST_ORGS = []
+    TEST_EMAIL = config.TEST_SETTINGS["TEST_EMAIL"]
+    TEST_EMAIL_FORM = TEST_EMAIL.replace('@', '+{}@')
 
     def __init__(self, name, guid, spaces=None):
         self.name = name
@@ -72,6 +75,30 @@ class Organization(object):
         """Add admin user to the organization"""
         admin = get_admin_user()
         admin.add_to_organization(self.guid, list(roles))
+
+    # @classmethod
+    # def invite(cls, email=None, client=get_admin_client()):
+    #     """Invite user - return invitation code"""
+    #     if email is None:
+    #         email = cls.TEST_EMAIL_FORM.format(time.time())
+    #     response = api.api_invite_user(client, email)
+    #     code_link = response["details"]
+    #     code_id = code_link.find("code=") + len("code=")
+    #     return email, code_link[code_id:]
+    #
+    #
+    # @classmethod
+    # def onboard(cls, code, org_name=None, password=None, client=get_unauthorized_client()):
+    #     """Answer onboarding invitation"""
+    #     if org_name is None:
+    #         org_name = cls.NAME_PREFIX + str(time.time())
+    #     if password is None:
+    #         password = "nieczesc"
+    #     response = api.api_register_org_and_user(client, code, org_name, password)
+    #     print(response)
+    #     org = cls(name=org_name, guid=response["guid"]) # how to obtain org guid ?
+    #     cls.TEST_ORGS.append(org)
+    #     return org
 
 
 @functools.total_ordering

@@ -2,6 +2,7 @@ from test_utils.objects import Organization
 from test_utils import ApiTestCase, get_logger
 
 
+
 logger = get_logger("test organization")
 
 
@@ -47,3 +48,9 @@ class TestOrganization(ApiTestCase):
         orgs = Organization.get_list()
         self.assertTrue(len(orgs), len(expected_orgs))
         self.assertListEqual(sorted(orgs), sorted(expected_orgs))
+
+    """def test_onboarding(self):
+        org_name, code = Organization.invite()
+        expected_org = Organization.onboard(code=code)
+        orgs = Organization.get_list()
+        self.assertInList(expected_org, orgs)"""
