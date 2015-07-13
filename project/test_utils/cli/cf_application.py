@@ -30,7 +30,7 @@ class CfApplication(object):
 
     MANIFEST_NAME = "manifest.yml"
 
-    def __init__(self, local_path=None, name=None, state=None, instances=None, memory=None, disk=None, *urls):
+    def __init__(self, local_path=None, name=None, state=None, instances=None, memory=None, disk=None, urls=()):
         """local_path - directory where application manifest is located"""
         self.name = name
         self.state = state
@@ -39,9 +39,10 @@ class CfApplication(object):
         self.disk = disk
         self.urls = urls
         self.local_path = local_path
-        self.manifest_path = os.path.join(local_path, self.MANIFEST_NAME)
-        with open(self.manifest_path) as f:
-            self.manifest = yaml.load(f.read())
+        if self.local_path is not None:
+            self.manifest_path = os.path.join(local_path, self.MANIFEST_NAME)
+            with open(self.manifest_path) as f:
+                self.manifest = yaml.load(f.read())
 
     def __repr__(self):
         return "{0} (name={1})".format(self.__class__.__name__, self.name)
@@ -69,7 +70,8 @@ class CfApplication(object):
         output = cf_cli.cf_apps()
         for line in output.split("\n")[4:-1]:
             data = [item for item in re.split("\s|,", line) if item != ""]
-            applications.append(cls(*data))
+            applications.append(cls(name=data[0], state=data[1], instances=data[2], memory=data[3], disk=data[4],
+                                    urls=data[5:]))
         return applications
 
     def cf_push(self, organization, space):
