@@ -14,7 +14,7 @@ CONFIG = {
     "demo-gotapaas.com": {
         "api_endpoint": "demo-gotapaas.com",
         "login_endpoint": "login.demo-gotapaas.com",
-        "cf_endpoint": "api.gotapaas.com",
+        "cf_endpoint": "api.demo-gotapaas.com",
         "admin_guid": "284b34e8-6c23-4d64-afd1-952a394df501",
         "admin_username": "tester-admin"
     }
