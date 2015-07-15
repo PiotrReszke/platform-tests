@@ -1,0 +1,83 @@
+{
+  "info": {"version": "1.0.0", "title": "Service Catalog API"},
+  "paths": {
+    "/rest/services": {
+      "get": {
+        "operationId": "get_marketplace_services",
+        "parameters": [{"name": "space", "in": "query", "type": "string"}],
+        "responses": {"200": {"description": "OK", "schema": {"$ref": "services_list"}}}}
+      }
+  },
+  "definitions": {
+    "metadata": {
+      "properties": {
+        "guid":  {"type": "string"},
+        "url": {"type": "string"},
+        "created_at":  {"type": "string"},
+        "updated_at": {"type": "string"}
+      }
+    },
+
+    "service_plan_entity": {
+      "name": {"type": "string"},
+      "free": {"type": "boolean"},
+      "description": {"type": "string"},
+      "service_guid": {"type": "string"},
+      "extra": {"type": "string"},
+      "unique_id": {"type": "string"},
+      "public": {"type": "boolean"},
+      "active": {"type": "boolean"},
+      "service_url": {"type": "string"},
+      "service_instances_url": {"type": "string"}
+    },
+
+    "service_plan":{
+      "metadata": { "$ref": "metadata"},
+      "service_plan_entity": { "$ref": "service_plan_entity"}
+    },
+
+    "entity": {
+      "properties": {
+        "label":  {"type": "string"},
+        "provider": {"type": "string"},
+        "url":  {"type": "string"},
+        "description":  {"type": "string"},
+        "long_description": {"type": "string"},
+        "version":  {"type": "string"},
+        "info_url": {"type": "string"},
+        "active":  {"type": "string"},
+        "bindable": {"type": "string"},
+        "unique_id":  {"type": "string"},
+        "extra": {"type": "string"},
+        "tags": {"type": "array", "items": {"type": "string"}},
+        "requires": {"type": "array", "items": {"type": "string"}},
+        "documentation_url":  {"type": "string"},
+        "service_broker_guid": {"type": "string"},
+        "plan_updateable":  {"type": "string"},
+        "service_plans_url": {"type": "string"},
+        "service_plans": {"type": "array", "items": {"$ref": "service_plan"} }
+
+
+
+      }
+    },
+    "service": {
+      "properties": {
+        "metadata":  {"$ref": "metadata"},
+        "entity": {"$ref": "entity"}
+      }
+    },
+    "services_list": {
+      "properties": {
+        "total_results":  {"type": "integer", "format": "int32"},
+        "total_pages": {"type": "integer", "format": "int32"},
+        "prev_url": {"type": "string"},
+        "next_url": {"type": "string"},
+        "resources": {"type":"array", "items":{"$ref": "service"}}
+      }
+    }
+  },
+  "security": [{"default": []}],
+  "swagger": "2.0",
+  "consumes": ["application/json"]
+}

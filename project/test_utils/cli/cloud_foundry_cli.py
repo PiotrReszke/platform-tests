@@ -38,3 +38,14 @@ def cf_apps():
     command = ["cf", "apps"]
     log_command(command)
     return subprocess.check_output(["cf", "apps"]).decode()
+
+def cf_marketplace():
+    command = ["cf", "marketplace"]
+    log_command(command)
+    return subprocess.check_output(["cf", "marketplace"]).decode()
+
+def cf_services(space_guid):
+    command = ["cf", "curl", "v2/spaces/{0}/services".format(space_guid)]
+    log_command(command)
+    return subprocess.check_output(["cf", "curl", "v2/spaces/{0}/services".format(space_guid)]).decode()
+

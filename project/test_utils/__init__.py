@@ -10,5 +10,5 @@ from test_utils.data_acquisition_service.transfer import Transfer
 
 from test_utils.cli.cloud_foundry_cli import cf_login
 from test_utils.cli.cf_application import CfApplication, github_get_file_content
-
+from test_utils.service_catalog.marketplace import Marketplace
 
