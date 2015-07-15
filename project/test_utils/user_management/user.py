@@ -26,7 +26,7 @@ class User(object):
 
     @staticmethod
     def get_default_username(prefix="test-user-"):
-        return prefix + str(time.time()) + "@example.com"
+        return prefix + str(time.time()) + "@mailinator.com"
 
     @classmethod
     def create_via_organization(cls, organization_guid, username=None, roles=None):
