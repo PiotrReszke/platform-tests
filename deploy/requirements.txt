@@ -1,3 +1,4 @@
 pyswagger
 requests
+spur
 teamcity-messages

@@ -1,5 +1,4 @@
 import unittest
-import sys
 import os
 from teamcity import is_running_under_teamcity
 from teamcity.unittestpy import TeamcityTestRunner
@@ -24,11 +23,9 @@ if __name__ == "__main__":
                                 login_token=args.login_token,
                                 github_auth=(args.github_username, args.github_password))
 
-    if not '--test' in sys.argv:
-        test_dir = "tests/"
+    if args.test is None:
+        test_dir = "tests"
     else:
-        #testindex = sys.argv.index('--test')
-        #test_dir = sys.argv[testindex+1]
         test_dir=args.test
         if os.path.exists("tests/" + test_dir):
             test_dir = "tests/" + test_dir

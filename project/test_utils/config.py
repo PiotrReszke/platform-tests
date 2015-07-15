@@ -10,7 +10,8 @@ CONFIG = {
         "cf_endpoint": "api.run.gotapaas.eu",
         "admin_guid": "13c32424-23f4-44f7-bbb9-60763bfab4bc",
         "admin_username": "admin",
-        "seedorg_guid": "16829796-2b3a-4c98-ad08-166315ca1411"
+        "seedorg_guid": "16829796-2b3a-4c98-ad08-166315ca1411",
+        "cdh_host": "cdh.gotapaas.eu"
     },
     "demo-gotapaas.com": {
         "api_endpoint": "demo-gotapaas.com",
@@ -18,7 +19,8 @@ CONFIG = {
         "cf_endpoint": "api.demo-gotapaas.com",
         "admin_guid": "284b34e8-6c23-4d64-afd1-952a394df501",
         "admin_username": "tester-admin",
-        "seedorg_guid": "79d9c4ec-292c-48b4-9d7e-87ff62f86b1e"
+        "seedorg_guid": "79d9c4ec-292c-48b4-9d7e-87ff62f86b1e",
+        "cdh_host": "cdh.demo-gotapaas.com"
     }
 }
 

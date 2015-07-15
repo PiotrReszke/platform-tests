@@ -1,5 +1,3 @@
-import subprocess
-
 from test_utils import get_logger
 
 
@@ -13,7 +11,4 @@ def log_command(command, replace=None):
     logger.info(msg)
 
 
-def cd(path):
-    command = [cd, path]
-    log_command(command)
-    subprocess.call(command)
+
