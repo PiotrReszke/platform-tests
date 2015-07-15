@@ -1,7 +1,6 @@
 from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger
 from test_utils import Organization, Transfer
 
-
 logger = get_logger("test data transfer")
 
 

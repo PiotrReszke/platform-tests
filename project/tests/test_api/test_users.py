@@ -1,18 +1,16 @@
 from test_utils import ApiTestCase, cleanup_after_failed_setup
 from test_utils import Organization, User
+from test_utils.client_enum import Role
+from test_utils.user_management.user import get_admin_client
 
 
 class TestOrganizationUsers(ApiTestCase):
 
     @classmethod
     @cleanup_after_failed_setup(Organization.delete_test_orgs)
-    def setUpClass(self):
-        self.organization = Organization.create()
-
-    def test_create_organization_user(self):
-        expected_user = User.create_via_organization(self.organization.guid)
-        users = User.get_list_via_organization(self.organization.guid)
-        self.assertInList(expected_user, users)
+    def setUpClass(cls):
+        cls.organization = Organization.create()
+        cls.org_manager_client = User.create_user_for_client(cls.organization.guid, Role.org_manager).app_client
 
     def test_create_organization_user_with_role(self):
         """Create a user with each of the roles allowed"""
@@ -20,6 +18,13 @@ class TestOrganizationUsers(ApiTestCase):
             with self.subTest(role=role):
                 expected_user = User.create_via_organization(self.organization.guid, roles=[role])
                 users = User.get_list_via_organization(self.organization.guid)
+                self.assertInList(expected_user, users)
+
+    def test_create_organization_user(self):
+        for client in [self.org_manager_client, get_admin_client()]:
+            with self.subTest(client=client):
+                expected_user = User.create_via_organization(self.organization.guid, client=client)
+                users = User.get_list_via_organization(self.organization.guid, client=client)
                 self.assertInList(expected_user, users)
 
     def test_create_organization_user_two_roles(self):

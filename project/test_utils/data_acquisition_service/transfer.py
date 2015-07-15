@@ -1,13 +1,13 @@
 import functools
 import time
-
 import test_utils.data_acquisition_service.api_calls as api
+from test_utils.user_management.user import get_admin_client
+
 
 @functools.total_ordering
 class Transfer(object):
-
-    COMPARABLE_ATTRIBUTES = ["category", "id", "id_in_object_store", "is_public", "organization_guid", "source", "state",
-                             "token", "timestamps", "title", "user_id"]
+    COMPARABLE_ATTRIBUTES = ["category", "id", "id_in_object_store", "is_public", "organization_guid", "source",
+                             "state", "token", "timestamps", "title", "user_id"]
 
     def __init__(self, category=None, id=None, id_in_object_store=None, is_public=None, org_guid=None, source=None,
                  state=None, token=None, timestamps=None, title=None, user_id=None):
@@ -41,27 +41,28 @@ class Transfer(object):
                    user_id=api_response["userId"])
 
     @classmethod
-    def create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=0):
+    def create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=0,
+               client=get_admin_client()):
         if title is None:
             title = "test-transfer-{}".format(time.time())
-        api_response = api.api_create_das_request(category=category, is_public=is_public, org_guid=org_guid, source=source,
-                                                  title=title, user_id=user_id)
+        api_response = api.api_create_das_request(client, category=category, is_public=is_public,
+                                                  org_guid=org_guid, source=source, title=title, user_id=user_id)
         return cls(category=category, id=api_response["id"], id_in_object_store=api_response["idInObjectStore"],
                    is_public=is_public, org_guid=org_guid, source=source, state=api_response["state"],
                    token=api_response["token"], timestamps=["timestamps"], title=title, user_id=user_id)
 
     @classmethod
-    def get_list(cls, orgs):
-        api_response = api.api_get_das_requests([org.guid for org in orgs])
+    def get_list(cls, orgs, client=get_admin_client()):
+        api_response = api.api_get_das_requests(client, [org.guid for org in orgs])
         transfers = []
         for transfer_data in api_response:
             transfers.append(cls._from_api_response(transfer_data))
         return transfers
 
     @classmethod
-    def get(cls, transfer_id):
-        api_response = api.api_get_das_request(transfer_id)
+    def get(cls, transfer_id, client=get_admin_client()):
+        api_response = api.api_get_das_request(client, transfer_id)
         return cls._from_api_response(api_response)
 
-    def delete(self):
-        return api.api_delete_das_request(self.id)
+    def delete(self, client=get_admin_client()):
+        return api.api_delete_das_request(client, self.id)

@@ -1,6 +1,5 @@
 from test_utils import Organization, ApiTestCase, get_logger
 
-
 logger = get_logger("test organization")
 
 
@@ -46,7 +45,3 @@ class TestOrganization(ApiTestCase):
         orgs = Organization.get_list()
         self.assertTrue(len(orgs), len(expected_orgs))
         self.assertListEqual(sorted(orgs), sorted(expected_orgs))
-
-
-
-

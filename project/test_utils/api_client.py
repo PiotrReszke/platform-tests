@@ -1,10 +1,15 @@
 import json
+from math import floor, ceil
+import random
+import string
 import time
+from urllib.parse import urlencode
 
 from pyswagger import SwaggerApp
 from pyswagger.core import BaseClient
 import requests
 
+from test_utils.mail_utils.mailing import get_code_from_gmail
 from test_utils.logger import get_logger
 import test_utils.config as config
 
@@ -90,10 +95,11 @@ class ApiClient(BaseClient):
     def _log_request(self, method, url, headers="", data="", params=None):
         if params:
             url = "{}?{}".format(url, "&".join(["{}={}".format(k, v) for k, v in params.items()]))
-        # if "Authorization" in headers:
+        #if "Authorization" in headers:
         #    headers["Authorization"] = "[SECRET]"
         msg = [
             "\n----------------Request------------------",
+            "Client name: {}".format(self._username),
             "URL: {} {}".format(method, url),
             "Headers: {}".format(headers),
             "Content: {}".format(data),
@@ -113,18 +119,22 @@ class ApiClient(BaseClient):
 
 
 class ConsoleClient(ApiClient):
-
     _scheme = "https"
 
-    def __init__(self, username=None, password=None):
+    def __init__(self, username, password=None):
         super().__init__(username, password)
         if password is None:
-            # self._forgot_password()
-            # self._reset_password()
-            pass
+            self._username = username
+            self._call_forgot_password()
+            self._generate_password()
+            code = self._get_reset_password_code(self._username)
+            self._reset_password(code)
         else:
             self._authenticate()
         self._api_endpoint = "console.{}".format(config.CONFIG[self._domain]["api_endpoint"])
+
+    def __repr__(self):
+        return "ConsoleClient: {}".format(self._username)
 
     def _authenticate(self):
         logger.info("-------------------- Authenticating user {} --------------------".format(self._username))
@@ -139,16 +149,52 @@ class ConsoleClient(ApiClient):
         if len(self._session.cookies) == 0:
             raise Exception("Authentication failed. No cookies were set in session.")
 
+    def _call_forgot_password(self):
+        logger.info("-------------------- Call forgot password for user {} --------------------".format(self._username))
+        path = "https://{}/forgot_password.do".format(self._login_endpoint)
+        data = {"email": self._username}
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        request = requests.Request("POST", path, data=data, headers=headers)
+        response = self._session.send(request.prepare())
+        if not response.ok:
+            raise UnexpectedResponseError(response.status_code, response.text)
+
+    def _reset_password(self, code):
+        logger.info("-------------------- Reset password for user {} --------------------".format(self._username))
+        path = "https://{}/reset_password.do".format(self._login_endpoint)
+        data = {"email": self._username, "password": self._password, "password_confirmation": self._password,
+                "code": code}
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        request = requests.Request("POST", path, data=data, headers=headers)
+        response = self._session.send(request.prepare())
+        if not response.ok:
+            raise UnexpectedResponseError(response.status_code, response.text)
+        if len(response.cookies) == 0:
+            raise Exception("Authentication failed. No cookies were set in session.")
+
+    def _generate_password(self):
+        pass_length = 8
+        letters = ''.join(random.choice(string.ascii_letters) for _ in range(ceil(pass_length / 2)))
+        digits = ''.join(random.choice(string.digits) for _ in range(floor(pass_length / 2) - 1))
+        p = letters + digits + '%'
+        self._password = p
+
+    def _get_reset_password_code(self, username):
+        return get_code_from_gmail(username)
+
 
 class AppClient(ApiClient):
 
-    TOKEN_EXPIRY_TIME = 298 # (in seconds) 5 minutes minus 2s buffer
+    TOKEN_EXPIRY_TIME = 298  # (in seconds) 5 minutes minus 2s buffer
     _scheme = "http"
 
     def __init__(self, username, password):
         super().__init__(username, password)
         self._token_retrieval_time = 0
         self._get_token()
+
+    def __repr__(self):
+        return "AppClient: {}".format(self._username)
 
     def _get_token(self):
         logger.info("-------------------- Retrieve token for user {} --------------------".format(self._username))
@@ -171,13 +217,3 @@ class AppClient(ApiClient):
         if (self._token is not None) and (time.time() - self._token_retrieval_time > self.TOKEN_EXPIRY_TIME):
             self._get_token()
         return super().call(application_name, operation_id, **kwargs)
-
-
-
-__CLIENT = None
-
-def get_app_client():
-    global __CLIENT
-    if __CLIENT is None:
-        __CLIENT = AppClient(username=config.TEST_SETTINGS["TEST_USERNAME"], password=config.TEST_SETTINGS["TEST_PASSWORD"])
-    return __CLIENT

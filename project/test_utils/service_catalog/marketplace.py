@@ -2,6 +2,7 @@ import functools
 from test_utils.cli.cloud_foundry_cli import cf_services
 import test_utils.service_catalog.api_calls as api
 import json
+from test_utils.user_management.user import get_admin_client
 
 
 @functools.total_ordering
@@ -26,8 +27,8 @@ class Marketplace(object):
                                                                                self.services_count, self.services_names)
 
     @classmethod
-    def api_fetch_marketplace_services(cls, space_guid=None):
-        api_response = api.api_get_marketplace_services(space_guid=space_guid)
+    def api_fetch_marketplace_services(cls, space_guid=None, client=get_admin_client()):
+        api_response = api.api_get_marketplace_services(space_guid=space_guid, client=client)
         services = api_response["resources"]
         services_count = api_response["total_results"]
         tags = cls.get_services_tags(services)

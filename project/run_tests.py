@@ -26,7 +26,7 @@ if __name__ == "__main__":
     if args.test is None:
         test_dir = "tests"
     else:
-        test_dir=args.test
+        test_dir = args.test
         if os.path.exists("tests/" + test_dir):
             test_dir = "tests/" + test_dir
         else:

@@ -43,7 +43,7 @@ TEST_SETTINGS = {}
 
 
 def update_test_settings(test_environment=None, test_username=None, proxy=None, password=None, login_token=None,
-                         github_auth=()):
+                         github_auth=(), test_email=None):
     TEST_SETTINGS["TEST_ENVIRONMENT"] = test_environment or TEST_SETTINGS["TEST_ENVIRONMENT"]
     TEST_SETTINGS["TEST_USERNAME"] = test_username or TEST_SETTINGS["TEST_USERNAME"]
     TEST_SETTINGS["TEST_PROXY"] = proxy
@@ -54,6 +54,7 @@ def update_test_settings(test_environment=None, test_username=None, proxy=None, 
     TEST_SETTINGS["TEST_PASSWORD"] = password or secret_password
     TEST_SETTINGS["TEST_LOGIN_TOKEN"] = login_token or secret_login_token
     TEST_SETTINGS["GITHUB_AUTH"] = github_auth or TEST_SETTINGS.get("GITHUB_AUTH")
+    TEST_SETTINGS["TEST_EMAIL"] = test_email or TEST_SETTINGS["TEST_EMAIL"]
 
 
 def parse_arguments():
@@ -105,7 +106,8 @@ if __SECRET.has_section("github"):
 update_test_settings(test_environment="gotapaas.eu",
                      test_username="admin",
                      proxy="proxy-mu.intel.com:911",
-                     github_auth=__github_auth)
+                     github_auth=__github_auth,
+                     test_email="intel.data.tests@gmail.com")
 # change settings when tests are run with PyCharm runner using environment variables
 update_test_settings(test_environment=os.environ.get("TEST_ENVIRONMENT"),
                      test_username=os.environ.get("TEST_USERNAME"),
