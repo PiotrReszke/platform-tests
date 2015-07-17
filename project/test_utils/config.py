@@ -9,7 +9,8 @@ CONFIG = {
         "login_endpoint": "login.run.gotapaas.eu",
         "cf_endpoint": "api.run.gotapaas.eu",
         "admin_guid": "13c32424-23f4-44f7-bbb9-60763bfab4bc",
-        "admin_username": "admin"
+        "admin_username": "admin",
+        "seedorg_guid": "16829796-2b3a-4c98-ad08-166315ca1411"
     },
     "demo-gotapaas.com": {
         "api_endpoint": "demo-gotapaas.com",
@@ -25,7 +26,8 @@ CONFIG = {
 APP_SCHEMAS = {
     "user-management": "swagger/user_management_swagger.json",
     "data-catalog": "swagger/data_catalog_swagger.json",
-    "das": "swagger/data_acquisition_service_swagger.json"
+    "das": "swagger/data_acquisition_service_swagger.json",
+    "service-catalog": "swagger/service_catalog_swagger.json"
 }
 
 
