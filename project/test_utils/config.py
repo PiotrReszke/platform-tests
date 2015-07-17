@@ -17,7 +17,8 @@ CONFIG = {
         "login_endpoint": "login.demo-gotapaas.com",
         "cf_endpoint": "api.demo-gotapaas.com",
         "admin_guid": "284b34e8-6c23-4d64-afd1-952a394df501",
-        "admin_username": "tester-admin"
+        "admin_username": "tester-admin",
+        "seedorg_guid": "79d9c4ec-292c-48b4-9d7e-87ff62f86b1e"
     }
 }
 
