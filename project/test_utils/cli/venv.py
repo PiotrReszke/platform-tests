@@ -24,10 +24,10 @@ class Virtualenv(object):
         log_command(command)
         subprocess.check_call(command)
 
-    def pip_install(self, package_name, extra_index_url=None):
+    def pip_install(self, package_name, **pip_options):
         command = [self.pip, "install"]
-        if extra_index_url is not None:
-            command += ["--extra-index-url", extra_index_url]
+        for option_name, value in pip_options:
+            command += ["--" + option_name, value]
         command += [package_name]
         log_command(command)
         subprocess.check_call(command)
