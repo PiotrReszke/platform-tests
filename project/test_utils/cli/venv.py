@@ -32,6 +32,12 @@ class Virtualenv(object):
         log_command(command)
         subprocess.check_call(command)
 
+    def pip_install_local_package(self, package_path):
+        """Package path is path where the package's setup.py is located"""
+        command = [self.pip, "install", "-e", package_path]
+        log_command(command)
+        subprocess.check_call(command)
+
     def pip_uninstall(self, package_name):
         command = [self.pip, "uninstall", package_name]
         log_command(command)
