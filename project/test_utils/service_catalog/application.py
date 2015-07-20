@@ -5,9 +5,11 @@ import re
 
 import requests
 import yaml
+import collections
 
 import test_utils.cli.cloud_foundry_cli as cf_cli
 import test_utils.cli.shell_commands as shell_commands
+from test_utils.service_catalog import api_calls as api
 from test_utils import get_logger, config
 
 
@@ -26,11 +28,11 @@ def github_get_file_content(repository, path, owner="intel-data"):
     return base64.b64decode(json.loads(response_content)["content"])
 
 
-class CfApplication(object):
+class Application(object):
 
     MANIFEST_NAME = "manifest.yml"
 
-    def __init__(self, local_path=None, name=None, state=None, instances=None, memory=None, disk=None, urls=()):
+    def __init__(self, local_path=None, name=None, state=None, instances=None, memory=None, disk=None, urls=(), guid=None):
         """local_path - directory where application manifest is located"""
         self.name = name
         self.state = state
@@ -38,6 +40,7 @@ class CfApplication(object):
         self.memory = memory
         self.disk = disk
         self.urls = urls
+        self.guid = guid
         self.local_path = local_path
         if self.local_path is not None:
             self.manifest_path = os.path.join(local_path, self.MANIFEST_NAME)
@@ -82,3 +85,64 @@ class CfApplication(object):
     def change_name_in_manifest(self, new_name):
         self.manifest["applications"]["name"] = new_name
         self.__save_manifest()
+
+    @classmethod
+    def cf_get_app_summary(cls, app_guid):
+        path = "/v2/apps/" + app_guid + "/summary"
+        return json.loads(cf_cli.cf_curl(path, 'GET'))
+    
+    @classmethod
+    def api_get_app_summary(cls, app_guid):
+        return api.api_get_app_details(app_guid)
+
+    @classmethod
+    def api_get_apps_list(cls, space_guid):
+        response = api.api_get_apps(space_guid)
+        applications = []
+        for app in response:
+            applications.append(cls(name=app['name'], guid=app['guid']))
+        return applications
+    
+    @staticmethod
+    def compare_details(a, b):
+        compare_elements = lambda x, y: collections.Counter(x) == collections.Counter(y)
+        def compare_domains(cli, console):
+            cli_domains = []
+            console_domains = []
+            for i in cli:
+                cli_domains.append(i['host'] + "." + i['domain']['name'])
+            for i in console:
+                console_domains.append(i['host'] + "." + i['domain']['name'])
+            return compare_elements(cli_domains, console_domains)
+
+        def compare_services(cli, console):
+            cli_services = []
+            console_services = []
+            for i in cli:
+                cli_services.append(i['name'])
+            for i in console:
+                console_services.append(i['name'])
+            return compare_elements(cli_services, console_services)
+
+        different_details = []
+        if a['memory'] != b['memory']:
+            different_details.append('memory')
+        if a['disk_quota'] != b['disk_quota']:
+            different_details.append('disk_quota')
+        if a['running_instances'] != b['running_instances']:
+            different_details.append('running_instances')
+        if a['instances'] != b['instances']:
+            different_details.append('instances')
+        if not compare_domains(a['routes'], b['routes']):
+            different_details.append('domains')
+        if not compare_services(a['services'], b['services']):
+            different_details.append('services_bound')
+        if a['detected_buildpack'] != b['detected_buildpack']:
+            different_details.append('detected_buildpack')
+        if a['command'] != b['command']:
+            different_details.append('start_command')
+        if a['environment_json'] != b['environment_json']:
+            different_details.append('environment')
+        if a['package_updated_at'] != b['package_updated_at']:
+            different_details.append('updated_at')
+        return different_details

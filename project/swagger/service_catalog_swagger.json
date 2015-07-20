@@ -1,13 +1,40 @@
 {
   "info": {"version": "1.0.0", "title": "Service Catalog API"},
   "paths": {
+    "/rest/apps": {
+      "get": {
+        "responses": {
+          "200": {"schema": {"type": "string"}}
+        },
+        "parameters": [
+          {"name": "space", "in": "query", "required": "true", "type": "string"}
+        ],
+        "summary": "Retrieve applications list",
+        "operationId": "get_apps_list"
+      }
+    },
+    "/rest/apps/{app_guid}": {
+      "get": {
+        "responses": {
+          "200": {"schema": {"type": "string"}}
+        },
+        "parameters": [
+          {"name": "app_guid", "in": "path", "required": "true", "type": "string"}
+        ],
+        "summary": "Retrieve application details",
+        "operationId": "get_app_details"
+      }
+    },
     "/rest/services": {
       "get": {
         "operationId": "get_marketplace_services",
         "parameters": [{"name": "space", "in": "query", "type": "string"}],
-        "responses": {"200": {"description": "OK", "schema": {"$ref": "services_list"}}}}
+        "responses": {"200": {"description": "OK", "schema": {"$ref": "services_list"}}}
       }
+    }
   },
+  "security": [{"default": []}],
+  "swagger": "2.0",
   "definitions": {
     "metadata": {
       "properties": {
@@ -56,9 +83,6 @@
         "plan_updateable":  {"type": "string"},
         "service_plans_url": {"type": "string"},
         "service_plans": {"type": "array", "items": {"$ref": "service_plan"} }
-
-
-
       }
     },
     "service": {
@@ -76,8 +100,5 @@
         "resources": {"type":"array", "items":{"$ref": "service"}}
       }
     }
-  },
-  "security": [{"default": []}],
-  "swagger": "2.0",
-  "consumes": ["application/json"]
+  }
 }

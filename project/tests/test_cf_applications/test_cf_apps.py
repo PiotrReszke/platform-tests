@@ -1,5 +1,5 @@
 from test_utils import ApiTestCase, get_logger
-from test_utils import cf_login, CfApplication, github_get_file_content
+from test_utils import cf_login, Application, github_get_file_content
 
 
 logger = get_logger("cf_app_test")
@@ -14,9 +14,9 @@ class CloudFoundryApplications(ApiTestCase):
 
     def test_cf_application_status(self):
         """A cloned demo-settings.yml is a prerequisite for this test"""
-        expected_apps = CfApplication.get_list_from_settings(self.settings_file)
+        expected_apps = Application.get_list_from_settings(self.settings_file)
         logger.info("{} apps are expected to be started".format(len(expected_apps)))
-        apps = CfApplication.cf_get_list()
+        apps = Application.cf_get_list()
         logger.info("There are {} apps on cf".format(len(apps)))
         # find out which apps are missing
         expected_app_names = [app.name for app in expected_apps]
