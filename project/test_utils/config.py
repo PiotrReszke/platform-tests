@@ -95,6 +95,8 @@ def get_ssh_key_passphrase():
     if __SECRET.has_section("ssh"):
         return __SECRET["ssh"]["passphrase"]
 
+
+
 # default settings
 update_test_settings(client_type="console",
                      test_environment="gotapaas.eu",

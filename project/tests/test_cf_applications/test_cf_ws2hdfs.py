@@ -23,9 +23,9 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
     @cleanup_after_failed_setup(Application.delete_test_apps)
     def setUpClass(cls):
         cf_cli.cf_login("seedorg", "seedspace")
-        cf_cli.cf_cs("kafka", "kafka-inst")
-        cf_cli.cf_cs("zookeeper", "zookeeper-inst")
-        cf_cli.cf_cs("hdfs", "hdfs-inst", "free")
+        cf_cli.cf_create_service("kafka", "shared", "kafka-inst")
+        cf_cli.cf_create_service("zookeeper", "shared", "zookeeper-inst")
+        cf_cli.cf_create_service("hdfs", "free", "hdfs-inst")
         postfix = str(time.time())
         cls.app_ws2kafka = Application(local_path="../../ingestion-ws-kafka-hdfs/ws2kafka",
                                  name="ws2kafka-{}".format(postfix),

@@ -53,16 +53,22 @@ def cf_push(local_path, local_jar):
 
 
 @log_output_on_error
+def cf_apps():
+    command = ["cf", "apps"]
+    log_command(command)
+    return subprocess.check_output(command).decode()
+
+
 def cf_marketplace():
     command = ["cf", "marketplace"]
     log_command(command)
     return subprocess.check_output(["cf", "marketplace"]).decode()
 
 
-def cf_cs(service, instance, plans="shared"):
-    command = ["cf", "cs", service, plans, instance]
+def cf_create_service(service, plan, instance_name):
+    command = ["cf", "create-service", service, plan, instance_name]
     log_command(command)
-    subprocess.check_call(command)
+    return subprocess.check_output(command).decode()
 
 
 def cf_stop(app_name):

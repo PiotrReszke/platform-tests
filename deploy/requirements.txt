@@ -1,5 +1,8 @@
+certifi
 google-api-python-client
+paho-mqtt
 requests
 spur
 teamcity-messages
 websocket
+
