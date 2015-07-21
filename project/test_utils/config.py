@@ -56,7 +56,6 @@ def update_test_settings(test_environment=None, test_username=None, proxy=None, 
     TEST_SETTINGS["GITHUB_AUTH"] = github_auth or TEST_SETTINGS.get("GITHUB_AUTH")
 
 
-
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Platform API Automated Tests")
     parser.add_argument("-e",
@@ -95,6 +94,9 @@ def get_config_value(key):
     test_environment = TEST_SETTINGS["TEST_ENVIRONMENT"]
     return CONFIG[test_environment][key]
 
+def get_ssh_key_passphrase():
+    if __SECRET.has_section("ssh"):
+        return __SECRET["ssh"]["passphrase"]
 
 # default settings
 __github_auth = None
@@ -111,8 +113,4 @@ update_test_settings(test_environment=os.environ.get("TEST_ENVIRONMENT"),
                      password=os.environ.get("TEST_PASSWORD"),
                      login_token=os.environ.get("TEST_LOGIN_TOKEN"),
                      github_auth=(os.environ.get("GITHUB_USERNAME", os.environ.get("GITHUB_PASSWORD"))))
-
-
-
-
 

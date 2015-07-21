@@ -67,7 +67,12 @@ def cf_start(app_name):
     log_command(command)
     subprocess.check_call(command)
 
-def delete_application(app_name):
+def cf_delete(app_name):
     command = ["cf", "delete", "-f", app_name]
     log_command(command)
     subprocess.check_call(command)
+
+def cf_env(app_name):
+    command = ["cf", "env", app_name]
+    log_command(command)
+    return subprocess.check_output(command).decode()

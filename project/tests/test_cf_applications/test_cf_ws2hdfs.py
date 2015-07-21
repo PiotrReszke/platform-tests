@@ -13,7 +13,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        Application.delete_test_app()
+        Application.delete_test_apps()
 
     @classmethod
     @cleanup_after_failed_setup(Application.delete_test_apps)

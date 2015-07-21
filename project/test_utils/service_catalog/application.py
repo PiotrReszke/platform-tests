@@ -2,18 +2,14 @@ import base64
 import json
 import os
 import re
-
 import requests
 import yaml
 import collections
-
 import test_utils.cli.cloud_foundry_cli as cf_cli
-import test_utils.cli.shell_commands as shell_commands
 from test_utils.service_catalog import api_calls as api
 from test_utils import get_logger, config
 
-
-logger = get_logger("cf_application")
+logger = get_logger("application")
 
 
 def github_get_file_content(repository, path, owner="intel-data"):
@@ -27,12 +23,13 @@ def github_get_file_content(repository, path, owner="intel-data"):
     response_content = response.content.decode(encoding)
     return base64.b64decode(json.loads(response_content)["content"])
 
-
 class Application(object):
 
     MANIFEST_NAME = "manifest.yml"
+    TEST_APPS = []
 
-    def __init__(self, local_path=None, name=None, state=None, instances=None, memory=None, disk=None, urls=(), guid=None):
+    def __init__(self, local_path=None, name=None, state=None, instances=None, memory=None, disk=None, org_name=None,
+                 space_name=None, urls=(), topic=None, guid=None):
         """local_path - directory where application manifest is located"""
         self.name = name
         self.state = state
@@ -40,12 +37,27 @@ class Application(object):
         self.memory = memory
         self.disk = disk
         self.urls = urls
+        self.org_name = org_name
+        self.space_name = space_name
+        self.local_path = local_path
+        self.topic = topic
         self.guid = guid
         self.local_path = local_path
         if self.local_path is not None:
-            self.manifest_path = os.path.join(local_path, self.MANIFEST_NAME)
+            self.manifest_path = str(os.path.join(local_path, self.MANIFEST_NAME))
             with open(self.manifest_path) as f:
                 self.manifest = yaml.load(f.read())
+        self.local_jar = self.local_path
+        if "path" in self.manifest["applications"][0]:
+            self.local_jar = self.local_jar + "/" + self.manifest["applications"][0]["path"]
+        self._broker_guid = None
+
+    @property
+    def broker_guid(self):
+        if self._broker_guid is None:
+            cf_env = self.cf_env()
+            self._broker_guid = cf_env["VCAP_SERVICES"]["hdfs"][0]["credentials"]["uri"].split("/")[-2]
+        return self._broker_guid
 
     def __repr__(self):
         return "{0} (name={1})".format(self.__class__.__name__, self.name)
@@ -57,6 +69,16 @@ class Application(object):
     def __save_manifest(self):
         with open(self.manifest_path, "w") as f:
             f.write(yaml.dump(self.manifest))
+
+    @classmethod
+    def delete_test_apps(cls):
+        while len(cls.TEST_APPS) > 0:
+            app = cls.TEST_APPS[0]
+            app.delete()
+
+    def delete(self):
+        self.TEST_APPS.remove(self)
+        return cf_cli.cf_delete(self.name)
 
     @classmethod
     def get_list_from_settings(cls, settings_yml, state="started"):
@@ -77,6 +99,15 @@ class Application(object):
                                     urls=data[5:]))
         return applications
 
+    def api_get(self, endpoint, url=None):
+        url = url or self.urls[0]
+        url = "http://" + url + endpoint
+        logger.info("------------------------------------------ GET {} ------------------------------------------".format(url))
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise Exception("Response code is {}".format(response.status_code))
+        return json.loads(response.text)
+
     def cf_push(self, organization, space):
         cf_cli.cf_target(organization, space)
         output = cf_cli.cf_push(self.local_path, self.local_jar)
@@ -92,14 +123,21 @@ class Application(object):
         return json.loads(output[start:end])
 
     def change_name_in_manifest(self, new_name):
-        self.manifest["applications"]["name"] = new_name
+        self.manifest["applications"][0]["name"] = new_name
         self.__save_manifest()
+
+    def change_topic_in_manifest(self, new_topic):
+        self.manifest["applications"][0]["env"]["TOPICS"] = new_topic
+        self.__save_manifest()
+
+    def change_consumer_group_in_manifest(self, new_consumer_group):
+        self.manifest["applications"][0]["env"]["CONSUMER_GROUP"] = new_consumer_group
 
     @classmethod
     def cf_get_app_summary(cls, app_guid):
         path = "/v2/apps/" + app_guid + "/summary"
         return json.loads(cf_cli.cf_curl(path, 'GET'))
-    
+
     @classmethod
     def api_get_app_summary(cls, app_guid):
         return api.api_get_app_details(app_guid)
@@ -111,7 +149,7 @@ class Application(object):
         for app in response:
             applications.append(cls(name=app['name'], guid=app['guid']))
         return applications
-    
+
     @staticmethod
     def compare_details(a, b):
         compare_elements = lambda x, y: collections.Counter(x) == collections.Counter(y)
@@ -155,3 +193,5 @@ class Application(object):
         if a['package_updated_at'] != b['package_updated_at']:
             different_details.append('updated_at')
         return different_details
+
+
