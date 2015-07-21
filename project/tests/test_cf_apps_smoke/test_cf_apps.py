@@ -6,7 +6,8 @@ from test_utils.api_client import UnexpectedResponseError
 logger = get_logger("taproot_app_test")
 
 
-class TAProotApplicationsTest(ApiTestCase):
+class TAProotApplicationsSmokeTest(ApiTestCase):
+    """A cloned demo-settings.yml is a prerequisite for this test"""
 
     @classmethod
     def setUpClass(cls):
@@ -14,7 +15,7 @@ class TAProotApplicationsTest(ApiTestCase):
         cf_login("seedorg", "seedspace")
 
     def test_cf_application_status(self):
-        """A cloned demo-settings.yml is a prerequisite for this test"""
+        """Check that all applications from demo-settings.yml are started on cf"""
         expected_apps = Application.get_list_from_settings(self.settings_file)
         logger.info("{} apps are expected to be started".format(len(expected_apps)))
         apps = Application.cf_get_list()
@@ -30,6 +31,7 @@ class TAProotApplicationsTest(ApiTestCase):
                         "\nMissing applications: {}\nApplications not started: {}".format(missing_apps, apps_not_started))
 
     def test_taproot_applications_details(self):
+        """Verify application details between cf and Platform API"""
         # Get expected apps from settings file
         expected_apps = Application.get_list_from_settings(self.settings_file)
         # Get apps list from console
