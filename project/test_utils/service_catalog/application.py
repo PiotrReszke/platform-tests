@@ -43,13 +43,13 @@ class Application(object):
         self.topic = topic
         self.guid = guid
         self.local_path = local_path
+        self.local_jar = self.local_path
         if self.local_path is not None:
             self.manifest_path = str(os.path.join(local_path, self.MANIFEST_NAME))
             with open(self.manifest_path) as f:
                 self.manifest = yaml.load(f.read())
-        self.local_jar = self.local_path
-        if "path" in self.manifest["applications"][0]:
-            self.local_jar = self.local_jar + "/" + self.manifest["applications"][0]["path"]
+            if "path" in self.manifest["applications"][0]:
+                self.local_jar = self.local_jar + "/" + self.manifest["applications"][0]["path"]
         self._broker_guid = None
 
     @property
