@@ -90,8 +90,8 @@ class ApiClient(BaseClient):
     def _log_request(self, method, url, headers="", data="", params=None):
         if params:
             url = "{}?{}".format(url, "&".join(["{}={}".format(k, v) for k, v in params.items()]))
-        if "Authorization" in headers:
-            headers["Authorization"] = "[SECRET]"
+        # if "Authorization" in headers:
+        #    headers["Authorization"] = "[SECRET]"
         msg = [
             "\n----------------Request------------------",
             "URL: {} {}".format(method, url),
