@@ -1,9 +1,15 @@
 import functools
 import time
-from test_utils import config, ConsoleClient, AppClient
-import test_utils.user_management.api_calls as api
+
+from test_utils import config
+from test_utils.api_client import ConsoleClient, AppClient
+import test_utils.api_calls.user_management_api_calls as api
 
 __ADMIN = None
+
+
+
+__all__ = ["User", "get_admin_client", "get_admin_user"]
 
 
 def get_admin_user():

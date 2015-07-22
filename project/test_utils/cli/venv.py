@@ -1,7 +1,10 @@
 import os
 import subprocess
 
-from test_utils.cli.shell_commands import log_command
+from test_utils.logger import log_command
+
+
+__all__ = ["Virtualenv"]
 
 
 class Virtualenv(object):

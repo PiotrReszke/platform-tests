@@ -1,10 +1,12 @@
-import unittest
 import os
+import unittest
+
 from teamcity import is_running_under_teamcity
 from teamcity.unittestpy import TeamcityTestRunner
 
-from test_utils import get_logger
-import test_utils.config as config
+from test_utils.logger import get_logger
+from test_utils import config
+
 
 
 logger = get_logger("run tests")

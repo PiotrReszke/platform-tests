@@ -1,10 +1,11 @@
 import subprocess
 
+from test_utils.logger import get_logger, log_command
 import test_utils.config as config
 
-from test_utils.cli.shell_commands import log_command
 
-from test_utils import get_logger
+__all__ = ["cf_login", "cf_target", "cf_push", "cf_apps", "cf_curl", "cf_marketplace", "cf_services", "cf_cs", "cf_stop", "cf_start", "cf_delete", "cf_env"]
+
 
 logger = get_logger("cloud_foundry_cli")
 

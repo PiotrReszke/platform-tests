@@ -1,4 +1,4 @@
-pyswagger
+google-api-python-client
 requests
 spur
 teamcity-messages

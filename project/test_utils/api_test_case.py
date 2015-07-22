@@ -2,12 +2,16 @@ import functools
 import unittest
 
 from test_utils.api_client import UnexpectedResponseError
-from test_utils.user_management.organization import Organization
-from test_utils.data_acquisition_service.transfer import Transfer
+from test_utils.objects.organization import Organization
+from test_utils.objects.transfer import Transfer
+from test_utils.logger import get_logger
 
-from .logger import get_logger
 
 logger = get_logger("api_test_case")
+
+
+__all__ = ["ApiTestCase", "cleanup_after_failed_setup"]
+
 
 class ApiTestCase(unittest.TestCase):
 

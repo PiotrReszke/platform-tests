@@ -3,18 +3,20 @@ from math import floor, ceil
 import random
 import string
 import time
-from urllib.parse import urlencode
 
 from pyswagger import SwaggerApp
 from pyswagger.core import BaseClient
 import requests
 
-from test_utils.mail_utils.mailing import get_code_from_gmail
+from test_utils.gmail_api import get_code_from_gmail
 from test_utils.logger import get_logger
-import test_utils.config as config
+from test_utils import config
 
 
 logger = get_logger("api client")
+
+
+__all__ = ["UnexpectedResponseError", "AppClient", "ConsoleClient"]
 
 
 class UnexpectedResponseError(Exception):

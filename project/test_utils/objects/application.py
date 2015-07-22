@@ -2,14 +2,22 @@ import base64
 import json
 import os
 import re
+import collections
+
 import requests
 import yaml
-import collections
-import test_utils.cli.cloud_foundry_cli as cf_cli
-from test_utils.service_catalog import api_calls as api
-from test_utils import get_logger, config
+
+import test_utils.cli.cloud_foundry as cf
+from test_utils.api_calls import service_catalog_api_calls as api
+from test_utils.logger import get_logger
+from test_utils import config
+
 
 logger = get_logger("application")
+
+
+__all__ = ["Application", "github_get_file_content"]
+
 
 
 def github_get_file_content(repository, path, owner="intel-data"):
@@ -78,7 +86,7 @@ class Application(object):
 
     def delete(self):
         self.TEST_APPS.remove(self)
-        return cf_cli.cf_delete(self.name)
+        return cf.cf_delete(self.name)
 
     @classmethod
     def get_list_from_settings(cls, settings_yml, state="started"):
@@ -92,7 +100,7 @@ class Application(object):
     def cf_get_list(cls):
         """Get list of applications from Cloud Foundry"""
         applications = []
-        output = cf_cli.cf_apps()
+        output = cf.cf_apps()
         for line in output.split("\n")[4:-1]:
             data = [item for item in re.split("\s|,", line) if item != ""]
             applications.append(cls(name=data[0], state=data[1], instances=data[2], memory=data[3], disk=data[4],
@@ -109,15 +117,15 @@ class Application(object):
         return json.loads(response.text)
 
     def cf_push(self, organization, space):
-        cf_cli.cf_target(organization, space)
-        output = cf_cli.cf_push(self.local_path, self.local_jar)
+        cf.cf_target(organization, space)
+        output = cf.cf_push(self.local_path, self.local_jar)
         self.TEST_APPS.append(self)
         for line in output.split("\n"):
             if line[0:5] == "urls:":
                 self.urls = (re.split(r'urls: ', line)[1],)
 
     def cf_env(self):
-        output = cf_cli.cf_env(self.name)
+        output = cf.cf_env(self.name)
         start = re.search("^\{$", output, re.MULTILINE).start()
         end = re.search("^\}$", output, re.MULTILINE).end()
         return json.loads(output[start:end])
@@ -136,7 +144,7 @@ class Application(object):
     @classmethod
     def cf_get_app_summary(cls, app_guid):
         path = "/v2/apps/" + app_guid + "/summary"
-        return json.loads(cf_cli.cf_curl(path, 'GET'))
+        return json.loads(cf.cf_curl(path, 'GET'))
 
     @classmethod
     def api_get_app_summary(cls, app_guid):
@@ -153,6 +161,7 @@ class Application(object):
     @staticmethod
     def compare_details(a, b):
         compare_elements = lambda x, y: collections.Counter(x) == collections.Counter(y)
+
         def compare_domains(cli, console):
             cli_domains = []
             console_domains = []

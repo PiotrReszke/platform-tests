@@ -1,4 +1,6 @@
-from test_utils import ApiTestCase, get_logger, Marketplace, cf_login
+from test_utils.objects import Marketplace
+from test_utils.cli.cloud_foundry import cf_login
+from test_utils import ApiTestCase, get_logger
 from test_utils.config import get_config_value
 
 logger = get_logger("test marketplace")

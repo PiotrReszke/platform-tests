@@ -2,6 +2,10 @@ import argparse
 import configparser
 import os
 
+
+__all__ = ["APP_SCHEMAS", "TEST_SETTINGS", "update_test_settings", "parse_arguments", "get_config_value", "get_ssh_key_passphrase"]
+
+
 # configuration variables depending on the environment
 CONFIG = {
     "gotapaas.eu": {

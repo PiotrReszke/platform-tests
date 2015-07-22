@@ -1,13 +1,17 @@
 import os
 import re
+
 import spur
 
-from test_utils import config, get_logger
-from test_utils.cli.shell_commands import log_command
-from test_utils.config import get_ssh_key_passphrase
+from test_utils import config
+from test_utils.logger import get_logger, log_command
+
 
 
 logger = get_logger("hdfs")
+
+
+__all__ = ["Hdfs", "Topic"]
 
 
 class Hdfs(object):
@@ -24,7 +28,7 @@ class Hdfs(object):
 
     def _execute(self, command):
         log_command(command)
-        with spur.SshShell(hostname=self.hostname, username=self.username, password=get_ssh_key_passphrase()) as shell:
+        with spur.SshShell(hostname=self.hostname, username=self.username, password=config.get_ssh_key_passphrase()) as shell:
             result = shell.run(command)
         if result.return_code != 0:
             raise result.to_error()

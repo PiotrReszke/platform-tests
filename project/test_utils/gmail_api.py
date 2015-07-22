@@ -1,14 +1,14 @@
+import base64
 import os
-
-from apiclient import errors
-
-import httplib2
-from apiclient import discovery
-
 import time
+
+from apiclient import discovery, errors
+import httplib2
 import oauth2client
+
 from test_utils import config
 from test_utils.logger import get_logger
+
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
 CLIENT_SECRET_FILE = 'client_secret.json'
@@ -71,5 +71,24 @@ def get_recent_message_to(to_email):
             return get_message(service, message_list[0].get('id'))['raw']
         time.sleep(3)
         raise TimeoutError("Can't find email message with code to {}".format(to_email))
+
+
+def extract_code_from_message(message):
+    b = base64.urlsafe_b64decode(message)
+    c = b.decode()  # .replace('=3D', '=').replace('=\r\n', '')
+    d = c.find('code=')
+    if d != -1:
+        d += len('code=')
+        e = c[d:].find('&')
+        code = (c[d:d + e])
+        return code
+    else:
+        raise Exception("Can't find code in given message")
+
+
+def get_code_from_gmail(email):
+    message = get_recent_message_to(email)
+    code = extract_code_from_message(message)
+    return code
 
 

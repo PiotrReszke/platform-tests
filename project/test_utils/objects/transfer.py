@@ -1,7 +1,11 @@
 import functools
 import time
-import test_utils.data_acquisition_service.api_calls as api
-from test_utils.user_management.user import get_admin_client
+
+import test_utils.api_calls.das_api_calls as api
+from test_utils.objects.user import get_admin_client
+
+
+__all__ = ["Transfer"]
 
 
 @functools.total_ordering

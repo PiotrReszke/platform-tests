@@ -1,4 +1,6 @@
-from test_utils import Organization, ApiTestCase, get_logger
+from test_utils.objects import Organization
+from test_utils import ApiTestCase, get_logger
+
 
 logger = get_logger("test organization")
 

@@ -1,7 +1,6 @@
 from test_utils import ApiTestCase, cleanup_after_failed_setup
-from test_utils import Organization, User
+from test_utils.objects import Organization, User, get_admin_client
 from test_utils.client_enum import Role
-from test_utils.user_management.user import get_admin_client
 
 
 class TestOrganizationUsers(ApiTestCase):

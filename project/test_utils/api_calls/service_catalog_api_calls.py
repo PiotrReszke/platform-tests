@@ -1,9 +1,13 @@
-from test_utils.logger import get_logger
 import json
+
+from ..logger import get_logger
+
 
 logger = get_logger("service-catalog calls")
 
+
 APP_NAME = "service-catalog"
+
 
 def api_get_marketplace_services(client, space_guid):
     """GET /rest/services"""
