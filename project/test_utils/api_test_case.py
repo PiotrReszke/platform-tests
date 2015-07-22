@@ -5,12 +5,23 @@ from test_utils.api_client import UnexpectedResponseError
 from test_utils.user_management.organization import Organization
 from test_utils.data_acquisition_service.transfer import Transfer
 
+from .logger import get_logger
+
+logger = get_logger("api_test_case")
 
 class ApiTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
         Organization.delete_test_orgs()
+
+    def run(self, result=None):
+        logger.info('\n******************************************************************\n'
+                    '*\n'
+                    '*\t\t %s\n'
+                    '*\n'
+                    '******************************************************************\n', self._testMethodName)
+        return super().run(result=result)
 
     def assertInList(self, member, container, msg=None):
         """Modeled after TestCase.assertIn(), but testing for equality, not identity."""
