@@ -46,7 +46,8 @@ class Transfer(object):
 
     @classmethod
     def create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=0,
-               client=get_admin_client()):
+               client=None):
+        client = client or get_admin_client()
         if title is None:
             title = "test-transfer-{}".format(time.time())
         api_response = api.api_create_das_request(client, category=category, is_public=is_public,
@@ -56,7 +57,8 @@ class Transfer(object):
                    token=api_response["token"], timestamps=["timestamps"], title=title, user_id=user_id)
 
     @classmethod
-    def get_list(cls, orgs, client=get_admin_client()):
+    def get_list(cls, orgs, client=None):
+        client = client or get_admin_client()
         api_response = api.api_get_das_requests(client, [org.guid for org in orgs])
         transfers = []
         for transfer_data in api_response:
@@ -64,9 +66,11 @@ class Transfer(object):
         return transfers
 
     @classmethod
-    def get(cls, transfer_id, client=get_admin_client()):
+    def get(cls, transfer_id, client=None):
+        client = client or get_admin_client()
         api_response = api.api_get_das_request(client, transfer_id)
         return cls._from_api_response(api_response)
 
-    def delete(self, client=get_admin_client()):
+    def delete(self, client=None):
+        client = client or get_admin_client()
         return api.api_delete_das_request(client, self.id)

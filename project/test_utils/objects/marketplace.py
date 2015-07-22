@@ -31,7 +31,8 @@ class Marketplace(object):
                                                                                self.services_count, self.services_names)
 
     @classmethod
-    def api_fetch_marketplace_services(cls, space_guid=None, client=get_admin_client()):
+    def api_fetch_marketplace_services(cls, space_guid=None, client=None):
+        client = client or get_admin_client()
         api_response = api.api_get_marketplace_services(space_guid=space_guid, client=client)
         services = api_response["resources"]
         services_count = api_response["total_results"]

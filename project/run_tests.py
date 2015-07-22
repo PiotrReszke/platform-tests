@@ -34,7 +34,6 @@ if __name__ == "__main__":
         else:
             raise NotADirectoryError('Directory {} doesn\'t exists'.format(test_dir))
 
-
     # run tests
     if is_running_under_teamcity():
         runner = TeamcityTestRunner()

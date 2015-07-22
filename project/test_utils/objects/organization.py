@@ -30,7 +30,8 @@ class Organization(object):
         return self.guid < other.guid
 
     @classmethod
-    def create(cls, name=None, client=get_admin_client()):
+    def create(cls, name=None, client=None):
+        client = client or get_admin_client()
         if name is None:
             name = cls.NAME_PREFIX + str(time.time())
         response = api.api_create_organization(client, name)
@@ -40,7 +41,8 @@ class Organization(object):
         return org
 
     @classmethod
-    def get_list(cls, client=get_admin_client()):
+    def get_list(cls, client=None):
+        client = client or get_admin_client()
         response = api.api_get_organizations(client)
         organizations = []
         for organization_data in response:
@@ -56,11 +58,13 @@ class Organization(object):
             org = cls.TEST_ORGS[0]
             org.delete()
 
-    def rename(self, new_name, client=get_admin_client()):
+    def rename(self, new_name, client=None):
+        client = client or get_admin_client()
         self.name = new_name
         return api.api_rename_organization(client, self.guid, new_name)
 
-    def delete(self, client=get_admin_client()):
+    def delete(self, client=None):
+        client = client or get_admin_client()
         self.TEST_ORGS.remove(self)
         return api.api_delete_organization(client, self.guid)
 

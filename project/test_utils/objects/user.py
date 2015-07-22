@@ -71,22 +71,24 @@ class User(object):
         return prefix + str(time.time()) + "@mailinator.com"
 
     @classmethod
-    def create_via_organization(cls, organization_guid, username=None, roles=None, client=get_admin_client(),
-                                client_type=None):
+    def create_via_organization(cls, organization_guid, username=None, roles=None, client=None, client_type=None):
+        client = client or get_admin_client()
         username = cls.get_default_username() if username is None else username
         response = api.api_create_organization_user(client, organization_guid, username, roles)
         return cls(guid=response["guid"], username=username, roles=roles, organization_guid=organization_guid,
                    client_type=client_type)
 
     @classmethod
-    def create_via_space(cls, space_guid, organization_guid=None, username=None, roles=None, client=get_admin_client()):
+    def create_via_space(cls, space_guid, organization_guid=None, username=None, roles=None, client=None):
+        client = client or get_admin_client()
         username = cls.get_default_username() if username is None else username
         response = api.api_create_space_user(client, space_guid, username, organization_guid, roles)
         return cls(guid=response["guid"], username=username, roles=roles, organization_guid=response["org_guid"],
                    space_guid=space_guid)
 
     @classmethod
-    def get_list_via_organization(cls, organization_guid, client=get_admin_client()):
+    def get_list_via_organization(cls, organization_guid, client=None):
+        client = client or get_admin_client()
         response = api.api_get_organization_users(client, organization_guid)
         users = []
         for user_data in response:
@@ -95,7 +97,8 @@ class User(object):
         return users
 
     @classmethod
-    def get_list_via_space(cls, space_guid, client=get_admin_client()):
+    def get_list_via_space(cls, space_guid, client=None):
+        client = client or get_admin_client()
         response = api.api_get_space_users(client, space_guid)
         users = []
         for user_data in response:
@@ -104,20 +107,23 @@ class User(object):
         return users
 
     @classmethod
-    def create_user_for_client(cls, org_guid, role, extention=None):
-        username = cls.TEST_EMAIL_FORM.format(time.time() if extention is None else extention)
+    def create_user_for_client(cls, org_guid, role, extension=None):
+        username = cls.TEST_EMAIL_FORM.format(time.time() if extension is None else extension)
         roles = list(role.value)
         return cls.create_via_organization(org_guid, username, roles, client_type=ConsoleClient)
 
-    def add_to_organization(self, organization_guid, roles, client=get_admin_client()):
+    def add_to_organization(self, organization_guid, roles, client=None):
+        client = client or get_admin_client()
         api.api_create_organization_user(client, organization_guid, self.username, roles)
 
-    def update_via_organization(self, new_roles=None, client=get_admin_client()):
+    def update_via_organization(self, new_roles=None, client=None):
+        client = client or get_admin_client()
         if new_roles is not None:
             self.roles = new_roles
         api.api_update_organization_user(client, self.organizations_guid[0], self.guid, new_roles)
 
-    def update_via_space(self, new_username=None, new_roles=None, client=get_admin_client()):
+    def update_via_space(self, new_username=None, new_roles=None, client=None):
+        client = client or get_admin_client()
         if new_username is not None:
             self.username = new_username
         if new_roles is not None:
@@ -125,10 +131,12 @@ class User(object):
         api.api_update_space_user(client, self.organizations_guid[0], self.space_guid, self.guid, new_username,
                                   new_roles)
 
-    def delete_via_organization(self, client=get_admin_client()):
+    def delete_via_organization(self, client=None):
+        client = client or get_admin_client()
         api.api_delete_organization_user(client, self.organizations_guid[0], self.guid)
 
-    def delete_via_space(self, client=get_admin_client()):
+    def delete_via_space(self, client=None):
+        client = client or get_admin_client()
         api.api_delete_space_user(client, self.space_guid, self.organizations_guid[0])
 
 # fix deletion via org/space to delete from all org/space
