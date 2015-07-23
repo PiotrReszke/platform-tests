@@ -2,8 +2,6 @@
 *.pyc
 *.pyo
 *.log
-*.secret.ini
 *.yml
 *__pycache__/
-*gmail-code.json
-*client_secret.json
+*key.dat

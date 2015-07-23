@@ -40,7 +40,7 @@ APP_SCHEMAS = {
 
 # passwords and other secrets
 __SECRET = configparser.ConfigParser()
-__SECRET.read("test_utils/.secret.ini")
+__SECRET.read("test_utils/secrets/.secret.ini")
 
 
 TEST_SETTINGS = {}

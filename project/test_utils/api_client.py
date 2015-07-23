@@ -171,8 +171,8 @@ class ConsoleClient(ApiClient):
         response = self._session.send(request.prepare())
         if not response.ok:
             raise UnexpectedResponseError(response.status_code, response.text)
-        if len(response.cookies) == 0:
-            raise Exception("Authentication failed. No cookies were set in session.")
+        #if len(self._session.cookies) == 0:
+        #    raise Exception("Authentication failed. No cookies were set in session.")
 
     def _generate_password(self):
         pass_length = 8

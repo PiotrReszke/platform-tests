@@ -11,7 +11,7 @@ from test_utils.logger import get_logger
 
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
-CLIENT_SECRET_FILE = 'client_secret.json'
+CLIENT_SECRET_FILE = 'secrets/client_secret.json'
 APPLICATION_NAME = 'praca-email'
 TEST_EMAIL = config.TEST_SETTINGS["TEST_EMAIL"]
 
@@ -20,7 +20,7 @@ logger = get_logger("gmail client")
 
 def get_credentials():
     directory = os.path.dirname(__file__)
-    credential_path = os.path.join(directory, 'gmail-code.json')
+    credential_path = os.path.join(directory, 'secrets/gmail-code.json')
     store = oauth2client.file.Storage(credential_path)
     credentials = store.get()
     if not credentials or credentials.invalid:
@@ -61,7 +61,7 @@ def get_recent_message_to(to_email):
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('gmail', 'v1', http=http)
     start = time.time()
-    time_frame = 16
+    time_frame = 31
     while time.time() - start < time_frame:
         message_list = (list_messages_matching_query(service, to_email))
         message_numb = len(message_list)
@@ -70,6 +70,7 @@ def get_recent_message_to(to_email):
         if message_numb >= 2:
             return get_message(service, message_list[0].get('id'))['raw']
         time.sleep(3)
+        logger.info("jestem")
         raise TimeoutError("Can't find email message with code to {}".format(to_email))
 
 
