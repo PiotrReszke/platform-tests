@@ -18,7 +18,8 @@ if __name__ == "__main__":
     # parse settings passed from command line
     args = config.parse_arguments()
 
-    config.update_test_settings(test_environment=args.environment,
+    config.update_test_settings(client_type=args.client_type,
+                                test_environment=args.environment,
                                 test_username=args.username,
                                 proxy=args.proxy,
                                 password=args.password,

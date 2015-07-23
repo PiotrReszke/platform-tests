@@ -46,8 +46,8 @@ __SECRET.read("test_utils/.secret.ini")
 TEST_SETTINGS = {}
 
 
-def update_test_settings(test_environment=None, test_username=None, proxy=None, password=None, login_token=None,
-                         github_auth=(), test_email=None):
+def update_test_settings(client_type, test_environment=None, test_username=None, proxy=None, password=None, login_token=None,
+                         github_auth=None, test_email=None):
     TEST_SETTINGS["TEST_ENVIRONMENT"] = test_environment or TEST_SETTINGS["TEST_ENVIRONMENT"]
     TEST_SETTINGS["TEST_USERNAME"] = test_username or TEST_SETTINGS["TEST_USERNAME"]
     TEST_SETTINGS["TEST_PROXY"] = proxy
@@ -57,8 +57,12 @@ def update_test_settings(test_environment=None, test_username=None, proxy=None, 
         secret_login_token = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]]["login_token"]
     TEST_SETTINGS["TEST_PASSWORD"] = password or secret_password
     TEST_SETTINGS["TEST_LOGIN_TOKEN"] = login_token or secret_login_token
-    TEST_SETTINGS["GITHUB_AUTH"] = github_auth or TEST_SETTINGS.get("GITHUB_AUTH")
+    if None not in github_auth:
+        TEST_SETTINGS["GITHUB_AUTH"] = github_auth
+    else:
+        TEST_SETTINGS["GITHUB_AUTH"] = TEST_SETTINGS.get("GITHUB_AUTH")
     TEST_SETTINGS["TEST_EMAIL"] = test_email or TEST_SETTINGS["TEST_EMAIL"]
+    TEST_SETTINGS["TEST_CLIENT_TYPE"] = client_type
 
 
 def parse_arguments():
@@ -91,6 +95,9 @@ def parse_arguments():
     parser.add_argument("--github-password",
                         default=None,
                         help="password matching GitHub username")
+    parser.add_argument("--client-type",
+                        default="console",
+                        help="choose a client type for tests")
     return parser.parse_args()
 
 
@@ -107,16 +114,18 @@ def get_ssh_key_passphrase():
 __github_auth = None
 if __SECRET.has_section("github"):
     __github_auth = (__SECRET["github"]["username"], __SECRET["github"]["password"])
-update_test_settings(test_environment="gotapaas.eu",
+update_test_settings(client_type="console",
+                     test_environment="gotapaas.eu",
                      test_username="admin",
                      proxy="proxy-mu.intel.com:911",
                      github_auth=__github_auth,
                      test_email="intel.data.tests@gmail.com")
 # change settings when tests are run with PyCharm runner using environment variables
-update_test_settings(test_environment=os.environ.get("TEST_ENVIRONMENT"),
+update_test_settings(client_type="console",
+                     test_environment=os.environ.get("TEST_ENVIRONMENT"),
                      test_username=os.environ.get("TEST_USERNAME"),
                      proxy=(os.environ.get("TEST_PROXY") or TEST_SETTINGS["TEST_PROXY"]),
                      password=os.environ.get("TEST_PASSWORD"),
                      login_token=os.environ.get("TEST_LOGIN_TOKEN"),
-                     github_auth=(os.environ.get("GITHUB_USERNAME", os.environ.get("GITHUB_PASSWORD"))))
+                     github_auth=(os.environ.get("GITHUB_USERNAME"), os.environ.get("GITHUB_PASSWORD")))
 
