@@ -1,5 +1,5 @@
-from test_utils import ApiTestCase, get_logger, config
-from test_utils import cf_login, Application, github_get_file_content
+from test_utils import ApiTestCase, get_logger, config, cf_login
+from test_utils.objects import Application, github_get_file_content
 from test_utils.api_client import UnexpectedResponseError
 
 
