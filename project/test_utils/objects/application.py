@@ -12,6 +12,7 @@ from test_utils.api_calls import service_catalog_api_calls as api
 from test_utils.logger import get_logger
 from test_utils import config
 from test_utils.objects.user import get_admin_client
+from urllib.parse import urlparse
 
 logger = get_logger("application")
 
@@ -93,7 +94,17 @@ class Application(object):
         applications = []
         settings = yaml.load(settings_yml)
         for app_info in settings["applications"] + settings["user_provided_service_instances"] + settings["service_brokers"]:
-            applications.append(cls(name=app_info["name"], state=state))
+            tmp_name = ""
+            if "credentials" in app_info.keys():
+                if "host" in app_info["credentials"].keys():
+                    tmp_name = re.split('[.]', urlparse(app_info["credentials"]["host"]).hostname)[0]
+                elif "hueUrl" in app_info["credentials"].keys():
+                    tmp_name = re.split('[.]', urlparse(app_info["credentials"]["hueUrl"]).hostname)[0]
+            elif "broker_url" in app_info.keys():
+                tmp_name = re.split('[.]', urlparse(app_info["broker_url"]).hostname)[0]
+            if not tmp_name:
+                tmp_name = app_info["name"]
+            applications.append(cls(name=tmp_name, state=state))
         return applications
 
     @classmethod
