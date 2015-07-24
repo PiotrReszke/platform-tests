@@ -1,13 +1,13 @@
 import functools
 from datetime import datetime
 
-from test_utils import config, get_logger
+from test_utils import TEST_SETTINGS, get_admin_client, get_logger, get_config_value
 import test_utils.api_calls.user_management_api_calls as api
 import test_utils.api_calls.metrics_provider_api_calls as metrics_api
-from test_utils.objects import get_admin_user, get_admin_client
+from test_utils.objects import User, Space
 
 
-__all__ = ["Organization", "Space"]
+__all__ = ["Organization"]
 
 
 logger = get_logger("organization")
@@ -18,7 +18,7 @@ class Organization(object):
 
     NAME_PREFIX = "test_org_"
     TEST_ORGS = []
-    TEST_EMAIL = config.TEST_SETTINGS["TEST_EMAIL"]
+    TEST_EMAIL = TEST_SETTINGS["TEST_EMAIL"]
     TEST_EMAIL_FORM = TEST_EMAIL.replace('@', '+{}@')
 
     def __init__(self, name, guid, spaces=None):
@@ -67,7 +67,7 @@ class Organization(object):
 
     @classmethod
     def get_seedorg(cls):
-        return cls(name="seedorg", guid=config.get_config_value("seedorg_guid"))
+        return cls(name="seedorg", guid=get_config_value("seedorg_guid"))
 
     def rename(self, new_name, client=None):
         client = client or get_admin_client()
@@ -81,7 +81,7 @@ class Organization(object):
 
     def add_admin(self, roles=("managers",)):
         """Add admin user to the organization"""
-        admin = get_admin_user()
+        admin = User.get_admin()
         admin.add_to_organization(self.guid, list(roles))
 
     # @classmethod
@@ -121,25 +121,3 @@ class Organization(object):
             if response.get(response_key) is None:
                 logger.warning("Missing metrics in response: {}".format(response_key))
             self.metrics[response_key] = response[response_key]["numerator"] / response[response_key]["denominator"]
-
-
-@functools.total_ordering
-class Space(object):
-
-    def __init__(self, name, guid):
-        self.name = name
-        self.guid = guid
-
-    def __repr__(self):
-        return "{0} (name={1}, guid={2})".format(self.__class__.__name__, self.name, self.guid)
-
-    def __eq__(self, other):
-        return self.name == other.name and self.guid == other.guid
-
-    def __lt__(self, other):
-        return self.guid < other.guid
-
-    @classmethod
-    def get_seedspace(cls):
-        return cls(name="seedspace", guid=config.get_config_value("seedspace_guid"))
-

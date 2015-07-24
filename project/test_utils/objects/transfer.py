@@ -2,7 +2,7 @@ import functools
 import time
 
 import test_utils.api_calls.das_api_calls as api
-from test_utils.objects.user import get_admin_client
+from test_utils import get_admin_client
 
 
 __all__ = ["Transfer"]
@@ -45,8 +45,8 @@ class Transfer(object):
                    user_id=api_response["userId"])
 
     @classmethod
-    def create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=0,
-               client=None):
+    def api_create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=0,
+                   client=None):
         client = client or get_admin_client()
         if title is None:
             title = "test-transfer-{}".format(time.time())
@@ -57,7 +57,7 @@ class Transfer(object):
                    token=api_response["token"], timestamps=["timestamps"], title=title, user_id=user_id)
 
     @classmethod
-    def get_list(cls, orgs, client=None):
+    def api_get_list(cls, orgs, client=None):
         client = client or get_admin_client()
         api_response = api.api_get_das_requests(client, [org.guid for org in orgs])
         transfers = []
@@ -66,11 +66,11 @@ class Transfer(object):
         return transfers
 
     @classmethod
-    def get(cls, transfer_id, client=None):
+    def api_get(cls, transfer_id, client=None):
         client = client or get_admin_client()
         api_response = api.api_get_das_request(client, transfer_id)
         return cls._from_api_response(api_response)
 
-    def delete(self, client=None):
+    def api_delete(self, client=None):
         client = client or get_admin_client()
         return api.api_delete_das_request(client, self.id)

@@ -1,10 +1,8 @@
 import functools
 import unittest
 
-from test_utils.api_client import UnexpectedResponseError
-from test_utils.objects.organization import Organization
-from test_utils.objects.transfer import Transfer
-from test_utils.logger import get_logger
+import test_utils.objects.organization as org
+from test_utils import get_logger, UnexpectedResponseError
 
 
 logger = get_logger("api_test_case")
@@ -17,7 +15,7 @@ class ApiTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        Organization.delete_test_orgs()
+        org.Organization.delete_test_orgs()
 
     def run(self, result=None):
         logger.info('\n******************************************************************\n'
@@ -32,15 +30,15 @@ class ApiTestCase(unittest.TestCase):
         for item in container:
             if member == item:
                 return
-        standardMsg = "{} not found in list".format(member, container)
-        self.fail(self._formatMessage(msg, standardMsg))
+        standard_msg = "{} not found in list".format(member, container)
+        self.fail(self._formatMessage(msg, standard_msg))
 
     def assertNotInList(self, member, container, msg=None):
         """Reverse to assertInList"""
         for item in container:
             if member == item:
-                standardMsg = "{} found in list".format(member, container)
-                self.fail(self._formatMessage(msg, standardMsg))
+                standard_msg = "{} found in list".format(member, container)
+                self.fail(self._formatMessage(msg, standard_msg))
 
     def assertRaisesUnexpectedResponse(self, status, error_message, callableObj, *args, **kwargs):
         """If error message does not need to be checked, pass None"""
@@ -54,14 +52,19 @@ class ApiTestCase(unittest.TestCase):
             self.assertEqual(e.exception.status, status,
                              "Error status is {0}, expected {1}".format(e.exception.status, status))
 
-    def assertTransfersEqual(self, transfer, expected_transfer, *compared_attributes):
-        if len(compared_attributes) == 0:
-            compared_attributes = Transfer.COMPARABLE_ATTRIBUTES
-        for attribute_name in compared_attributes:
-            attribute = getattr(transfer, attribute_name)
-            expected_attribute = getattr(expected_transfer, attribute_name)
-            self.assertEqual(attribute, expected_attribute,
-                             "transfer.{0} = {1}, expected: {2}".format(attribute_name, attribute, expected_attribute))
+    def assertAttributesEqual(self, obj, expected_obj):
+        if getattr(obj, "COMPARABLE_ATTRIBUTES", None) is None:
+            raise ValueError("Object of type {} does not have attribute COMPARABLE_ATTRIBUTES".format(type(obj)))
+        if type(obj) != type(expected_obj):
+            raise TypeError("Cannot compare object of type {} with object of type {}".format(type(obj), type(expected_obj)))
+        differences = []
+        for attribute in obj.COMPARABLE_ATTRIBUTES:
+            obj_val = getattr(obj, attribute)
+            expected_val = getattr(expected_obj, attribute)
+            if obj_val != expected_val:
+                differences.append("{0}.{1}={2} not equal to {0}.{1}={3}".format(type(obj), attribute, obj_val, expected_val))
+        if differences != []:
+            self.fail("Objects are not equal:\n{}".format("\n".join(differences)))
 
 
 def cleanup_after_failed_setup(cleanup_method):

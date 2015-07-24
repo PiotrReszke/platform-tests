@@ -6,8 +6,7 @@ from apiclient import discovery, errors
 import httplib2
 import oauth2client
 
-from test_utils import config
-from test_utils.logger import get_logger
+from test_utils import config, get_logger
 
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'

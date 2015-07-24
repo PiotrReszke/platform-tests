@@ -211,7 +211,7 @@
       }
     },
     "InvitationDetails": {
-      "propetries": {
+      "properties": {
         "details": {"type": "string"}
       }
     }

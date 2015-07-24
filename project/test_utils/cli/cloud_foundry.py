@@ -1,11 +1,10 @@
 import functools
 import subprocess
 
-import test_utils.config as config
-from test_utils import CfApiClient, get_logger, log_command
+from test_utils import CfApiClient, get_logger, log_command, get_config_value, TEST_SETTINGS
 
 
-__all__ = ["cf_login", "cf_target", "cf_push", "cf_marketplace", "cf_cs", "cf_stop", "cf_start", "cf_delete",
+__all__ = ["cf_login", "cf_target", "cf_push", "cf_marketplace", "cf_create_service", "cf_stop", "cf_start", "cf_delete",
            "cf_env", "cf_api_get_service_instances", "cf_api_app_summary", "cf_api_env", "cf_api_services",
            "cf_api_space_summary", "cf_api_org_auditors", "cf_api_org_managers", "cf_api_org_billing_managers"]
 
@@ -27,9 +26,9 @@ def log_output_on_error(func):
 
 
 def cf_login(organization, space):
-    api_url = config.get_config_value("cf_endpoint")
-    username = config.TEST_SETTINGS["TEST_USERNAME"]
-    password = config.TEST_SETTINGS["TEST_PASSWORD"]
+    api_url = get_config_value("cf_endpoint")
+    username = TEST_SETTINGS["TEST_USERNAME"]
+    password = TEST_SETTINGS["TEST_PASSWORD"]
     command = ["cf", "login", "-a", api_url, "-u", username, "-p", password, "-o", organization, "-s", space]
     log_command(command, replace=(password, "[SECRET]"))
     subprocess.check_call(command)
@@ -59,12 +58,14 @@ def cf_apps():
     return subprocess.check_output(command).decode()
 
 
+@log_output_on_error
 def cf_marketplace():
     command = ["cf", "marketplace"]
     log_command(command)
     return subprocess.check_output(["cf", "marketplace"]).decode()
 
 
+@log_output_on_error
 def cf_create_service(service, plan, instance_name):
     command = ["cf", "create-service", service, plan, instance_name]
     log_command(command)

@@ -3,40 +3,129 @@
   "paths": {
     "/rest/apps": {
       "get": {
-        "responses": {
-          "200": {"schema": {"type": "string"}}
-        },
-        "parameters": [
-          {"name": "space", "in": "query", "required": "true", "type": "string"}
-        ],
-        "summary": "Retrieve applications list",
-        "operationId": "get_apps_list"
+        "operationId": "get_app_list",
+        "parameters": [{"name": "space", "in": "query", "required": "true", "type": "string"}],
+        "responses": {"200": {"schema": {"type": "array", "items": {"$ref": "Application"}}}}
       }
     },
     "/rest/apps/{app_guid}": {
       "get": {
-        "responses": {
-          "200": {"schema": {"type": "string"}}
-        },
-        "parameters": [
-          {"name": "app_guid", "in": "path", "required": "true", "type": "string"}
-        ],
-        "summary": "Retrieve application details",
-        "operationId": "get_app_details"
+        "operationId": "get_app_details",
+        "parameters": [{"name": "app_guid", "in": "path", "required": "true", "type": "string"}],
+        "responses": {"200": {"schema": {"$ref": "ApplicationDetails"}}}
       }
     },
     "/rest/services": {
       "get": {
         "operationId": "get_marketplace_services",
         "parameters": [{"name": "space", "in": "query", "type": "string"}],
-        "responses": {"200": {"description": "OK", "schema": {"$ref": "services_list"}}}
+        "responses": {"200": {"description": "OK", "schema": {"$ref": "ServiceInstanceListResponse"}}}
+      }
+    },
+    "/rest/services/{service_guid}": {
+      "get": {
+        "operationId": "get_service",
+        "parameters": [{"name": "service_guid", "in": "path", "type": "string"}],
+        "responses": {"200": {"description": "OK", "schema": {"$ref": "ServiceInstanceDetails"}}}
       }
     }
   },
   "security": [{"default": []}],
   "swagger": "2.0",
   "definitions": {
-    "metadata": {
+    "Application": {
+      "properties": {
+        "guid":  {"type": "string"},
+        "urls": {"type": "array", "items": {"type": "string"}},
+        "name":  {"type": "string"},
+        "state": {"type": "string"},
+        "running_instances": {"type": "integer", "format": "int32"},
+        "service_names": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "ApplicationDetails": {
+      "properties": {
+        "guid": {"type": "string"},
+        "name": {"type": "string"},
+        "memory": {"type": "integer", "format": "int32"},
+        "instances": {"type": "integer", "format": "int32"},
+        "disk_quota": {"type": "integer", "format": "int32"},
+        "space_guid": {"type": "string"},
+        "stack_guid": {"type": "string"},
+        "state": {"type": "string"},
+        "command": {"type": "string"},
+        "buildpack": {"type": "string"},
+        "health_check_timeout": {"type": "string"},
+        "environment_json": {"type": "string"},
+        "detected_buildpack": {"type": "string"},
+        "detected_buildpack_guid": {"type": "string"},
+        "package_state": {"type": "string"},
+        "package_updated_at": {"type": "string"},
+        "system_env_json": {"type": "string"},
+        "staging_task_id": {"type": "string"},
+        "running_instances": {"type": "integer", "format": "int32"},
+        "available_domain": {"type": "string"},
+        "routes": {"type": "array", "items": {"$ref": "ApplicationRoute"}},
+        "version": {"type": "string"},
+        "services": {"type": "array", "items": {"$ref": "ServiceInstance"}}
+      }
+    },
+    "ApplicationRoute": {
+      "properties": {
+        "guid": {"type": "string"},
+        "host": {"type": "string"},
+        "domain": {"properties": {"guid": {"type": "string"}, "name": {"type": "string"}}}
+      }
+    },
+    "ServiceInstance": {
+      "properties": {
+        "guid": {"type": "string"},
+        "name": {"type": "string"},
+        "service_plan": {"properties": {
+            "name": {"type": "string"},
+            "service": {"properties": {"guid": {"type": "string"}, "label": {"type": "string"}}}}
+        },
+        "dashboard_uri": {"type": "string"},
+        "bound_app_count": {"type": "integer", "format": "int32"}
+      }
+    },
+    "ServiceInstanceListResponse": {
+      "properties": {
+        "total_results":  {"type": "integer", "format": "int32"},
+        "total_pages": {"type": "integer", "format": "int32"},
+        "prev_url": {"type": "string"},
+        "next_url": {"type": "string"},
+        "resources": {"type":"array", "items":{"$ref": "ServiceInstanceDetails"}}
+      }
+    },
+    "ServiceInstanceDetails": {
+      "properties": {
+        "metadata": {"$ref": "Metadata"},
+        "entity": {
+          "properties": {
+            "label":  {"type": "string"},
+            "provider": {"type": "string"},
+            "url":  {"type": "string"},
+            "description":  {"type": "string"},
+            "long_description": {"type": "string"},
+            "version":  {"type": "string"},
+            "info_url": {"type": "string"},
+            "active":  {"type": "boolean"},
+            "bindable": {"type": "boolean"},
+            "unique_id":  {"type": "string"},
+            "extra": {"type": "string"},
+            "tags": {"type": "array", "items": {"type": "string"}},
+            "requires": {"type": "array", "items": {"type": "string"}},
+            "documentation_url":  {"type": "string"},
+            "service_broker_guid": {"type": "string"},
+            "plan_updateable":  {"type": "boolean"},
+            "service_plans_url": {"type": "string"},
+            "service_plans": {"type": "array", "items": {"$ref": "ServicePlan"}}
+          }
+        }
+      }
+    },
+    "Metadata": {
       "properties": {
         "guid":  {"type": "string"},
         "url": {"type": "string"},
@@ -44,57 +133,23 @@
         "updated_at": {"type": "string"}
       }
     },
-    "service_plan_entity": {
-      "name": {"type": "string"},
-      "free": {"type": "boolean"},
-      "description": {"type": "string"},
-      "service_guid": {"type": "string"},
-      "extra": {"type": "string"},
-      "unique_id": {"type": "string"},
-      "public": {"type": "boolean"},
-      "active": {"type": "boolean"},
-      "service_url": {"type": "string"},
-      "service_instances_url": {"type": "string"}
-    },
-    "service_plan":{
-      "metadata": { "$ref": "metadata"},
-      "service_plan_entity": { "$ref": "service_plan_entity"}
-    },
-    "entity": {
+    "ServicePlan": {
       "properties": {
-        "label":  {"type": "string"},
-        "provider": {"type": "string"},
-        "url":  {"type": "string"},
-        "description":  {"type": "string"},
-        "long_description": {"type": "string"},
-        "version":  {"type": "string"},
-        "info_url": {"type": "string"},
-        "active":  {"type": "string"},
-        "bindable": {"type": "string"},
-        "unique_id":  {"type": "string"},
-        "extra": {"type": "string"},
-        "tags": {"type": "array", "items": {"type": "string"}},
-        "requires": {"type": "array", "items": {"type": "string"}},
-        "documentation_url":  {"type": "string"},
-        "service_broker_guid": {"type": "string"},
-        "plan_updateable":  {"type": "string"},
-        "service_plans_url": {"type": "string"},
-        "service_plans": {"type": "array", "items": {"$ref": "service_plan"}}
-      }
-    },
-    "service": {
-      "properties": {
-        "metadata":  {"$ref": "metadata"},
-        "entity": {"$ref": "entity"}
-      }
-    },
-    "services_list": {
-      "properties": {
-        "total_results":  {"type": "integer", "format": "int32"},
-        "total_pages": {"type": "integer", "format": "int32"},
-        "prev_url": {"type": "string"},
-        "next_url": {"type": "string"},
-        "resources": {"type":"array", "items":{"$ref": "service"}}
+        "metadata":  {"$ref": "Metadata"},
+        "entity": {
+          "properties": {
+            "name": {"type": "string"},
+            "free": {"type": "boolean"},
+            "description": {"type": "string"},
+            "service_guid": {"type": "string"},
+            "extra": {"type": "string"},
+            "unique_id": {"type": "string"},
+            "public": {"type": "boolean"},
+            "active": {"type": "boolean"},
+            "service_url": {"type": "string"},
+            "service_instances_url": {"type": "string"}
+          }
+        }
       }
     }
   }

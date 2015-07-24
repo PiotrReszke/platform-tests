@@ -40,7 +40,9 @@ APP_SCHEMAS = {
     "data-catalog": "swagger/data_catalog_swagger.json",
     "metrics-provider": "swagger/metrics_provider_swagger.json",
     "service-catalog": "swagger/service_catalog_swagger.json",
-    "user-management": "swagger/user_management_swagger.json"
+    "user-management": "swagger/user_management_swagger.json",
+    "app-launcher-helper": "swagger/app_launcher_helper_swagger.json",
+    "hive": "swagger/dataset_publisher_swagger.json"
 }
 
 
@@ -82,6 +84,7 @@ def parse_arguments():
                         help="choose a group of tests which should be executed")
     parser.add_argument("--client-type",
                         default="console",
+                        choices=["console", "app"],
                         help="choose a client type for tests")
     return parser.parse_args()
 

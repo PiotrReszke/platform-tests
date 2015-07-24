@@ -1,6 +1,5 @@
-from test_utils import ApiTestCase, cleanup_after_failed_setup
-from test_utils.objects import Organization, User, get_admin_client
-from test_utils.client_enum import Role
+from test_utils import ApiTestCase, cleanup_after_failed_setup, ClientRole, get_admin_client
+from test_utils.objects import Organization, User
 
 
 class TestOrganizationUsers(ApiTestCase):
@@ -9,7 +8,7 @@ class TestOrganizationUsers(ApiTestCase):
     @cleanup_after_failed_setup(Organization.delete_test_orgs)
     def setUpClass(cls):
         cls.organization = Organization.create()
-        cls.org_manager_client = User.create_user_for_client(cls.organization.guid, Role.org_manager).app_client
+        cls.org_manager_client = User.create_user_for_client(cls.organization.guid, ClientRole.org_manager).app_client
 
     def test_create_organization_user_with_role(self):
         """Create a user with each of the roles allowed"""

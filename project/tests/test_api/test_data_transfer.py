@@ -14,14 +14,12 @@ class TestDataTransfer(ApiTestCase):
         cls.org.add_admin()
 
     def test_get_transfers(self):
-        transfers = Transfer.get_list(orgs=[self.org])
+        transfers = Transfer.api_get_list(orgs=[self.org])
         logger.info("{} transfers".format(len(transfers)))
 
     def test_submit_transfer(self):
         data_source = "http://fake-csv-server.apps.gotapaas.eu/fake-csv/100"
-        expected_transfer = Transfer.create(source=data_source, org_guid=self.org.guid)
-        transfer = Transfer.get(expected_transfer.id)
-        self.assertTransfersEqual(transfer, expected_transfer)
-
-
+        expected_transfer = Transfer.api_create(source=data_source, org_guid=self.org.guid)
+        transfer = Transfer.api_get(expected_transfer.id)
+        self.assertAttributesEqual(transfer, expected_transfer)
 

@@ -1,47 +1,19 @@
 import functools
 import time
 
-from test_utils import config
+from test_utils import TEST_SETTINGS, get_config_value, get_admin_client
 from test_utils.api_client import ConsoleClient, AppClient
 import test_utils.api_calls.user_management_api_calls as api
 
-__ADMIN = None
 
-
-
-__all__ = ["User", "get_admin_client", "get_admin_user"]
-
-
-def get_admin_user():
-    global __ADMIN
-    if __ADMIN is None:
-        admin_guid = config.get_config_value("admin_guid")
-        admin_username = config.get_config_value("admin_username")
-        admin_password = config.TEST_SETTINGS["TEST_PASSWORD"]
-        __ADMIN = User(guid=admin_guid, username=admin_username, client_type=AppClient, password=admin_password)
-    return __ADMIN
-
-
-__ADMIN_CLI = None
-
-
-def get_admin_client():
-    global __ADMIN_CLI
-    if __ADMIN_CLI is None:
-        admin_username = config.get_config_value("admin_username")
-        admin_password = config.TEST_SETTINGS["TEST_PASSWORD"]
-        client_type = config.TEST_SETTINGS["TEST_CLIENT_TYPE"]
-        if client_type == "console":
-            __ADMIN_CLI = ConsoleClient(admin_username, admin_password)
-        elif client_type == "app":
-            __ADMIN_CLI = AppClient(admin_username, admin_password)
-    return __ADMIN_CLI
+__all__ = ["User"]
 
 
 @functools.total_ordering
 class User(object):
-    TEST_EMAIL = config.TEST_SETTINGS["TEST_EMAIL"]
+    TEST_EMAIL = TEST_SETTINGS["TEST_EMAIL"]
     TEST_EMAIL_FORM = TEST_EMAIL.replace('@', '+{}@')
+    __ADMIN = None
 
     def __init__(self, guid, username, roles=None, organization_guid=None, space_guid=None, client_type=None,
                  password=None):
@@ -142,5 +114,14 @@ class User(object):
     def delete_via_space(self, client=None):
         client = client or get_admin_client()
         api.api_delete_space_user(client, self.space_guid, self.organizations_guid[0])
+
+    @classmethod
+    def get_admin(cls):
+        if cls.__ADMIN is None:
+            admin_guid = get_config_value("admin_guid")
+            admin_username = get_config_value("admin_username")
+            admin_password = TEST_SETTINGS["TEST_PASSWORD"]
+            cls.__ADMIN = cls(guid=admin_guid, username=admin_username, client_type=AppClient, password=admin_password)
+        return cls.__ADMIN
 
 # fix deletion via org/space to delete from all org/space

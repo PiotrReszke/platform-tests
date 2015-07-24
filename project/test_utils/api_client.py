@@ -1,5 +1,5 @@
+import enum
 import json
-from math import floor, ceil
 import random
 import string
 import time
@@ -8,15 +8,29 @@ from pyswagger import SwaggerApp
 from pyswagger.core import BaseClient
 import requests
 
-from test_utils.gmail_api import get_code_from_gmail
-from test_utils.logger import get_logger
-from test_utils import config
+from test_utils import config, get_logger, get_code_from_gmail
 
 
 logger = get_logger("api client")
 
 
-__all__ = ["UnexpectedResponseError", "AppClient", "ConsoleClient", "CfApiClient"]
+__all__ = ["UnexpectedResponseError", "AppClient", "ConsoleClient", "CfApiClient", "get_admin_client", "ClientRole"]
+
+
+__ADMIN_CLIENT = None
+
+
+def get_admin_client():
+    global __ADMIN_CLIENT
+    if __ADMIN_CLIENT is None:
+        admin_username = config.TEST_SETTINGS["TEST_USERNAME"]
+        admin_password = config.TEST_SETTINGS["TEST_PASSWORD"]
+        client_type = config.TEST_SETTINGS["TEST_CLIENT_TYPE"]
+        if client_type == "console":
+            __ADMIN_CLIENT = ConsoleClient(admin_username, admin_password)
+        elif client_type == "app":
+            __ADMIN_CLIENT = AppClient(admin_username, admin_password)
+    return __ADMIN_CLIENT
 
 
 class UnexpectedResponseError(Exception):
@@ -25,6 +39,14 @@ class UnexpectedResponseError(Exception):
         super(UnexpectedResponseError, self).__init__(message)
         self.status = status
         self.error_message = error_message
+
+
+
+class ClientRole(enum.Enum):
+    undefined = "undefined"
+    admin = "admin"
+    org_manager = ("managers",)
+
 
 
 class ApiClient(BaseClient):
@@ -180,10 +202,8 @@ class ConsoleClient(ApiClient):
 
     def _generate_password(self):
         pass_length = 8
-        letters = ''.join(random.choice(string.ascii_letters) for _ in range(ceil(pass_length / 2)))
-        digits = ''.join(random.choice(string.digits) for _ in range(floor(pass_length / 2) - 1))
-        p = letters + digits + '%'
-        self._password = p
+        base = string.ascii_letters + string.digits + "%"
+        self._password = ["".join(random.choice(base)) for _ in range(pass_length)]
 
     @staticmethod
     def _get_reset_password_code(username):
