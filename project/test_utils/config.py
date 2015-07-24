@@ -47,7 +47,7 @@ TEST_SETTINGS = {}
 
 
 def update_test_settings(client_type, test_environment=None, test_username=None, proxy=None, password=None, login_token=None,
-                         github_auth=None, test_email=None):
+                         github_auth=(), test_email=None):
     TEST_SETTINGS["TEST_ENVIRONMENT"] = test_environment or TEST_SETTINGS["TEST_ENVIRONMENT"]
     TEST_SETTINGS["TEST_USERNAME"] = test_username or TEST_SETTINGS["TEST_USERNAME"]
     TEST_SETTINGS["TEST_PROXY"] = proxy
@@ -57,10 +57,7 @@ def update_test_settings(client_type, test_environment=None, test_username=None,
         secret_login_token = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]]["login_token"]
     TEST_SETTINGS["TEST_PASSWORD"] = password or secret_password
     TEST_SETTINGS["TEST_LOGIN_TOKEN"] = login_token or secret_login_token
-    if None not in github_auth:
-        TEST_SETTINGS["GITHUB_AUTH"] = github_auth
-    else:
-        TEST_SETTINGS["GITHUB_AUTH"] = TEST_SETTINGS.get("GITHUB_AUTH")
+    TEST_SETTINGS["GITHUB_AUTH"] = github_auth or TEST_SETTINGS.get("GITHUB_AUTH")
     TEST_SETTINGS["TEST_EMAIL"] = test_email or TEST_SETTINGS["TEST_EMAIL"]
     TEST_SETTINGS["TEST_CLIENT_TYPE"] = client_type
 
