@@ -21,7 +21,7 @@ def api_get_apps(client, space_guid):
     return json.loads(client.call(APP_NAME, "get_apps_list", space=space_guid))
 
 
-def api_get_app_details(client, app_guid):
+def api_get_app_summary(client, app_guid):
     """POST /rest/orgs"""
     logger.info("------------------ Get {} details ------------------".format(app_guid))
     return json.loads(client.call(APP_NAME, "get_app_details", app_guid=app_guid))

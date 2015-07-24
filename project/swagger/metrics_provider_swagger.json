@@ -1,0 +1,44 @@
+{
+  "info": {"version": "1.0.0", "title": "Metrics Controller API"},
+  "paths": {
+    "/rest/orgs/{org_guid}/metrics": {
+      "get": {
+        "operationId": "get_org_metrics",
+        "parameters": [{"name": "org_guid", "in": "path", "type": "string"}],
+        "responses": {
+          "200": {"description": "OK", "schema": {"$ref": "MetricsResponse"}},
+          "401": {"description": "Unauthorized", "type": "string"},
+          "403": {"description": "Forbidden", "type": "string"},
+          "404": {"description": "Not Found", "type": "string"}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "MetricsResponse": {
+      "properties": {
+        "appsDown": {"type": "integer", "format": "int32"},
+        "appsRunning": {"type": "integer", "format": "int32"},
+        "datasetCount": {"type": "integer", "format": "int32"},
+        "domainsUsage": {"type": "integer", "format": "int32"},
+        "domainsUsagePercent": {"$ref": "Percentage"},
+        "memoryUsage": {"$ref": "Percentage"},
+        "memoryUsageAbsolute": {"type": "integer", "format": "int32"},
+        "privateDatasets": {"type": "integer", "format": "int32"},
+        "publicDatasets": {"type": "integer", "format": "int32"},
+        "serviceUsage": {"type": "integer", "format": "int32"},
+        "serviceUsagePercent": {"$ref": "Percentage"},
+        "totalUsers": {"type": "integer", "format": "int32"}
+      }
+    },
+    "Percentage": {
+      "properties": {
+        "numerator": {"type": "integer", "format": "int32"},
+        "denominator": {"type": "integer", "format": "int32"}
+      }
+    }
+  },
+  "security": [{"default": []}],
+  "swagger": "2.0",
+  "consumes": ["application/json"]
+}

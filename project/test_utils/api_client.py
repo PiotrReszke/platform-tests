@@ -16,7 +16,7 @@ from test_utils import config
 logger = get_logger("api client")
 
 
-__all__ = ["UnexpectedResponseError", "AppClient", "ConsoleClient"]
+__all__ = ["UnexpectedResponseError", "AppClient", "ConsoleClient", "CfApiClient"]
 
 
 class UnexpectedResponseError(Exception):
@@ -97,8 +97,8 @@ class ApiClient(BaseClient):
     def _log_request(self, method, url, headers="", data="", params=None):
         if params:
             url = "{}?{}".format(url, "&".join(["{}={}".format(k, v) for k, v in params.items()]))
-        #if "Authorization" in headers:
-        #    headers["Authorization"] = "[SECRET]"
+        # if "Authorization" in headers:
+        #     headers["Authorization"] = "[SECRET]"
         msg = [
             "\n----------------Request------------------",
             "Client name: {}".format(self._username),
@@ -219,3 +219,38 @@ class AppClient(ApiClient):
         if (self._token is not None) and (time.time() - self._token_retrieval_time > self.TOKEN_EXPIRY_TIME):
             self._get_token()
         return super().call(application_name, operation_id, **kwargs)
+
+
+class CfApiClient(AppClient):
+
+    _ME = None
+
+    def __init__(self):
+        username = config.TEST_SETTINGS["TEST_USERNAME"]
+        password = config.TEST_SETTINGS["TEST_PASSWORD"]
+        super().__init__(username, password)
+        self._api_endpoint = "http://{}/v2/".format(config.get_config_value("cf_endpoint"))
+
+    @classmethod
+    def get_client(cls):
+        if cls._ME is None:
+            cls._ME = cls()
+        return cls._ME
+
+    def call(self, method, path, params=None, body=None):
+        if (time.time() - self._token_retrieval_time) > self.TOKEN_EXPIRY_TIME:
+            self._get_token()
+        request = requests.Request(
+            method=method.upper(),
+            params=params,
+            url=self._api_endpoint + path,
+            headers={"Accept": "application/json", "Authorization": self._token},
+            json=body
+        )
+        request = request.prepare()
+        self._log_request(method=request.method, url=request.url, headers=request.headers)
+        response = self._session.send(request)
+        self._log_response(status=response.status_code, headers=response.headers, text=response.text)
+        if not response.ok:
+            raise UnexpectedResponseError(response.status_code, response.text)
+        return json.loads(response.text)

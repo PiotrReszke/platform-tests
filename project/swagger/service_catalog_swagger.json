@@ -44,7 +44,6 @@
         "updated_at": {"type": "string"}
       }
     },
-
     "service_plan_entity": {
       "name": {"type": "string"},
       "free": {"type": "boolean"},
@@ -57,12 +56,10 @@
       "service_url": {"type": "string"},
       "service_instances_url": {"type": "string"}
     },
-
     "service_plan":{
       "metadata": { "$ref": "metadata"},
       "service_plan_entity": { "$ref": "service_plan_entity"}
     },
-
     "entity": {
       "properties": {
         "label":  {"type": "string"},
@@ -82,7 +79,7 @@
         "service_broker_guid": {"type": "string"},
         "plan_updateable":  {"type": "string"},
         "service_plans_url": {"type": "string"},
-        "service_plans": {"type": "array", "items": {"$ref": "service_plan"} }
+        "service_plans": {"type": "array", "items": {"$ref": "service_plan"}}
       }
     },
     "service": {

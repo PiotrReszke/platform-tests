@@ -3,8 +3,9 @@ import time
 
 from test_utils import config
 import test_utils.api_calls.user_management_api_calls as api
-from test_utils.objects.user import get_admin_user, get_admin_client
-
+import test_utils.api_calls.metrics_provider_api_calls as metrics_api
+from test_utils.objects import get_admin_user, get_admin_client
+from test_utils.config import get_config_value
 
 
 __all__ = ["Organization", "Space"]
@@ -22,6 +23,7 @@ class Organization(object):
         self.name = name
         self.guid = guid
         self.spaces = [] if spaces is None else spaces
+        self.metrics = {}
 
     def __repr__(self):
         return "{0} (name={1}, guid={2}, spaces={3})".format(self.__class__.__name__, self.name, self.guid, self.spaces)
@@ -61,6 +63,10 @@ class Organization(object):
             org = cls.TEST_ORGS[0]
             org.delete()
 
+    @classmethod
+    def get_seedorg(cls):
+        return cls(name="seedorg", guid=get_config_value("seedorg_guid"))
+
     def rename(self, new_name, client=None):
         client = client or get_admin_client()
         self.name = new_name
@@ -75,6 +81,7 @@ class Organization(object):
         """Add admin user to the organization"""
         admin = get_admin_user()
         admin.add_to_organization(self.guid, list(roles))
+
 
     # @classmethod
     # def invite(cls, email=None, client=get_admin_client()):
@@ -100,6 +107,26 @@ class Organization(object):
     #     cls.TEST_ORGS.append(org)
     #     return org
 
+    def api_get_metrics(self, client=None):
+        client = client or get_admin_client()
+        response = metrics_api.api_get_org_metrics(client, self.guid)
+        self.metrics = {
+            "apps_down": response["appsDown"],
+            "apps_running": response["appsRunning"],
+            "dataset_count": response["datasetCount"],
+            "domains_usage": response["domainsUsage"],
+            "domains_usage_percent": response["domainsUsagePercent"]["numerator"] / response["domainsUsagePercent"]["denominator"],
+            "memory_usage_percent": response["memoryUsage"]["numerator"] / response["memoryUsage"]["denominator"],
+            "memory_usage": response["memoryUsageAbsolute"],
+            "private_datasets": response["privateDatasets"],
+            "public_datasets": response["publicDatasets"],
+            "service_usage": response["serviceUsage"],
+            "service_usage_percent": response["serviceUsagePercent"]["numerator"] / response["serviceUsagePercent"]["denominator"],
+            "total_users": response["totalUsers"]
+        }
+
+
+
 
 @functools.total_ordering
 class Space(object):
@@ -117,4 +144,7 @@ class Space(object):
     def __lt__(self, other):
         return self.guid < other.guid
 
+    @classmethod
+    def get_seedspace(cls):
+        return cls(name="seedspace", guid=get_config_value("seedspace_guid"))
 

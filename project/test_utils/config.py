@@ -3,7 +3,8 @@ import configparser
 import os
 
 
-__all__ = ["APP_SCHEMAS", "TEST_SETTINGS", "update_test_settings", "parse_arguments", "get_config_value", "get_ssh_key_passphrase"]
+__all__ = ["APP_SCHEMAS", "TEST_SETTINGS", "update_test_settings", "parse_arguments", "get_config_value",
+           "get_ssh_key_passphrase"]
 
 
 # configuration variables depending on the environment
@@ -14,7 +15,8 @@ CONFIG = {
         "cf_endpoint": "api.run.gotapaas.eu",
         "admin_guid": "13c32424-23f4-44f7-bbb9-60763bfab4bc",
         "admin_username": "admin",
-        "seedorg_guid": "16829796-2b3a-4c98-ad08-166315ca1411",
+        "seedorg_guid": "69e8563a-f182-4c1a-9b9d-9a475297cb41",
+        "seedspace_guid": "16829796-2b3a-4c98-ad08-166315ca1411",
         "cdh_host": "cdh.gotapaas.eu"
     },
     "demo-gotapaas.com": {
@@ -24,6 +26,7 @@ CONFIG = {
         "admin_guid": "284b34e8-6c23-4d64-afd1-952a394df501",
         "admin_username": "tester-admin",
         "seedorg_guid": "79d9c4ec-292c-48b4-9d7e-87ff62f86b1e",
+        "seedspace_guid": "2b92e961-0ff8-4fe1-8a14-b8b491b05700",
         "cdh_host": "cdh.demo-gotapaas.com"
     }
 }
@@ -31,10 +34,11 @@ CONFIG = {
 
 # schema paths for each application
 APP_SCHEMAS = {
-    "user-management": "swagger/user_management_swagger.json",
-    "data-catalog": "swagger/data_catalog_swagger.json",
     "das": "swagger/data_acquisition_service_swagger.json",
-    "service-catalog": "swagger/service_catalog_swagger.json"
+    "data-catalog": "swagger/data_catalog_swagger.json",
+    "metrics-provider": "swagger/metrics_provider_swagger.json",
+    "service-catalog": "swagger/service_catalog_swagger.json",
+    "user-management": "swagger/user_management_swagger.json"
 }
 
 
@@ -124,5 +128,5 @@ update_test_settings(client_type="console",
                      proxy=(os.environ.get("TEST_PROXY") or TEST_SETTINGS["TEST_PROXY"]),
                      password=os.environ.get("TEST_PASSWORD"),
                      login_token=os.environ.get("TEST_LOGIN_TOKEN"),
-                     github_auth=(os.environ.get("GITHUB_USERNAME"), os.environ.get("GITHUB_PASSWORD")))
+                     github_auth=__github_auth)
 

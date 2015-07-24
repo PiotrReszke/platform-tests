@@ -10,9 +10,9 @@ class TestMarketplaceServices(ApiTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.api_marketplace = Marketplace.api_fetch_marketplace_services(get_config_value("seedorg_guid")) #seedspace guid
+        cls.api_marketplace = Marketplace.api_fetch_marketplace_services(get_config_value("seedspace_guid")) #seedspace guid
         cf_login("seedorg", "seedspace")
-        cls.cf_marketplace = Marketplace.cf_fetch_marketplace_services(get_config_value("seedorg_guid"))
+        cls.cf_marketplace = Marketplace.cf_fetch_marketplace_services(get_config_value("seedspace_guid"))
 
     def test_marketplace_services(self):
         self.assertEqual(self.api_marketplace, self.cf_marketplace)

@@ -13,19 +13,20 @@ class TAProotApplicationsSmokeTest(ApiTestCase):
     def setUpClass(cls):
         cls.settings_file = github_get_file_content(repository="platform-appstack", path="demo-settings.yml")
         cf_login("seedorg", "seedspace")
+        cls.seedspace_guid = config.get_config_value("seedspace_guid")
 
     def test_cf_application_status(self):
         """Check that all applications from demo-settings.yml are started on cf"""
         expected_apps = Application.get_list_from_settings(self.settings_file)
         logger.info("{} apps are expected to be started".format(len(expected_apps)))
-        apps = Application.cf_get_list()
+        apps = Application.cf_api_get_list(self.seedspace_guid)
         logger.info("There are {} apps on cf".format(len(apps)))
         # find out which apps are missing
         expected_app_names = [app.name for app in expected_apps]
         app_names = [app.name for app in apps]
         missing_apps = [name for name in expected_app_names if name not in app_names]
         # check that all expected apps are running
-        apps_not_started = [app.name for app in apps if app.name in expected_app_names and app.state != "started"]
+        apps_not_started = [app.name for app in apps if app.name in expected_app_names and not app.is_started]
         # assert that both conditions are satisfied
         self.assertTrue((missing_apps == [] and apps_not_started == []),
                         "\nMissing applications: {}\nApplications not started: {}".format(missing_apps, apps_not_started))
@@ -35,7 +36,7 @@ class TAProotApplicationsSmokeTest(ApiTestCase):
         # Get expected apps from settings file
         expected_apps = Application.get_list_from_settings(self.settings_file)
         # Get apps list from console
-        apps_list = Application.api_get_apps_list(config.get_config_value('seedorg_guid'))
+        apps_list = Application.api_get_apps_list(self.seedspace_guid)
         missing_apps = []
         different_apps = []
         for app in expected_apps:

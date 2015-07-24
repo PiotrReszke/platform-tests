@@ -44,7 +44,7 @@ class Marketplace(object):
 
     @classmethod
     def cf_fetch_marketplace_services(cls, space_guid=None):
-        cf_response = json.loads(cf.cf_services(space_guid))
+        cf_response = cf.cf_api_services(space_guid)
         services = cf_response["resources"]
         services_count = cf_response["total_results"]
         services_names = cls.get_services_names(services)
