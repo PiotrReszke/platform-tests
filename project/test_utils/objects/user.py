@@ -30,7 +30,11 @@ def get_admin_client():
     if __ADMIN_CLI is None:
         admin_username = config.get_config_value("admin_username")
         admin_password = config.TEST_SETTINGS["TEST_PASSWORD"]
-        __ADMIN_CLI = AppClient(admin_username, admin_password)
+        client_type = config.TEST_SETTINGS["TEST_CLIENT_TYPE"]
+        if client_type == "console":
+            __ADMIN_CLI = ConsoleClient(admin_username, admin_password)
+        elif client_type == "app":
+            __ADMIN_CLI = AppClient(admin_username, admin_password)
     return __ADMIN_CLI
 
 

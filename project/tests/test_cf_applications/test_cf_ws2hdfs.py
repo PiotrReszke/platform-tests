@@ -4,7 +4,7 @@ import websocket
 
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
 from test_utils.objects import Application
-import test_utils.cli.cloud_foundry_cli as cf_cli
+import test_utils.cli.cloud_foundry as cf_cli
 from test_utils.cli.hdfs import Topic
 
 

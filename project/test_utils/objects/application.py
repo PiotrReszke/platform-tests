@@ -11,6 +11,7 @@ import test_utils.cli.cloud_foundry as cf
 from test_utils.api_calls import service_catalog_api_calls as api
 from test_utils.logger import get_logger
 from test_utils import config
+from test_utils.objects.user import get_admin_client
 
 
 logger = get_logger("application")
@@ -147,12 +148,14 @@ class Application(object):
         return json.loads(cf.cf_curl(path, 'GET'))
 
     @classmethod
-    def api_get_app_summary(cls, app_guid):
-        return api.api_get_app_details(app_guid)
+    def api_get_app_summary(cls, app_guid, client=None):
+        client = client or get_admin_client()
+        return api.api_get_app_details(app_guid=app_guid, client=client)
 
     @classmethod
-    def api_get_apps_list(cls, space_guid):
-        response = api.api_get_apps(space_guid)
+    def api_get_apps_list(cls, space_guid, client=None):
+        client = client or get_admin_client()
+        response = api.api_get_apps(space_guid=space_guid, client=client)
         applications = []
         for app in response:
             applications.append(cls(name=app['name'], guid=app['guid']))
