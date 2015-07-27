@@ -70,8 +70,7 @@ def get_recent_message_to(to_email):
         if message_numb >= 2:
             return get_message(service, message_list[0].get('id'))['raw']
         time.sleep(3)
-        logger.info("jestem")
-        raise TimeoutError("Can't find email message with code to {}".format(to_email))
+    raise TimeoutError("Can't find email message with code to {}".format(to_email))
 
 
 def extract_code_from_message(message):
