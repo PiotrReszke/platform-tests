@@ -131,6 +131,7 @@ class ConsoleClient(ApiClient):
 
     def __init__(self, username, password=None):
         super().__init__(username, password)
+        self._login_scheme = config.get_config_value("login.do_scheme")
         if password is None:
             self._username = username
             self._call_forgot_password()
@@ -157,21 +158,21 @@ class ConsoleClient(ApiClient):
 
     def _authenticate(self):
         logger.info("-------------------- Authenticating user {} --------------------".format(self._username))
-        path = "{}://{}/login.do".format(config.get_config_value("login.do_scheme"), self._login_endpoint)
+        path = "{}://{}/login.do".format(self._login_scheme, self._login_endpoint)
         data = {"username": self._username, "password": self._password}
         headers = {"Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded"}
         self._make_request(path, data, headers)
 
     def _call_forgot_password(self):
         logger.info("-------------------- Call forgot password for user {} --------------------".format(self._username))
-        path = "https://{}/forgot_password.do".format(self._login_endpoint)
+        path = "{}://{}/forgot_password.do".format(self._login_scheme, self._login_endpoint)
         data = {"email": self._username}
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         self._make_request(path, data, headers)
 
     def _reset_password(self, code):
         logger.info("-------------------- Reset password for user {} --------------------".format(self._username))
-        path = "https://{}/reset_password.do".format(self._login_endpoint)
+        path = "{}://{}/reset_password.do".format(self._login_scheme, self._login_endpoint)
         data = {"email": self._username, "password": self._password, "password_confirmation": self._password,
                 "code": code}
         headers = {"Content-Type": "application/x-www-form-urlencoded"}

@@ -49,23 +49,19 @@ __SECRET = configparser.ConfigParser()
 __SECRET.read("test_utils/secrets/.secret.ini")
 
 
-TEST_SETTINGS = {}
+TEST_SETTINGS = {
+    "github_auth": (__SECRET["github"]["username"], __SECRET["github"]["password"]),
+    "TEST_EMAIL": "intel.data.tests@gmail.com"
+}
 
 
-def update_test_settings(client_type, test_environment=None, test_username=None, proxy=None, password=None, login_token=None,
-                         github_auth=(), test_email=None):
+def update_test_settings(client_type=None, test_environment=None, test_username=None, proxy=None):
     TEST_SETTINGS["TEST_ENVIRONMENT"] = test_environment or TEST_SETTINGS["TEST_ENVIRONMENT"]
     TEST_SETTINGS["TEST_USERNAME"] = test_username or TEST_SETTINGS["TEST_USERNAME"]
     TEST_SETTINGS["TEST_PROXY"] = proxy
-    secret_password = secret_login_token = None
-    if __SECRET.has_section(TEST_SETTINGS["TEST_ENVIRONMENT"]):
-        secret_password = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]][TEST_SETTINGS["TEST_USERNAME"]]
-        secret_login_token = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]]["login_token"]
-    TEST_SETTINGS["TEST_PASSWORD"] = password or secret_password
-    TEST_SETTINGS["TEST_LOGIN_TOKEN"] = login_token or secret_login_token
-    TEST_SETTINGS["GITHUB_AUTH"] = github_auth or TEST_SETTINGS.get("GITHUB_AUTH")
-    TEST_SETTINGS["TEST_EMAIL"] = test_email or TEST_SETTINGS["TEST_EMAIL"]
-    TEST_SETTINGS["TEST_CLIENT_TYPE"] = client_type
+    TEST_SETTINGS["TEST_CLIENT_TYPE"] = client_type or TEST_SETTINGS["TEST_CLIENT_TYPE"]
+    TEST_SETTINGS["TEST_PASSWORD"] = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]][TEST_SETTINGS["TEST_USERNAME"]]
+    TEST_SETTINGS["TEST_LOGIN_TOKEN"] = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]]["login_token"]
 
 
 def parse_arguments():
@@ -78,26 +74,12 @@ def parse_arguments():
                         "--username",
                         default=None,
                         help="username for logging into Cloud Foundry")
-    parser.add_argument("-p",
-                        "--password",
-                        default=None,
-                        help="password matching environment and username")
-    parser.add_argument("-l",
-                        "--login-token",
-                        default=None,
-                        help="authorization token for cf login")
     parser.add_argument("--proxy",
                         default=None,
                         help="set proxy for api client")
     parser.add_argument("--test",
                         default=None,
                         help="choose a group of tests which should be executed")
-    parser.add_argument("--github-username",
-                        default=None,
-                        help="username in GitHub")
-    parser.add_argument("--github-password",
-                        default=None,
-                        help="password matching GitHub username")
     parser.add_argument("--client-type",
                         default="console",
                         help="choose a client type for tests")
@@ -114,21 +96,13 @@ def get_ssh_key_passphrase():
         return __SECRET["ssh"]["passphrase"]
 
 # default settings
-__github_auth = None
-if __SECRET.has_section("github"):
-    __github_auth = (__SECRET["github"]["username"], __SECRET["github"]["password"])
 update_test_settings(client_type="console",
                      test_environment="gotapaas.eu",
                      test_username="admin",
-                     proxy="proxy-mu.intel.com:911",
-                     github_auth=__github_auth,
-                     test_email="intel.data.tests@gmail.com")
+                     proxy="proxy-mu.intel.com:911")
 # change settings when tests are run with PyCharm runner using environment variables
-update_test_settings(client_type="console",
+update_test_settings(client_type=os.environ.get("TEST_CLIENT_TYPE"),
                      test_environment=os.environ.get("TEST_ENVIRONMENT"),
                      test_username=os.environ.get("TEST_USERNAME"),
-                     proxy=(os.environ.get("TEST_PROXY") or TEST_SETTINGS["TEST_PROXY"]),
-                     password=os.environ.get("TEST_PASSWORD"),
-                     login_token=os.environ.get("TEST_LOGIN_TOKEN"),
-                     github_auth=__github_auth)
+                     proxy=os.environ.get("TEST_PROXY"))
 

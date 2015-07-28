@@ -21,19 +21,14 @@ if __name__ == "__main__":
     config.update_test_settings(client_type=args.client_type,
                                 test_environment=args.environment,
                                 test_username=args.username,
-                                proxy=args.proxy,
-                                password=args.password,
-                                login_token=args.login_token,
-                                github_auth=(args.github_username, args.github_password))
+                                proxy=args.proxy)
 
     if args.test is None:
         test_dir = "tests"
     else:
-        test_dir = args.test
-        if os.path.exists("tests/" + test_dir):
-            test_dir = "tests/" + test_dir
-        else:
-            raise NotADirectoryError('Directory {} doesn\'t exists'.format(test_dir))
+        test_dir = "tests/" + args.test
+        if not os.path.exists(test_dir):
+            raise NotADirectoryError("Directory {} doesn't exists".format(args.test))
 
     # run tests
     if is_running_under_teamcity():

@@ -12,9 +12,6 @@ __all__ = ["cf_login", "cf_target", "cf_push", "cf_marketplace", "cf_cs", "cf_st
 logger = get_logger("cloud_foundry_cli")
 
 
-__CF_API_CLIENT = CfApiClient.get_client()
-
-
 # ------------------------------- command line interface ------------------------------- #
 
 def cf_login(organization, space):
@@ -87,7 +84,7 @@ def __get_all_pages(path, query_params=None):
     page_num = 1
     while True:
         params = {"results-per-page": 100, "page": page_num}.update(query_params)
-        response = __CF_API_CLIENT.call(method="GET", path=path, params=params)
+        response = CfApiClient.get_client().call(method="GET", path=path, params=params)
         resources.extend(response["resources"])
         if page_num == response["total_pages"]:
             break
@@ -102,23 +99,23 @@ def cf_api_get_service_instances(org_guid):
 
 def cf_api_env(app_guid):
     logger.info("------------------ CF: env for app {} ------------------".format(app_guid))
-    return __CF_API_CLIENT.call(method="GET", path="apps/{}/env".format(app_guid))
+    return CfApiClient.get_client().call(method="GET", path="apps/{}/env".format(app_guid))
 
 
 def cf_api_services(space_guid):
     logger.info("------------------ CF: services for space {} ------------------".format(space_guid))
-    return __CF_API_CLIENT.call(method="GET", path="spaces/{}/services".format(space_guid))
+    return CfApiClient.get_client().call(method="GET", path="spaces/{}/services".format(space_guid))
 
 
 def cf_api_app_summary(app_guid):
     logger.info("------------------ CF: summary for app {} ------------------".format(app_guid))
-    return __CF_API_CLIENT.call("GET", "apps/{}/summary".format(app_guid))
+    return CfApiClient.get_client().call("GET", "apps/{}/summary".format(app_guid))
 
 
 def cf_api_space_summary(space_guid):
     """Equal to running cf apps"""
     logger.info("------------------ CF: summary for space {} ------------------".format(space_guid))
-    return __CF_API_CLIENT.call("GET", "spaces/{}/summary".format(space_guid))
+    return CfApiClient.get_client().call("GET", "spaces/{}/summary".format(space_guid))
 
 
 def cf_api_org_managers(org_guid):
