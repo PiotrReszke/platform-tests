@@ -22,7 +22,7 @@ class TestOrganizationUsers(ApiTestCase):
     def test_create_organization_user(self):
         for client in [self.org_manager_client, get_admin_client()]:
             with self.subTest(client=client):
-                expected_user = User.create_via_organization(self.organization.guid, client=client)
+                expected_user = User.create_via_organization(self.organization.guid, client=client, roles=["managers"])
                 users = User.get_list_via_organization(self.organization.guid, client=client)
                 self.assertInList(expected_user, users)
 

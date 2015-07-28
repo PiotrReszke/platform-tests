@@ -50,7 +50,7 @@ class ApiClient(BaseClient):
         opt = opt or {}
         swagger_request, swagger_response = super().request(req_and_resp, opt)
         swagger_request._SwaggerRequest__url = self._api_endpoint + swagger_request.path # fix hostname
-        swagger_request.schemes[:] = [self._scheme] # fix scheme
+        swagger_request.schemes[:] = [self._scheme]  # fix scheme
         # apply request-related options before preparation.
         swagger_request.prepare(scheme=self.prepare_schemes(swagger_request).pop(), handle_files=False)
         swagger_request._patch(opt)
@@ -99,6 +99,8 @@ class ApiClient(BaseClient):
             url = "{}?{}".format(url, "&".join(["{}={}".format(k, v) for k, v in params.items()]))
         # if "Authorization" in headers:
         #     headers["Authorization"] = "[SECRET]"
+        if "password" in data:
+            data["password"] = "[SECRET]"
         msg = [
             "\n----------------Request------------------",
             "Client name: {}".format(self._username),
@@ -109,7 +111,8 @@ class ApiClient(BaseClient):
         ]
         logger.debug("\n".join(msg))
 
-    def _log_response(self, status, headers, text):
+    @staticmethod
+    def _log_response(status, headers, text):
         msg = [
             "\n----------------Response------------------",
             "Status code: {}".format(status),
@@ -138,28 +141,30 @@ class ConsoleClient(ApiClient):
     def __repr__(self):
         return "ConsoleClient: {}".format(self._username)
 
+    def _make_request(self, path, data="", headers="", params=None, method="POST"):
+        request = requests.Request(method.upper(), path, data=data, headers=headers)
+        request = self._session.prepare_request(request)
+        self._log_request(method, path, headers, data, params)
+        response = self._session.send(request)
+        self._log_response(response.status_code, response.headers, response.text)
+        if not response.ok:
+            raise UnexpectedResponseError(response.status_code, response.text)
+        if "forgotPasswordLink" in response.text:
+            raise UnexpectedResponseError(response.status_code, response.text, "Client is not authorized")
+
     def _authenticate(self):
         logger.info("-------------------- Authenticating user {} --------------------".format(self._username))
         path = "https://{}/login.do".format(self._login_endpoint)
         data = {"username": self._username, "password": self._password}
         headers = {"Accept": "application/json"}
-        request = requests.Request("POST", path, data=data, headers=headers)
-        request = self._session.prepare_request(request)
-        response = self._session.send(request)
-        if not response.ok:
-            raise UnexpectedResponseError(response.status_code, response.text)
-        if len(self._session.cookies) == 0:
-            raise Exception("Authentication failed. No cookies were set in session.")
+        self._make_request(path, data, headers)
 
     def _call_forgot_password(self):
         logger.info("-------------------- Call forgot password for user {} --------------------".format(self._username))
         path = "https://{}/forgot_password.do".format(self._login_endpoint)
         data = {"email": self._username}
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        request = requests.Request("POST", path, data=data, headers=headers)
-        response = self._session.send(request.prepare())
-        if not response.ok:
-            raise UnexpectedResponseError(response.status_code, response.text)
+        self._make_request(path, data, headers)
 
     def _reset_password(self, code):
         logger.info("-------------------- Reset password for user {} --------------------".format(self._username))
@@ -167,12 +172,7 @@ class ConsoleClient(ApiClient):
         data = {"email": self._username, "password": self._password, "password_confirmation": self._password,
                 "code": code}
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        request = requests.Request("POST", path, data=data, headers=headers)
-        response = self._session.send(request.prepare())
-        if not response.ok:
-            raise UnexpectedResponseError(response.status_code, response.text)
-        #if len(self._session.cookies) == 0:
-        #    raise Exception("Authentication failed. No cookies were set in session.")
+        self._make_request(path, data, headers)
 
     def _generate_password(self):
         pass_length = 8
@@ -181,7 +181,8 @@ class ConsoleClient(ApiClient):
         p = letters + digits + '%'
         self._password = p
 
-    def _get_reset_password_code(self, username):
+    @staticmethod
+    def _get_reset_password_code(username):
         return get_code_from_gmail(username)
 
 

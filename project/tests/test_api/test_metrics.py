@@ -1,7 +1,7 @@
 import unittest
 
 from test_utils import ApiTestCase
-from test_utils.objects import Organization, Space, ServiceInstance, Application
+from test_utils.objects import Organization, ServiceInstance
 
 
 class MetricsTest(ApiTestCase):
@@ -10,7 +10,6 @@ class MetricsTest(ApiTestCase):
     def setUpClass(cls):
         cls.seedorg = Organization.get_seedorg()
         cls.seedorg.api_get_metrics()
-        cls.seedspace = Space.get_seedspace()
 
     @unittest.expectedFailure
     def test_service_count(self):
