@@ -50,7 +50,7 @@ __SECRET.read("test_utils/secrets/.secret.ini")
 
 
 TEST_SETTINGS = {
-    "github_auth": (__SECRET["github"]["username"], __SECRET["github"]["password"]),
+    "GITHUB_AUTH": (__SECRET["github"]["username"], __SECRET["github"]["password"]),
     "TEST_EMAIL": "intel.data.tests@gmail.com"
 }
 
