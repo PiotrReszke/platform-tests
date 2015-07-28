@@ -73,7 +73,8 @@ class ApiClient(BaseClient):
         self._log_response(swagger_response.status, swagger_response.header, swagger_response.raw)
         return swagger_response
 
-    def _prepare_uploaded_files(self, swagger_request):
+    @staticmethod
+    def _prepare_uploaded_files(swagger_request):
         file_obj = {}
         for k, v in swagger_request.files.items():
             f = v.data or open(v.filename, 'rb')
@@ -92,6 +93,8 @@ class ApiClient(BaseClient):
             error_message = response.data
             msg = "Unexpected response error: {0} '{1}'".format(response.status, response.raw)
             raise UnexpectedResponseError(status=response.status, error_message=error_message, message=msg)
+        if "forgotPasswordLink" in response.raw:
+            raise UnexpectedResponseError(response.status_code, response.text, "Client is not authorized")
         return response.data
 
     def _log_request(self, method, url, headers="", data="", params=None):

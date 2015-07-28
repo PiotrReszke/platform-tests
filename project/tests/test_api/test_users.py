@@ -20,6 +20,7 @@ class TestOrganizationUsers(ApiTestCase):
                 self.assertInList(expected_user, users)
 
     def test_create_organization_user(self):
+        """Verify that each, admin and organization manager, can create an organization user"""
         for client in [self.org_manager_client, get_admin_client()]:
             with self.subTest(client=client):
                 expected_user = User.create_via_organization(self.organization.guid, client=client, roles=["managers"])
