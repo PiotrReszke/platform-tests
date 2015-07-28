@@ -99,7 +99,7 @@ class ApiClient(BaseClient):
             url = "{}?{}".format(url, "&".join(["{}={}".format(k, v) for k, v in params.items()]))
         # if "Authorization" in headers:
         #     headers["Authorization"] = "[SECRET]"
-        if "password" in data:
+        if data is not None and "password" in data:
             data["password"] = "[SECRET]"
         msg = [
             "\n----------------Request------------------",
