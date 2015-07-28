@@ -154,9 +154,9 @@ class ConsoleClient(ApiClient):
 
     def _authenticate(self):
         logger.info("-------------------- Authenticating user {} --------------------".format(self._username))
-        path = "https://{}/login.do".format(self._login_endpoint)
+        path = "{}://{}/login.do".format(config.get_config_value("login.do_scheme"), self._login_endpoint)
         data = {"username": self._username, "password": self._password}
-        headers = {"Accept": "application/json"}
+        headers = {"Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded"}
         self._make_request(path, data, headers)
 
     def _call_forgot_password(self):

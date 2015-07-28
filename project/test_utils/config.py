@@ -11,6 +11,7 @@ __all__ = ["APP_SCHEMAS", "TEST_SETTINGS", "update_test_settings", "parse_argume
 CONFIG = {
     "gotapaas.eu": {
         "api_endpoint": "apps.gotapaas.eu",
+        "login.do_scheme": "https",
         "login_endpoint": "login.run.gotapaas.eu",
         "cf_endpoint": "api.run.gotapaas.eu",
         "admin_guid": "13c32424-23f4-44f7-bbb9-60763bfab4bc",
@@ -21,6 +22,7 @@ CONFIG = {
     },
     "demo-gotapaas.com": {
         "api_endpoint": "demo-gotapaas.com",
+        "login.do_scheme": "http",
         "login_endpoint": "login.demo-gotapaas.com",
         "cf_endpoint": "api.demo-gotapaas.com",
         "admin_guid": "284b34e8-6c23-4d64-afd1-952a394df501",
