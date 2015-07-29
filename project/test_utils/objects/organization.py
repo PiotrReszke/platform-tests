@@ -1,5 +1,5 @@
 import functools
-import time
+from datetime import datetime
 
 from test_utils import config
 import test_utils.api_calls.user_management_api_calls as api
@@ -14,7 +14,7 @@ __all__ = ["Organization", "Space"]
 @functools.total_ordering
 class Organization(object):
 
-    NAME_PREFIX = "test-org-"
+    NAME_PREFIX = "test_org_"
     TEST_ORGS = []
     TEST_EMAIL = config.TEST_SETTINGS["TEST_EMAIL"]
     TEST_EMAIL_FORM = TEST_EMAIL.replace('@', '+{}@')
@@ -38,7 +38,7 @@ class Organization(object):
     def create(cls, name=None, client=None):
         client = client or get_admin_client()
         if name is None:
-            name = cls.NAME_PREFIX + str(time.time())
+            name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]
         response = api.api_create_organization(client, name)
         response = response.strip('"')  # guid is returned together with quotation marks
         org = cls(name=name, guid=response)

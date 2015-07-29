@@ -27,7 +27,7 @@ def get_credentials():
         flow = oauth2client.client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
         flow.user_agent = APPLICATION_NAME
         credentials = oauth2client.tools.run_flow(flow, store)
-        print('Storing credentials to ' + credential_path)
+        logger.info('Storing credentials to ' + credential_path)
     return credentials
 
 
@@ -53,7 +53,7 @@ def get_message(service, msg_id):
         message = service.users().messages().get(userId=TEST_EMAIL, id=msg_id, format='raw').execute()
         return message
     except errors.HttpError as error:
-        print('An error occurred: %s' % error)
+        logger.warning('An error occurred: %s' % error)
 
 
 def get_recent_message_to(to_email):
@@ -67,8 +67,15 @@ def get_recent_message_to(to_email):
         message_numb = len(message_list)
         logger.info("---- Getting messages from {} email address, there are {} messages to {} ----".format(TEST_EMAIL,
                                                                                                 message_numb, to_email))
+        # First message: reset password, second message: invitation to the platform
         if message_numb >= 2:
+            for message in message_list:
+                b = base64.urlsafe_b64decode(get_message(service, message.get('id'))['raw'])
+                c = b.decode()
+                logger.info("---- Received message: -----\n" + c)
+
             return get_message(service, message_list[0].get('id'))['raw']
+
         time.sleep(3)
     raise TimeoutError("Can't find email message with code to {}".format(to_email))
 
@@ -83,7 +90,7 @@ def extract_code_from_message(message):
         code = (c[d:d + e])
         return code
     else:
-        raise Exception("Can't find code in given message")
+        raise Exception("Can't find code in given message: \n"+c)
 
 
 def get_code_from_gmail(email):
