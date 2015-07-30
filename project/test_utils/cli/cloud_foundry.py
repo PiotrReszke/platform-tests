@@ -1,3 +1,4 @@
+import functools
 import subprocess
 
 import test_utils.config as config
@@ -13,6 +14,17 @@ logger = get_logger("cloud_foundry_cli")
 
 
 # ------------------------------- command line interface ------------------------------- #
+
+def log_output_on_error(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except subprocess.SubprocessError as e:
+            logger.error(e.output)
+            raise
+        return wrapper
+
 
 def cf_login(organization, space):
     api_url = config.get_config_value("cf_endpoint")
@@ -33,12 +45,14 @@ def cf_target(organization=None, space=None):
     subprocess.check_call(command)
 
 
+@log_output_on_error
 def cf_push(local_path, local_jar):
     command = ["cf", "push", "-f", local_path, "-p", local_jar]
     log_command(command)
     return subprocess.check_output(command).decode()
 
 
+@log_output_on_error
 def cf_marketplace():
     command = ["cf", "marketplace"]
     log_command(command)
@@ -69,6 +83,7 @@ def cf_delete(app_name):
     subprocess.check_call(command)
 
 
+@log_output_on_error
 def cf_env(app_name):
     command = ["cf", "env", app_name]
     log_command(command)
