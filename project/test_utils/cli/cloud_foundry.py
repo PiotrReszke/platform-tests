@@ -23,7 +23,7 @@ def log_output_on_error(func):
         except subprocess.SubprocessError as e:
             logger.error(e.output)
             raise
-        return wrapper
+    return wrapper
 
 
 def cf_login(organization, space):
