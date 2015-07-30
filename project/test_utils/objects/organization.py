@@ -76,6 +76,7 @@ class Organization(object):
 
     def delete(self, client=None):
         client = client or get_admin_client()
+        Space.delete_spaces_in_org(client=client, org_guid=self.guid)
         self.TEST_ORGS.remove(self)
         return api.api_delete_organization(client, self.guid)
 
@@ -121,3 +122,4 @@ class Organization(object):
             if response.get(response_key) is None:
                 logger.warning("Missing metrics in response: {}".format(response_key))
             self.metrics[response_key] = response[response_key]["numerator"] / response[response_key]["denominator"]
+

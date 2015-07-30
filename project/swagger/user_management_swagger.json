@@ -161,6 +161,60 @@
           "404": {"description": "Not Found",  "schema": {"type": "string"}}
         }
       }
+    },
+    "/rest/orgs/{org}/spaces": {
+      "get": {
+        "operationId": "get_spaces_in_org",
+        "parameters": [
+          {"name": "org", "in": "path", "required": "true", "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "", "schema": {"$ref": "DetailedSpaceList"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Not Found",  "schema": {"type": "string"}}
+        }
+      }
+    },
+    "/rest/spaces/{space}": {
+      "delete": {
+        "operationId": "delete_space",
+        "parameters": [
+          {"name": "space", "in": "path", "required": "true", "type": "string"}
+        ],
+        "responses": {
+          "200": {"description": "", "schema": {"type": "string"}},
+          "204": {"description": "No Content", "schema": {"type": "string"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Not Found",  "schema": {"type": "string"}}
+        }
+      }
+    },
+    "/rest/spaces": {
+      "get": {
+        "operationId": "get_spaces",
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "Space"}}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Not Found",  "schema": {"type": "string"}}
+        }
+      },
+      "post": {
+        "operationId": "create_space",
+        "parameters": [
+          {"name": "body", "in": "body", "required": "true", "schema": {"$ref": "NewSpaceRequest"}}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "201": {"description": "Created", "schema": {"type": "string"}},
+          "400": {"description": "Bad request", "schema": {"type": "string"}},
+          "401": {"description": "Unauthorized", "schema": {"type": "string"}},
+          "403": {"description": "Forbidden", "schema": {"type": "string"}},
+          "404": {"description": "Not Found",  "schema": {"type": "string"}}
+        }
+      }
     }
   },
   "definitions": {
@@ -176,6 +230,29 @@
           "type": "array",
           "items": {"$ref": "SpaceInfo"}
         }
+      }
+    },
+    "DetailedOrganization": {
+      "properties": {
+        "metadata": {"$ref": "Metadata"},
+        "entity": {"$ref": "OrganizationEntity"}
+        }
+      },
+  "OrganizationEntity": {
+      "properties": {
+        "name":  {"type": "string"},
+        "quota_definition_guid":  {"type": "string"},
+        "status": {"type": "string"},
+        "quota_definitions_url":  {"type": "string"},
+        "spaces_url": {"type": "string"},
+        "domains_url":  {"type": "string"},
+        "private_domains_url": {"type": "string"},
+        "users_url":  {"type": "string"},
+        "managers_url": {"type": "string"},
+        "billing_managers_url":  {"type": "string"},
+        "auditors_url": {"type": "string"},
+        "app_events_url":  {"type": "string"},
+        "space_quota_definitions_url": {"type": "string"}
       }
     },
     "SpaceInfo": {
@@ -199,6 +276,59 @@
         "username": {"type": "string"}
       }
     },
+    "UserEntity": {
+      "properties": {
+        "admin":  {"type": "boolean"},
+        "active":  {"type": "boolean"},
+        "default_space_guid": {"type": "string"},
+        "spaces_url": {"type": "string"},
+        "organizations_url":  {"type": "string"},
+        "managed_organizations_url": {"type": "string"},
+        "billing_managed_organizations_url":  {"type": "string"},
+        "audited_organizations_url": {"type": "string"},
+        "managed_spaces_url":  {"type": "string"},
+        "audited_spaces_url": {"type": "string"}
+      }
+    },
+    "DetailedUser": {
+      "properties": {
+        "metadata": {"$ref": "Metadata"},
+        "entity": {"$ref": "UserEntity"}
+      }
+    },
+    "DomainEntity": {
+      "properties": {
+        "name":  {"type": "string"}
+      }
+    },
+    "Domain": {
+      "properties": {
+        "metadata": {"$ref": "Metadata"},
+        "entity": {"$ref": "DomainEntity"}
+      }
+    },
+    "SecurityGroupRule": {
+      "properties": {
+        "destination": {"type": "string"},
+        "ports": {"type": "string"},
+        "protocol": {"type": "string"}
+      }
+    },
+    "SecurityGroupEntity": {
+      "properties": {
+        "name":  {"type": "string"},
+        "rules": { "type": "array", "items":{"$ref": "SecurityGroupRule"} },
+        "running_default":  {"type": "boolean"},
+        "staging_default":  {"type": "boolean"},
+        "spaces_url":  {"type": "string"}
+      }
+    },
+    "SecurityGroup": {
+      "properties": {
+        "metadata": {"$ref": "Metadata"},
+        "entity": {"$ref": "SecurityGroupEntity"}
+      }
+    },
     "Registration": {
       "properties": {
         "password": {"type": "string"},
@@ -213,6 +343,156 @@
     "InvitationDetails": {
       "properties": {
         "details": {"type": "string"}
+      }
+    },
+    "Metadata": {
+      "properties": {
+        "guid":  {"type": "string"},
+        "url": {"type": "string"},
+        "created_at":  {"type": "string"},
+        "updated_at": {"type": "string"}
+      }
+    },
+    "SpaceEntity": {
+      "properties": {
+        "name":  {"type": "string"},
+        "organization_guid": {"type": "string"},
+        "space_quota_definition_guid":  {"type": "string"},
+        "organization_url":  {"type": "string"},
+        "developers_url": {"type": "string"},
+        "managers_url":  {"type": "string"},
+        "auditors_url": {"type": "string"},
+        "apps_url":  {"type": "string"},
+        "routes_url": {"type": "string"},
+        "domains_url":  {"type": "string"},
+        "service_instances_url": {"type": "string"},
+        "app_events_url":  {"type": "string"},
+        "events_url": {"type": "string"},
+        "security_groups_url":  {"type": "string"}
+      }
+    },
+    "DetailedSpaceEntity": {
+      "properties": {
+        "name":  {"type": "string"},
+        "organization_guid": {"type": "string"},
+        "space_quota_definition_guid":  {"type": "string", "required": "false"},
+        "organization_url":  {"type": "string"},
+        "organization": { "$ref": "DetailedOrganization" },
+        "developers_url": {"type": "string"},
+        "developers": { "type": "array", "required": "false", "items":{"$ref": "DetailedUser"} },
+        "managers_url":  {"type": "string"},
+        "managers": { "type": "array", "required": "false", "items":{"$ref": "DetailedUser"} },
+        "auditors_url": {"type": "string"},
+        "auditors": { "type": "array", "required": "false", "items":{"$ref": "DetailedUser"} },
+        "apps_url":  {"type": "string"},
+        "apps": { "type": "array", "required": "false", "items":{"$ref": "App"} },
+        "routes_url": {"type": "string"},
+        "domains_url":  {"type": "string"},
+        "domains": { "type": "array", "required": "false", "items":{"$ref": "Domain"} },
+        "service_instances_url": {"type": "string"},
+        "service_instances": { "type": "array", "required": "false", "items":{"$ref": "ServiceInstance"} },
+        "app_events_url":  {"type": "string"},
+        "events_url": {"type": "string"},
+        "security_groups_url":  {"type": "string"},
+        "security_groups": { "type": "array", "required": "false", "items":{"$ref": "SecurityGroup"} }
+      }
+    },
+    "ServiceInstanceEntity": {
+      "properties": {
+        "name":  {"type": "string"},
+        "credentials": {"type": "array", "items": {"type": "string"}},
+        "service_plan_guid":  {"type": "string"},
+        "space_guid":  {"type": "string"},
+        "gateway_data": {"type": "string"},
+        "dashboard_url": {"type": "string"},
+        "type": {"type": "string"},
+        "last_operation":  {"type": "string"},
+        "space_url": {"type": "string"},
+        "service_plan_url":  {"type": "string"},
+        "service_bindings_url":  {"type": "string"},
+        "service_keys_url":  {"type": "string"}
+      }
+    },
+    "AppEntity": {
+      "properties": {
+        "name":  {"type": "string"},
+        "production":  {"type": "boolean"},
+        "space_guid":  {"type": "string"},
+        "stack_guid": {"type": "string"},
+        "buildpack": {"type": "string"},
+        "detected_buildpack": {"type": "string"},
+        "environment_json":  {"type": "string"},
+        "memory": {"type": "integer", "format": "int32"},
+        "instances":  {"type": "integer", "format": "int32"},
+        "disk_quota":  {"type": "integer", "format": "int32"},
+        "state":  {"type": "string"},
+        "version":  {"type": "string"},
+        "command":  {"type": "string"},
+        "console":  {"type": "boolean"},
+        "debug":  {"type": "string"},
+        "staging_task_id":  {"type": "string"},
+        "package_state":  {"type": "string"},
+        "health_check_type":  {"type": "string"},
+        "health_check_timeout":  {"type": "string"},
+        "staging_failed_reason":  {"type": "string"},
+        "diego":  {"type": "boolean"},
+        "docker_image":  {"type": "string"},
+        "package_updated_at":  {"type": "string"},
+        "detected_start_command":  {"type": "string"},
+        "space_url":  {"type": "string"},
+        "stack_url":  {"type": "string"},
+        "events_url":  {"type": "string"},
+        "service_bindings_url":  {"type": "string"},
+        "routes_url":  {"type": "string"}
+      }
+    },
+    "Space": {
+      "properties": {
+        "metadata": {"$ref": "Metadata"},
+        "entity": {"$ref": "SpaceEntity"}
+      }
+    },
+    "ServiceInstance": {
+      "properties": {
+        "metadata": {"$ref": "Metadata"},
+        "entity": {"$ref": "ServiceInstanceEntity"}
+      }
+    },
+    "App": {
+      "properties": {
+        "metadata": {"$ref": "Metadata"},
+        "entity": {"$ref": "AppEntity"}
+      }
+    },
+    "DetailedSpace": {
+      "properties": {
+        "metadata": {"$ref": "Metadata"},
+        "entity": {"$ref": "DetailedSpaceEntity"}
+
+      }
+    },
+    "SpaceList": {
+      "properties": {
+        "total_results":  {"type": "integer", "format": "int32"},
+        "total_pages": {"type": "integer", "format": "int32"},
+        "prev_url": {"type": "string"},
+        "next_url": {"type": "string"},
+        "resources": {"type":"array", "items":{"$ref": "Space"}}
+      }
+    },
+    "DetailedSpaceList": {
+      "properties": {
+        "total_results":  {"type": "integer", "format": "int32"},
+        "total_pages": {"type": "integer", "format": "int32"},
+        "prev_url": {"type": "string"},
+        "next_url": {"type": "string"},
+        "resources": {"type":"array", "items":{"$ref": "DetailedSpace"}}
+      }
+    },
+    "NewSpaceRequest": {
+      "properties": {
+        "org_guid": {"type": "string"},
+        "name": {"type": "string"}
       }
     }
   },

@@ -121,3 +121,26 @@ def api_register_org_and_user(client, code, org_name, password):
         "password": password
     }
     return client.call(APP_NAME, "register_org_and_user", code=code, body=body)
+
+
+# ------------------------------------- Spaces Controller ------------------------------------- #
+
+def api_get_spaces_in_org(client, org_guid):
+    """GET /rest/orgs/{org}/spaces"""
+    logger.info("------------------ Get spaces in  org {} ------------------".format(org_guid))
+    return client.call(APP_NAME, "get_spaces_in_org", org=org_guid)
+
+def api_get_spaces(client):
+    """GET /rest/spaces"""
+    logger.info("------------------ Get all spaces ------------------")
+    return client.call(APP_NAME, "get_spaces")
+
+def api_create_space(client, name, org_guid):
+    """POST /rest/spaces"""
+    logger.info("------------------ Create space with name {} ------------------".format(name))
+    return client.call(APP_NAME, "create_space", body={"name": name, "org_guid": org_guid})
+
+def api_delete_space(client, space=None):
+    """DELETE /rest/spaces/{space}"""
+    logger.info("------------------ Delete space {} ------------------".format(space))
+    return client.call(APP_NAME, "delete_space", space=space)
