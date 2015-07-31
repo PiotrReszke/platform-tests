@@ -3,10 +3,10 @@ from test_utils.objects import Application, github_get_file_content
 from test_utils.api_client import UnexpectedResponseError
 
 
-logger = get_logger("taproot_app_test")
+logger = get_logger("trusted_analytics_app_test")
 
 
-class TAProotApplicationsSmokeTest(ApiTestCase):
+class TrustedAnalyticsApplicationsSmokeTest(ApiTestCase):
     """A cloned demo-settings.yml is a prerequisite for this test"""
 
     @classmethod
@@ -31,7 +31,7 @@ class TAProotApplicationsSmokeTest(ApiTestCase):
         self.assertTrue((missing_apps == [] and apps_not_started == []),
                         "\nMissing applications: {}\nApplications not started: {}".format(missing_apps, apps_not_started))
 
-    def test_taproot_applications_details(self):
+    def test_trusted_analytics_applications_details(self):
         """Verify application details between cf and Platform API"""
         # Get expected apps from settings file
         expected_apps = Application.get_list_from_settings(self.settings_file)
