@@ -46,15 +46,16 @@ def api_create_service_instance(client, name, space_guid, service_plan_guid, par
 def api_delete_service_instance(client, service_instance_guid):
     """DELETE /rest/service_instances/{service_instance_guid}"""
     logger.debug("------------------ Delete service instance {} ------------------".format(service_instance_guid))
-    raise NotImplementedError("Please add swagger schema for this method in swagger/service_catalog_swagger.json")
+    # raise NotImplementedError("Please add swagger schema for this method in swagger/service_catalog_swagger.json")
+    return client.call(APP_NAME, "delete_service_instance", instance=service_instance_guid)
 
 
 # ----------------------------------------------- Applications ----------------------------------------------- #
 
-def api_get_apps(client, space_guid):
+def api_get_filtered_applications(client, space):
     """GET /rest/apps"""
-    logger.debug("------------------ Get application list from space {} ------------------".format(space_guid))
-    return client.call(APP_NAME, "get_app_list", space=space_guid)
+    logger.info("------------------ Get applications in space {} ------------------".format(space))
+    return client.call(APP_NAME, "get_filtered_applications", space=space)
 
 
 def api_get_app_summary(client, app_guid):

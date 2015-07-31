@@ -6,7 +6,6 @@ import test_utils.api_calls.app_launcher_helper_api_calls as app_launcher_helper
 from test_utils import get_admin_client
 
 
-
 __all__ = ["ServiceInstance", "AtkInstance"]
 
 
@@ -54,6 +53,28 @@ class ServiceInstance(object):
         return service_instances
 
     @classmethod
+    def from_cf_api_space_summary_response(cls, response, space_guid):
+        instances = []
+        url = None
+        for instance_data in response["services"]:
+            service_type = instance_data["service_plan"]["service"]
+            try:
+                url = instance_data["dashboard_url"].replace("/dashboard", "")
+            except:
+                pass
+            service_instance = cls(guid=instance_data["guid"], name=instance_data["name"], space_guid=space_guid,
+                                   service_type_guid=service_type["guid"], type=service_type["label"], url=url,
+                                   service_plan_guid=instance_data["service_plan"]["guid"])
+            instances.append(service_instance)
+        return instances
+
+    @classmethod
+    def cf_api_get_list_in_space(cls, space_guid):
+        """Get list of service instances from Cloud Foundry API"""
+        response = cf.cf_api_space_summary(space_guid)
+        return cls.from_cf_api_space_summary_response(response, space_guid)
+
+    @classmethod
     def api_get_list(cls, space_guid, service_type_guid, client=None):
         client = client or get_admin_client()
         instances = []
@@ -80,7 +101,8 @@ class ServiceInstance(object):
 
     def api_delete(self, client=None):
         client = client or get_admin_client()
-        api.api_delete_service_instance(self.guid, client)
+        api.api_delete_service_instance(client, self.guid)
+
 
 
 class AtkInstance(ServiceInstance):
@@ -92,9 +114,9 @@ class AtkInstance(ServiceInstance):
         self.scoring_engine = scoring_engine
 
     @classmethod
-    def api_get_list(cls, org_guid, client=None):
+    def get_list(cls, org_guid, client=None):
         client = client or get_admin_client()
-        response = app_launcher_helper_api.api_list_atk_instances(client, org_guid)
+        response = app_launcher_helper_api.api_get_atk_instances(client, org_guid)
         instances = []
         for data in response["instances"]:
             instance = cls(guid=data["guid"], name=data["name"], state=data["state"], url=data["url"],

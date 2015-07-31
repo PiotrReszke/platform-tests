@@ -1,11 +1,11 @@
 {
   "info": {"version": "1.0.0", "title": "Service Catalog API"},
   "paths": {
-    "/rest/apps": {
+    "/rest/apps":{
       "get": {
-        "operationId": "get_app_list",
-        "parameters": [{"name": "space", "in": "query", "required": "true", "type": "string"}],
-        "responses": {"200": {"schema": {"type": "array", "items": {"$ref": "Application"}}}}
+        "operationId": "get_filtered_applications",
+          "parameters": [{"name": "space", "in": "query", "type": "string"}],
+          "responses": {"200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "Applications"}}}}
       }
     },
     "/rest/apps/{app_guid}": {
@@ -13,6 +13,18 @@
         "operationId": "get_app_details",
         "parameters": [{"name": "app_guid", "in": "path", "required": "true", "type": "string"}],
         "responses": {"200": {"schema": {"$ref": "ApplicationDetails"}}}
+      },
+      "delete": {
+        "operationId": "delete_app",
+          "parameters": [{"name": "app_guid", "in": "path", "type": "string"}],
+          "responses": {"200": {"description": "OK", "schema": {"type": "string"}}}
+      }
+    },
+    "/rest/service_instances/{instance}":{
+      "delete": {
+        "operationId": "delete_service_instance",
+          "parameters": [{"name": "instance", "in": "path", "required": "true", "type": "string"}],
+          "responses": {"200": {"description": "OK", "schema": {"type": "string"}}}
       }
     },
     "/rest/services": {
@@ -30,10 +42,8 @@
       }
     }
   },
-  "security": [{"default": []}],
-  "swagger": "2.0",
   "definitions": {
-    "Application": {
+    "Applications":{
       "properties": {
         "guid":  {"type": "string"},
         "urls": {"type": "array", "items": {"type": "string"}},
@@ -152,5 +162,7 @@
         }
       }
     }
-  }
+  },
+  "security": [{"default": []}],
+  "swagger": "2.0"
 }

@@ -92,6 +92,10 @@ class User(object):
         client = client or get_admin_client()
         api.api_create_organization_user(client, organization_guid, self.username, roles)
 
+    def add_to_space(self, organization_guid, space_guid, roles, client=None):
+        client = client or get_admin_client()
+        api.api_create_space_user(client, organization_guid, space_guid, self.username, list(roles))
+
     def update_via_organization(self, new_roles=None, client=None):
         client = client or get_admin_client()
         if new_roles is not None:

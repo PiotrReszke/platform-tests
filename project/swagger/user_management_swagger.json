@@ -40,6 +40,35 @@
         }
       }
     },
+    "/rest/spaces": {
+      "post": {
+        "operationId": "create_space",
+        "parameters": [
+          {"name": "body", "in": "body", "schema": {"$ref": "Space"}}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "201": {"description": "Created", "schema": {"type": "string"}}
+        }
+      },
+      "get": {
+        "operationId": "get_spaces",
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "SpaceResp"}}},
+          "201": {"description": "Created", "schema":  {"type": "array", "items": {"$ref": "SpaceResp"}}}
+        }
+      }
+    },
+    "/rest/spaces/{space}": {
+      "delete": {
+        "operationId": "delete_space",
+        "parameters": [{"name": "space", "in": "path", "required": "true", "type": "string"}],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "400": {"description": "Bad Request", "schema": {"type": "string"}}
+        }
+      }
+    },
     "/rest/orgs/{organization_guid}/users": {
       "get": {
         "operationId": "get_organization_users",
@@ -259,6 +288,21 @@
       "properties": {
         "guid": {"type": "string"},
         "name": {"type": "string"}
+      }
+    },
+    "Space": {
+      "properties": {
+        "org_guid": {"type": "string"},
+        "name": {"type": "string"}
+      }
+    },
+    "SpaceResp": {
+      "properties": {
+       "metadata": {"properties": {"guid": {"type": "string"}}},
+       "entity": {"properties": {
+          "name": {"type": "string"},
+          "organization_guid": {"type": "string"}}
+       }
       }
     },
     "UserRequest": {

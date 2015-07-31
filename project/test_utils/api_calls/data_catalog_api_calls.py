@@ -1,3 +1,5 @@
+import json
+
 from test_utils import get_logger
 
 
@@ -5,10 +7,20 @@ logger = get_logger("data-catalog calls")
 APP_NAME = "data-catalog"
 
 
-def api_get_datasets(client, org_guid_list, query="", filters=(), size=100, time_from=0):
+def api_get_datasets(client, org_guid_list, query="", filters=None, size=100, time_from=0,
+                     only_private=None, only_public=None):
     """GET /rest/datasets"""
     logger.debug("------------------ Get list of data sets in orgs {} ------------------".format(org_guid_list))
-    raise NotImplementedError("Please add a schema for this method in data_catalog_swagger.json")
+    filters = filters or []
+    params = {
+        "orgs": ",".join(org_guid_list),
+        "query": json.dumps({"query": query, "filters": filters, "size": size, "from": time_from})
+    }
+    if only_private:
+        params["onlyPrivate"] = only_private
+    if only_public:
+        params["onlyPublic"] = only_public
+    return client.call(APP_NAME, "search_datasets", **params)
 
 
 def api_get_dataset(client, entry_id):

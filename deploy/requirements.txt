@@ -1,6 +1,7 @@
 certifi
 google-api-python-client
 paho-mqtt
+pexpect
 requests
 spur
 teamcity-messages

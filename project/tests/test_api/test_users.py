@@ -5,7 +5,7 @@ from test_utils.objects import Organization, User
 class TestOrganizationUsers(ApiTestCase):
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.delete_test_orgs)
+    @cleanup_after_failed_setup(Organization.api_delete_test_orgs)
     def setUpClass(cls):
         cls.organization = Organization.create()
         cls.org_manager_client = User.create_user_for_client(cls.organization.guid, ClientRole.org_manager).app_client

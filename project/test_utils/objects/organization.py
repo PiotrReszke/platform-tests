@@ -1,10 +1,11 @@
 import functools
 from datetime import datetime
 
-from test_utils import TEST_SETTINGS, get_admin_client, get_logger, get_config_value
-import test_utils.api_calls.user_management_api_calls as api
+from test_utils import config, get_logger, get_admin_client
 import test_utils.api_calls.metrics_provider_api_calls as metrics_api
-from test_utils.objects import User, Space
+import test_utils.api_calls.user_management_api_calls as api
+from test_utils.objects import Space, User
+from test_utils.cli import cloud_foundry as cf
 
 
 __all__ = ["Organization"]
@@ -18,7 +19,7 @@ class Organization(object):
 
     NAME_PREFIX = "test_org_"
     TEST_ORGS = []
-    TEST_EMAIL = TEST_SETTINGS["TEST_EMAIL"]
+    TEST_EMAIL = config.TEST_SETTINGS["TEST_EMAIL"]
     TEST_EMAIL_FORM = TEST_EMAIL.replace('@', '+{}@')
 
     def __init__(self, name, guid, spaces=None):
@@ -37,7 +38,7 @@ class Organization(object):
         return self.guid < other.guid
 
     @classmethod
-    def create(cls, name=None, client=None):
+    def create(cls, name=None, space_names=(), client=None):
         client = client or get_admin_client()
         if name is None:
             name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]
@@ -45,6 +46,8 @@ class Organization(object):
         response = response.strip('"')  # guid is returned together with quotation marks
         org = cls(name=name, guid=response)
         cls.TEST_ORGS.append(org)
+        for space_name in space_names:
+            Space.api_create(org=org, name=space_name, client=client)
         return org
 
     @classmethod
@@ -60,14 +63,14 @@ class Organization(object):
         return organizations
 
     @classmethod
-    def delete_test_orgs(cls):
+    def api_delete_test_orgs(cls):
         while len(cls.TEST_ORGS) > 0:
             org = cls.TEST_ORGS[0]
             org.delete()
 
     @classmethod
     def get_seedorg(cls):
-        return cls(name="seedorg", guid=get_config_value("seedorg_guid"))
+        return cls(name="seedorg", guid=config.get_config_value("seedorg_guid"))
 
     def rename(self, new_name, client=None):
         client = client or get_admin_client()
@@ -76,14 +79,23 @@ class Organization(object):
 
     def delete(self, client=None):
         client = client or get_admin_client()
-        Space.delete_spaces_in_org(client=client, org_guid=self.guid)
-        self.TEST_ORGS.remove(self)
+        self.cf_delete_spaces()
+        if self in self.TEST_ORGS:
+            self.TEST_ORGS.remove(self)
         return api.api_delete_organization(client, self.guid)
+
+    def cf_delete_spaces(self):
+        while len(self.spaces) > 0:
+            space = self.spaces.pop()
+            cf.cf_target(self.name, space.name)
+            space.cf_delete_everything(org_object=self)
+            space.api_delete()
 
     def add_admin(self, roles=("managers",)):
         """Add admin user to the organization"""
         admin = User.get_admin()
         admin.add_to_organization(self.guid, list(roles))
+
 
     # @classmethod
     # def invite(cls, email=None, client=get_admin_client()):
@@ -123,3 +135,12 @@ class Organization(object):
                 logger.warning("Missing metrics in response: {}".format(response_key))
             self.metrics[response_key] = response[response_key]["numerator"] / response[response_key]["denominator"]
 
+    def api_get_spaces(self, client=None):
+        client = client or get_admin_client()
+        response = api.api_get_spaces_in_org(client, org_guid=self.guid)
+        spaces = []
+        for space_data in response["resources"]:
+            name = space_data["entity"]["name"]
+            guid = space_data["metadata"]["guid"]
+            spaces.append(Space(name, guid, self.guid))
+        return spaces

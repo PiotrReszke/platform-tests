@@ -1,7 +1,6 @@
-import unittest
-
 from test_utils.objects import Organization
 from test_utils import ApiTestCase, get_logger
+
 
 
 logger = get_logger("test organization")
@@ -11,7 +10,7 @@ class TestOrganization(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        Organization.delete_test_orgs()
+        Organization.api_delete_test_orgs()
 
     def test_get_organization_list(self):
         orgs = Organization.get_list()
@@ -50,9 +49,8 @@ class TestOrganization(ApiTestCase):
         self.assertTrue(len(orgs), len(expected_orgs))
         self.assertListEqual(sorted(orgs), sorted(expected_orgs))
 
-    @unittest.skip  # not sure if it's working
-    def test_onboarding(self):
+    """def test_onboarding(self):
         org_name, code = Organization.invite()
         expected_org = Organization.onboard(code=code)
         orgs = Organization.get_list()
-        self.assertInList(expected_org, orgs)
+        self.assertInList(expected_org, orgs)"""

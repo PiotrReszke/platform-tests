@@ -18,7 +18,8 @@ CONFIG = {
         "admin_username": "admin",
         "seedorg_guid": "69e8563a-f182-4c1a-9b9d-9a475297cb41",
         "seedspace_guid": "16829796-2b3a-4c98-ad08-166315ca1411",
-        "cdh_host": "cdh.gotapaas.eu"
+        "cdh_host": "cdh.gotapaas.eu",
+        "uaa": "uaa.run.gotapaas.eu"
     },
     "demo-gotapaas.com": {
         "api_endpoint": "demo-gotapaas.com",
@@ -29,7 +30,8 @@ CONFIG = {
         "admin_username": "tester-admin",
         "seedorg_guid": "79d9c4ec-292c-48b4-9d7e-87ff62f86b1e",
         "seedspace_guid": "2b92e961-0ff8-4fe1-8a14-b8b491b05700",
-        "cdh_host": "cdh.demo-gotapaas.com"
+        "cdh_host": "cdh.demo-gotapaas.com",
+        "uaa": "login.demo-gotapaas.com"
     }
 }
 
@@ -39,10 +41,10 @@ APP_SCHEMAS = {
     "das": "swagger/data_acquisition_service_swagger.json",
     "data-catalog": "swagger/data_catalog_swagger.json",
     "metrics-provider": "swagger/metrics_provider_swagger.json",
-    "service-catalog": "swagger/service_catalog_swagger.json",
     "user-management": "swagger/user_management_swagger.json",
+    "service-catalog": "swagger/service_catalog_swagger.json",
     "app-launcher-helper": "swagger/app_launcher_helper_swagger.json",
-    "hive": "swagger/dataset_publisher_swagger.json"
+    "hive": "swagger/hive_swagger.json"
 }
 
 

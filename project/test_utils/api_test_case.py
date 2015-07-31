@@ -15,7 +15,7 @@ class ApiTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        org.Organization.delete_test_orgs()
+        org.Organization.api_delete_test_orgs()
 
     def run(self, result=None):
         logger.info('\n******************************************************************\n'

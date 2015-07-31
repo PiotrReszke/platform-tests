@@ -135,9 +135,9 @@ def api_get_spaces(client):
     logger.info("------------------ Get all spaces ------------------")
     return client.call(APP_NAME, "get_spaces")
 
-def api_create_space(client, name, org_guid):
+def api_create_space(client, org_guid, name):
     """POST /rest/spaces"""
-    logger.info("------------------ Create space with name {} ------------------".format(name))
+    logger.info("------------------ Create space {} at organization {} ------------------".format(name, org_guid))
     return client.call(APP_NAME, "create_space", body={"name": name, "org_guid": org_guid})
 
 def api_delete_space(client, space=None):

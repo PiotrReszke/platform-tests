@@ -8,7 +8,7 @@ logger = get_logger("test data transfer")
 class TestDataTransfer(ApiTestCase):
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.delete_test_orgs)
+    @cleanup_after_failed_setup(Organization.api_delete_test_orgs)
     def setUpClass(cls):
         cls.org = Organization.create()
         cls.org.add_admin()
@@ -22,4 +22,6 @@ class TestDataTransfer(ApiTestCase):
         expected_transfer = Transfer.api_create(source=data_source, org_guid=self.org.guid)
         transfer = Transfer.api_get(expected_transfer.id)
         self.assertAttributesEqual(transfer, expected_transfer)
+
+
 

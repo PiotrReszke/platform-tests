@@ -139,7 +139,7 @@ class Application(object):
     def api_get_list(cls, space_guid, client=None):
         """Get list of applications from Console / service-catalog API"""
         client = client or get_admin_client()
-        response = api.api_get_apps(client, space_guid)
+        response = api.api_get_filtered_applications(client, space_guid)
         applications = []
         for app in response:
             applications.append(cls(name=app["name"], space_guid=space_guid, guid=app["guid"], state=app["state"],
@@ -194,17 +194,21 @@ class Application(object):
     # -------------------------------- cf api -------------------------------- #
 
     @classmethod
-    def cf_api_get_list(cls, space_guid):
-        """Get list of applications from Cloud Foundry API"""
+    def from_cf_api_space_summary_response(cls, response, space_guid):
         applications = []
-        cf_apps = cf.cf_api_space_summary(space_guid)
-        for app_data in cf_apps["apps"]:
+        for app_data in response["apps"]:
             app = cls(name=app_data["name"], space_guid=space_guid, state=app_data["state"], memory=app_data["memory"],
                       disk=app_data["disk_quota"], instances="{}/{}".format(app_data["running_instances"],
                                                                             app_data["instances"]),
                       urls=tuple(app_data["urls"]), guid=app_data["guid"])
             applications.append(app)
         return applications
+
+    @classmethod
+    def cf_api_get_list(cls, space_guid):
+        """Get list of applications from Cloud Foundry API"""
+        response = cf.cf_api_space_summary(space_guid)
+        return cls.from_cf_api_space_summary_response(response, space_guid)
 
     def cf_api_get_summary(self):
         response = cf.cf_api_app_summary(self.guid)
@@ -230,7 +234,8 @@ class Application(object):
                 self.urls = (re.split(r'urls: ', line)[1],)
 
     def cf_delete(self):
-        self.TEST_APPS.remove(self)
+        if self in self.TEST_APPS:
+            self.TEST_APPS.remove(self)
         return cf.cf_delete(self.name)
 
     def cf_env(self):
@@ -238,3 +243,4 @@ class Application(object):
         start = re.search("^\{$", output, re.MULTILINE).start()
         end = re.search("^\}$", output, re.MULTILINE).end()
         return json.loads(output[start:end])
+

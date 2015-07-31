@@ -59,15 +59,23 @@ def cf_apps():
 
 
 @log_output_on_error
-def cf_marketplace():
+def cf_marketplace(service_name=None):
     command = ["cf", "marketplace"]
+    if service_name is not None:
+        command += ["-s", service_name]
     log_command(command)
-    return subprocess.check_output(["cf", "marketplace"]).decode()
+    return subprocess.check_output(command).decode()
 
 
 @log_output_on_error
-def cf_create_service(service, plan, instance_name):
-    command = ["cf", "create-service", service, plan, instance_name]
+def cf_create_service(broker_name, plan, instance_name):
+    command = ["cf", "create-service", broker_name, plan, instance_name]
+    log_command(command)
+    return subprocess.check_output(command).decode()
+
+
+def cf_services():
+    command = ["cf", "services"]
     log_command(command)
     return subprocess.check_output(command).decode()
 
@@ -85,7 +93,7 @@ def cf_start(app_name):
 
 
 def cf_delete(app_name):
-    command = ["cf", "delete", "-f", app_name]
+    command = ["cf", "delete", app_name, "-f"]
     log_command(command)
     subprocess.check_call(command)
 
@@ -93,6 +101,58 @@ def cf_delete(app_name):
 @log_output_on_error
 def cf_env(app_name):
     command = ["cf", "env", app_name]
+    log_command(command)
+    return subprocess.check_output(command).decode()
+
+
+@log_output_on_error
+def cf_delete_with_routes(app_name):
+    command = ["cf", "delete", app_name, "-f", "-r"]
+    log_command(command)
+    return subprocess.check_output(command).decode()
+
+
+def cf_delete_space(space_name):
+    command = ["cf", "delete-space", space_name, "-f"]
+    log_command(command)
+    return subprocess.check_call(command)
+
+
+def cf_unbind_service(app_name, service_name):
+    command = ["cf", "unbind-service", app_name, service_name]
+    log_command(command)
+    return subprocess.check_call(command)
+
+
+@log_output_on_error
+def cf_spaces():
+    command = ["cf", "spaces"]
+    log_command(command)
+    return subprocess.check_output(command).decode()
+
+
+@log_output_on_error
+def cf_routes():
+    command = ["cf", "routes"]
+    log_command(command)
+    return subprocess.check_output(command).decode()
+
+
+def cf_delete_route(domain, route):
+    command = ["cf", "delete-route", domain, "-n", route, "-f"]
+    log_command(command)
+    return subprocess.check_call(command)
+
+
+def cf_delete_service(service):
+    command = ["cf", "delete-service", service, "-f"]
+    log_command(command)
+    return subprocess.check_call(command)
+
+
+@log_output_on_error
+def cf_get_service_guid(service):
+    command = ["cf", "service", service, "--guid"]
     log_command(command)
     return subprocess.check_output(command).decode()
 
@@ -135,7 +195,7 @@ def cf_api_app_summary(app_guid):
 
 
 def cf_api_space_summary(space_guid):
-    """Equal to running cf apps"""
+    """Equal to running cf apps and cf services"""
     logger.info("------------------ CF: summary for space {} ------------------".format(space_guid))
     return CfApiClient.get_client().call("GET", "spaces/{}/summary".format(space_guid))
 
@@ -153,4 +213,12 @@ def cf_api_org_billing_managers(org_guid):
 def cf_api_org_auditors(org_guid):
     logger.info("------------------ CF: auditors in org {} ------------------".format(org_guid))
     return __get_all_pages(path="organizations/{}/auditors".format(org_guid))
+
+
+def cf_api_get_space_routes(space_guid):
+    logger.info("------------------ CF: get routes in space {} ------------------".format(space_guid))
+    response = CfApiClient.get_client().call(method="GET", path="spaces/{}/routes".format(space_guid))
+
+
+
 

@@ -5,10 +5,10 @@
       "get": {
         "operationId": "search_datasets",
         "parameters": [
-          {"name": "query", "in": "formData", "schema": {"$ref": "QueryObject"}},
-          {"name": "orgs", "in": "formData", "type": "array", "items": {"type": "string"}},
-          {"name": "onlyPrivate", "in": "formData", "type": "boolean"},
-          {"name": "onlyPublic", "in": "formData", "type": "boolean"}
+          {"name": "query", "in": "query", "type": "string"},
+          {"name": "orgs", "in": "query", "type": "string"},
+          {"name": "onlyPrivate", "in": "query", "type": "boolean"},
+          {"name": "onlyPublic", "in": "query", "type": "boolean"}
         ],
         "responses": {"200": {"description": "OK", "schema": {"$ref": "SearchHits"}}
         }
@@ -17,8 +17,8 @@
     "/rest/datasets/{entry_id}": {
       "delete": {
         "operationId": "delete_entry",
-        "parameters": [],
-        "responses": {}
+        "parameters": [{"name": "entry_id", "in": "path", "required": "true", "type": "string"}],
+        "responses": {"200": {"description": "OK", "schema": {"type": "string"}}}
       },
       "get": {
         "operationId": "get_entry",
@@ -59,19 +59,6 @@
     }
   },
   "definitions": {
-    "QueryObject": {
-      "properties": {
-        "query": {"type": "string"},
-        "filters": {"type": "array", "items": {"$ref": "QueryFilter"}},
-        "from": {"type": "integer", "format": "int32"},
-        "size": {"type": "integer", "format": "int32"}
-      }
-    },
-    "QueryFilter": {
-      "properties": {
-        "^": {"type": "array", "items": {"type": "string"}}
-      }
-    },
     "SearchHits": {
       "properties": {
         "hits": {"type": "array", "items": {"$ref": "SearchHit"}},
@@ -82,7 +69,7 @@
     },
     "SearchHit": {
       "properties": {
-        "format": {"type": "string", "enum": ["CSV", "PDF"]},
+        "format": {"type": "string", "enum": ["CSV", "PDF", "TXT"]},
         "dataSample": {"type": "string"},
         "category": {
           "type": "string",

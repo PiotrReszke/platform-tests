@@ -1,11 +1,11 @@
 from test_utils import get_logger
 
 
-APP_NAME = ["app-launcher-helper"]
+APP_NAME = "app-launcher-helper"
 logger = get_logger("app-launcher-helper calls")
 
 
-def api_list_atk_instances(client, org_guid):
-    """GET /rest/orgs/{org_guid}/atkinstances"""
-    logger.debug("------------------ Get list of atk instances in org {} ------------------".format(org_guid))
-    raise NotImplementedError("Please create a schema in app_launcher_helper_swagger.json")
+def api_get_atk_instances(client, org_guids):
+    """GET /rest/orgs/{organization_guid}/atkinstances"""
+    logger.info("------------------ Get atk instances for orgs {} ------------------".format(org_guids))
+    return client.call(APP_NAME, "get_atk_instances", organization_guid=org_guids)
