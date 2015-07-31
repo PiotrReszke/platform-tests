@@ -132,6 +132,7 @@ class Application(object):
             "service_names": sorted([service["name"] for service in response["services"]])
         }
 
+
     # -------------------------------- platform api -------------------------------- #
 
     @classmethod

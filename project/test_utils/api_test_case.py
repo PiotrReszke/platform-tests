@@ -40,6 +40,9 @@ class ApiTestCase(unittest.TestCase):
                 standard_msg = "{} found in list".format(member, container)
                 self.fail(self._formatMessage(msg, standard_msg))
 
+    def assertUnorderedListEqual(self, list1, list2):
+        self.assertListEqual(sorted(list1), sorted(list2))
+
     def assertRaisesUnexpectedResponse(self, status, error_message, callableObj, *args, **kwargs):
         """If error message does not need to be checked, pass None"""
         with self.assertRaises(UnexpectedResponseError) as e:
