@@ -1,0 +1,37 @@
+{
+  "info": {"version": "1.0.0", "title": "Latest Events Service API"},
+  "paths": {
+    "/rest/les/events": {
+      "get": {
+        "operationId": "get_latest_events",
+        "responses": {
+          "200": {"description": "OK", "schema": {"$ref": "EventSummary"}},
+          "401": {"description": "Unauthorized", "type": "string"},
+          "403": {"description": "Forbidden", "type": "string"},
+          "404": {"description": "Not Found", "type": "string"}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "EventSummary": {
+      "properties": {
+        "total": {"type": "integer", "format": "int32"},
+        "events": {"type": "array", "items": {"$ref": "EventInfo"}}
+      }
+    },
+    "EventInfo": {
+      "properties": {
+        "id": {"type": "string"},
+        "sourceId": {"type": "string"},
+        "sourceName": {"type": "string"},
+        "timestamp": {"type": "integer", "format": "int32"},
+        "category": {"type": "string"},
+        "message": {"type": "string"}
+      }
+    }
+  },
+  "security": [{"default": []}],
+  "swagger": "2.0",
+  "consumes": ["application/json"]
+}

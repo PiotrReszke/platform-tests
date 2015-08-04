@@ -40,6 +40,7 @@ CONFIG = {
 APP_SCHEMAS = {
     "das": "swagger/data_acquisition_service_swagger.json",
     "data-catalog": "swagger/data_catalog_swagger.json",
+    "latest-events-service": "swagger/latest_events_service_swagger.json",
     "metrics-provider": "swagger/metrics_provider_swagger.json",
     "user-management": "swagger/user_management_swagger.json",
     "service-catalog": "swagger/service_catalog_swagger.json",
