@@ -1,4 +1,5 @@
 import os
+import spur
 import ssl
 import unittest
 
@@ -52,3 +53,26 @@ class TestMqtt(ApiTestCase):
         logger.info("Done")
         connection_code = mqtt_client.disconnect()
         logger.info("Disconnected with code {}".format(connection_code))
+
+        try:
+            shell = spur.SshShell(hostname="proxy.gotapaas.eu", username="taproot-tests", private_key_file=os.path.expanduser("~") + "/.ssh/taproot-test.dat", missing_host_key=spur.ssh.MissingHostKey.accept)
+            shell.run(["true"])
+        except spur.ssh.ConnectionError as error:
+            print(error)
+
+
+        result = shell.run(["sh", "-c", "cf logs mqtt-demo --recent | grep message: | cut -d ':' -f7"])
+        log_result = str(result.output)
+        log_result = log_result.replace("'","")
+        log_result = log_result.replace("\\n ",'\n')[2:]
+        log_result = log_result.replace("\\n","\n")
+
+
+        f = open(self.TEST_DATA_FILE,"r")
+        input = f.read()
+
+        print(log_result == input)
+
+        cf.cf_delete(self.APP_NAME)
+        cf.cf_delete_service(self.DB_SERVICE_INSTANCE_NAME)
+        cf.cf_delete_service(self.MQTT_SERVICE_INSTANCE_NAME)
