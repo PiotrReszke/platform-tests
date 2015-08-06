@@ -10,16 +10,16 @@ __all__ = ["APP_SCHEMAS", "TEST_SETTINGS", "update_test_settings", "parse_argume
 # configuration variables depending on the environment
 CONFIG = {
     "gotapaas.eu": {
-        "api_endpoint": "apps.gotapaas.eu",
+        "api_endpoint": "gotapaas.eu",
         "login.do_scheme": "https",
-        "login_endpoint": "login.run.gotapaas.eu",
-        "cf_endpoint": "api.run.gotapaas.eu",
+        "login_endpoint": "login.gotapaas.eu",
+        "cf_endpoint": "api.gotapaas.eu",
         "admin_guid": "13c32424-23f4-44f7-bbb9-60763bfab4bc",
-        "admin_username": "admin",
+        "admin_username": "tester-admin",
         "seedorg_guid": "69e8563a-f182-4c1a-9b9d-9a475297cb41",
         "seedspace_guid": "16829796-2b3a-4c98-ad08-166315ca1411",
         "cdh_host": "cdh.gotapaas.eu",
-        "uaa": "uaa.run.gotapaas.eu"
+        "uaa": "uaa.gotapaas.eu"
     },
     "demo-gotapaas.com": {
         "api_endpoint": "demo-gotapaas.com",
@@ -105,7 +105,7 @@ def get_ssh_key_passphrase():
 # default settings
 update_test_settings(client_type="console",
                      test_environment="gotapaas.eu",
-                     test_username="admin",
+                     test_username="tester-admin",
                      proxy="proxy-mu.intel.com:911")
 # change settings when tests are run with PyCharm runner using environment variables
 update_test_settings(client_type=os.environ.get("TEST_CLIENT_TYPE"),
