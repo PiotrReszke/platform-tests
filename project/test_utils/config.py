@@ -14,10 +14,10 @@ CONFIG = {
         "login.do_scheme": "https",
         "login_endpoint": "login.gotapaas.eu",
         "cf_endpoint": "api.gotapaas.eu",
-        "admin_guid": "13c32424-23f4-44f7-bbb9-60763bfab4bc",
+        "admin_guid": "c2c34a64-2869-4947-bd35-b2bed9f49dfe",
         "admin_username": "tester-admin",
-        "seedorg_guid": "69e8563a-f182-4c1a-9b9d-9a475297cb41",
-        "seedspace_guid": "16829796-2b3a-4c98-ad08-166315ca1411",
+        "seedorg_guid": "ee1c60ab-1d4f-4bbb-aeba-60ea8c67ba9b",
+        "seedspace_guid": "fceadf34-f597-4634-8dd2-1875c06b9c9c",
         "cdh_host": "cdh.gotapaas.eu",
         "uaa": "uaa.gotapaas.eu"
     },

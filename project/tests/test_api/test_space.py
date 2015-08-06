@@ -1,6 +1,6 @@
 from test_utils.objects import Organization, Space
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
-
+import test_utils.cli.cloud_foundry as cf_cli
 
 
 logger = get_logger("test spaces")
@@ -8,9 +8,13 @@ logger = get_logger("test spaces")
 
 class TestSpace(ApiTestCase):
 
+    ORG_NAME = "seedorg"
+    SPACE_NAME = "seedspace"
+
     @classmethod
     @cleanup_after_failed_setup(Organization.api_delete_test_orgs)
     def setUpClass(cls):
+        cf_cli.cf_login(cls.ORG_NAME, cls.SPACE_NAME)
         cls.org = Organization.create()
 
     @classmethod
