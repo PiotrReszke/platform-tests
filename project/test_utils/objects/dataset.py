@@ -11,8 +11,8 @@ logger = get_logger("dataset")
 @functools.total_ordering
 class DataSet(object):
 
-    COMPARABLE_ATTRIBUTES = ["category", "creationTime", "dataSample", "format", "is_public", "id",
-                             "org_guid", "recordCount", "size", "source", "target_uri", "title"]
+    COMPARABLE_ATTRIBUTES = ["category", "creation_time", "data_sample", "format", "is_public", "id",
+                             "org_guid", "record_count", "size", "source", "target_uri", "title"]
 
     def __init__(self, category=None, creation_time=None, data_sample=None, format=None, id=None, is_public=None,
                  org_guid=None, record_count=None, size=None, source_uri=None, target_uri=None, title=None):
