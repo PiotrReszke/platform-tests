@@ -4,6 +4,7 @@ import time
 
 import test_utils.api_calls.das_api_calls as api
 from test_utils import get_admin_client, get_logger
+from test_utils import config
 
 
 __all__ = ["Transfer"]
@@ -101,3 +102,11 @@ class Transfer(object):
         if self.state != self.finished_status:
             raise TimeoutError("Transfer did not finished in {}s".format(timeout))
 
+    @classmethod
+    def get_test_transfer_link(self):
+        if config.TEST_SETTINGS["TEST_ENVIRONMENT"] == "gotapaas.eu":
+            return "http://fake-csv-server.gotapaas.eu/fake-csv/2"
+        elif config.TEST_SETTINGS["TEST_ENVIRONMENT"] == "demo-gotapaas.com":
+            return "http://fake-csv-server.demo-gotapaas.com/fake-csv/10"
+        else:
+            return "http://fake-csv-server.gotapaas.eu/fake-csv/2"

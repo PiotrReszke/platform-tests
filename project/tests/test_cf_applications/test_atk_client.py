@@ -13,8 +13,7 @@ logger = get_logger("test transfer")
 
 class TestCreateAtkInstance(ApiTestCase):
 
-    DATA_SOURCE = "http://fake-csv-server.apps.gotapaas.eu/fake-csv/100"
-    # DATA_SOURCE = "https://www.quandl.com/api/v1/datasets/NASDAQOMX/NDX.csv"
+    DATA_SOURCE = Transfer.get_test_transfer_link()
     UAA_FILENAME = "pyclient.test"
     UAA_FILE_PATH = os.path.join(os.path.dirname(__file__), "..", "atk_python2", UAA_FILENAME)
     ATK_TEST_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "atk_python2", "atk_python_client")

@@ -94,10 +94,3 @@ class DataSet(object):
                                      org_guid=self.org_guid, recordCount=self.record_count, size=self.size,
                                      source=self.source, target_uri=self.target_uri, title=self.title)
 
-    # def api_publish_in_hive(self, client=None):
-    #     client = client or get_admin_client()
-    #     dataset_publisher_api.api_publish_in_hive(client, category=self.category, creation_time=self.creation_time,
-    #                                               data_sample=self.data_sample, format=self.format, id=self.id,
-    #                                               is_public=self.is_public, org_guid=self.org_guid,
-    #                                               record_count=self.record_count, size=self.size, title=self.title,
-    #                                               source_uri=self.source_uri, target_uri=self.target_uri)
