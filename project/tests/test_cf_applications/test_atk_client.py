@@ -19,7 +19,7 @@ class TestCreateAtkInstance(ApiTestCase):
     ATK_TEST_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "atk_python2", "atk_python_client")
     ATK_CLIENT_INDEX_URL = "http://host.gao.intel.com/pypi/master/simple"
     TRUSTED_HOST = "host.gao.intel.com"
-    ATK_CLIENT_NAME = "taprootanalytics"
+    ATK_CLIENT_NAME = "trustedanalytics"
 
     @classmethod
     def tearDownClass(cls):
