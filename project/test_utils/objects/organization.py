@@ -41,7 +41,7 @@ class Organization(object):
     def create(cls, name=None, space_names=(), client=None):
         client = client or get_admin_client()
         if name is None:
-            name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]
+            name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
         response = api.api_create_organization(client, name)
         response = response.strip('"')  # guid is returned together with quotation marks
         org = cls(name=name, guid=response)
