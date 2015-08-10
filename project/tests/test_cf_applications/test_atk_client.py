@@ -63,9 +63,9 @@ class TestCreateAtkInstance(ApiTestCase):
                                              "--transfer": transfer.title,
                                              "--uaa_file_name": self.UAA_FILENAME
                                          })
-        except:
+        except Exception as e:
+            logger(str(e))
             atk_vitualenv.delete()
-
 
         if atk_response == 1:
             raise Exception("ATK script has not run properly")
