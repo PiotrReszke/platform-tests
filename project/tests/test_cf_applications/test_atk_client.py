@@ -51,7 +51,7 @@ class TestCreateAtkInstance(ApiTestCase):
         self.assertInList(expected_atk_service, service_list)
 
         atk_vitualenv = Virtualenv("atk_virtualenv")
-        atk_response = 0
+        atk_response = 1
         try:
             atk_vitualenv.create()
             atk_vitualenv.pip_install(self.ATK_CLIENT_NAME, extra_index_url=self.ATK_CLIENT_INDEX_URL,
@@ -67,12 +67,14 @@ class TestCreateAtkInstance(ApiTestCase):
             atk_vitualenv.delete()
 
 
-        if atk_response == 0:
+        if atk_response == 1:
             raise Exception("ATK script has not run properly")
-        elif atk_response == 1:
-            raise Exception("Python client failed to connect to ATK instance")
         elif atk_response == 2:
+            raise Exception("Python client failed to connect to ATK instance")
+        elif atk_response == 3:
             raise Exception("Hive could not find resources")
+        else:
+            print(atk_response)
 
         with open(self.UAA_FILE_PATH) as f:
             content = f.read()

@@ -84,6 +84,8 @@ class Virtualenv(object):
         logger.info("Atk script output:\n{}".format(response))
 
         if "Connected" not in response:
-            return 1
-        if "100.00% Tasks" not in response:
             return 2
+        if "100.00% Tasks" not in response:
+            return 3
+
+        return response
