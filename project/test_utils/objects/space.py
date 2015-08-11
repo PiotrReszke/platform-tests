@@ -59,7 +59,7 @@ class Space(object):
     def api_create(cls, org=None, name=None, client=None):
         client = client or get_admin_client()
         if name is None:
-            name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]
+            name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
         api.api_create_space(client, org.guid, name)
         spaces = Space.api_get_list(client)
         for space in spaces:

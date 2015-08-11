@@ -5,7 +5,7 @@ import test_utils.cli.cloud_foundry as cf_cli
 
 
 # TEST_ORG_PATTERN = '^test_org_[0-9]{8}'
-TEST_ORG_PATTERN = "^test_org_[0-9]{8}_[0-9]{6}_[0-9]{3}$"
+TEST_ORG_PATTERN = "^test_org_[0-9]{8}_[0-9]{6}_[0-9]{6}$"
 # TEST_ORG_PATTERN = 'testorg[0-9]{6}'
 
 if __name__ == "__main__":
