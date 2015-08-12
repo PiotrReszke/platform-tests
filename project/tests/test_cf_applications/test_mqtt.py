@@ -4,7 +4,7 @@ import unittest
 
 import paho.mqtt.client as mqtt
 
-from tests import get_source
+from test_utils import app_source_utils
 from test_utils import ApiTestCase, get_logger, TEST_SETTINGS
 from test_utils.cli import cloud_foundry as cf
 from test_utils.objects import Application, Organization, Space
@@ -29,8 +29,8 @@ class TestMqtt(ApiTestCase):
 
     def test_connection(self):
 
-        get_source.clone_repository("mqtt-demo", self.APP_REPO_PATH)
-        get_source.compile_mvn()
+        app_source_utils.clone_repository("mqtt-demo", self.APP_REPO_PATH)
+        app_source_utils.compile_mvn(self.APP_REPO_PATH)
 
         org = Organization.get_seedorg()
         space = Space.get_seedspace()

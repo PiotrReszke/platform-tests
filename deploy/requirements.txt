@@ -1,4 +1,5 @@
 certifi
+gitpython
 google-api-python-client
 paho-mqtt
 pexpect
