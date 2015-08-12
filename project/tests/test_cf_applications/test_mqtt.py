@@ -1,10 +1,10 @@
 import os
-import spur
 import ssl
 import unittest
 
 import paho.mqtt.client as mqtt
 
+from tests import get_source
 from test_utils import ApiTestCase, get_logger, TEST_SETTINGS
 from test_utils.cli import cloud_foundry as cf
 from test_utils.objects import Application, Organization, Space
@@ -28,6 +28,10 @@ class TestMqtt(ApiTestCase):
     MQTT_TOPIC_NAME = "space-shuttle/test-data"
 
     def test_connection(self):
+
+        get_source.clone_repository("mqtt-demo", self.APP_REPO_PATH)
+        get_source.compile_mvn()
+
         org = Organization.get_seedorg()
         space = Space.get_seedspace()
 
@@ -54,24 +58,6 @@ class TestMqtt(ApiTestCase):
         connection_code = mqtt_client.disconnect()
         logger.info("Disconnected with code {}".format(connection_code))
 
-        try:
-            shell = spur.SshShell(hostname="proxy.gotapaas.eu", username="taproot-tests", private_key_file=os.path.expanduser("~") + "/.ssh/taproot-test.dat", missing_host_key=spur.ssh.MissingHostKey.accept)
-            shell.run(["true"])
-        except spur.ssh.ConnectionError as error:
-            print(error)
-
-
-        result = shell.run(["sh", "-c", "cf logs mqtt-demo --recent | grep message: | cut -d ':' -f7"])
-        log_result = str(result.output)
-        log_result = log_result.replace("'","")
-        log_result = log_result.replace("\\n ",'\n')[2:]
-        log_result = log_result.replace("\\n","\n")
-
-
-        f = open(self.TEST_DATA_FILE,"r")
-        input = f.read()
-
-        print(log_result == input)
 
         cf.cf_delete(self.APP_NAME)
         cf.cf_delete_service(self.DB_SERVICE_INSTANCE_NAME)

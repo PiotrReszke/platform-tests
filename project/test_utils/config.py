@@ -101,6 +101,11 @@ def get_ssh_key_passphrase():
     if __SECRET.has_section("ssh"):
         return __SECRET["ssh"]["passphrase"]
 
+def get_github_username():
+    return __SECRET["github"]["username"]
+
+def get_github_password():
+    return __SECRET["github"]["password"]
 
 
 # default settings
