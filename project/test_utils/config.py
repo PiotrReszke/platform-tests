@@ -15,7 +15,7 @@ CONFIG = {
         "login_endpoint": "login.gotapaas.eu",
         "cf_endpoint": "api.gotapaas.eu",
         "admin_guid": "c2c34a64-2869-4947-bd35-b2bed9f49dfe",
-        "admin_username": "tester-admin",
+        "admin_username": "trusted.analytics.tester@gmail.com",
         "seedorg_guid": "ee1c60ab-1d4f-4bbb-aeba-60ea8c67ba9b",
         "seedspace_guid": "fceadf34-f597-4634-8dd2-1875c06b9c9c",
         "cdh_host": "cdh.gotapaas.eu",
@@ -27,7 +27,7 @@ CONFIG = {
         "login_endpoint": "login.demo-gotapaas.com",
         "cf_endpoint": "api.demo-gotapaas.com",
         "admin_guid": "284b34e8-6c23-4d64-afd1-952a394df501",
-        "admin_username": "tester-admin",
+        "admin_username": "trusted.analytics.tester@gmail.com",
         "seedorg_guid": "79d9c4ec-292c-48b4-9d7e-87ff62f86b1e",
         "seedspace_guid": "2b92e961-0ff8-4fe1-8a14-b8b491b05700",
         "cdh_host": "cdh.demo-gotapaas.com",
@@ -111,7 +111,7 @@ def get_github_password():
 # default settings
 update_test_settings(client_type="console",
                      test_environment="gotapaas.eu",
-                     test_username="tester-admin",
+                     test_username="trusted.analytics.tester@gmail.com",
                      proxy="proxy-mu.intel.com:911")
 # change settings when tests are run with PyCharm runner using environment variables
 update_test_settings(client_type=os.environ.get("TEST_CLIENT_TYPE"),
