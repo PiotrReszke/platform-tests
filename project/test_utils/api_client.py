@@ -89,10 +89,10 @@ class ApiClient(BaseClient):
         if self._token is not None:
             swagger_request.header.update({"Authorization": self._token})
         request = self._session.prepare_request(request)
+        self._log_request(request.method, request.url, request.headers, request.body)
         response = self._session.send(request)
-        self._log_request(request.method, request.url, request.headers, request.body, fixed_query_params)
+        self._log_response(response.status_code, response.headers, response.text)
         swagger_response.apply_with(status=response.status_code, header=response.headers, raw=response.text)
-        self._log_response(swagger_response.status, swagger_response.header, swagger_response.raw)
         return swagger_response
 
     @staticmethod
@@ -119,9 +119,7 @@ class ApiClient(BaseClient):
             raise UnexpectedResponseError(response.status_code, response.text, "Client is not authorized")
         return response.data
 
-    def _log_request(self, method, url, headers="", data="", params=None):
-        if params:
-            url = "{}?{}".format(url, "&".join(["{}={}".format(k, v) for k, v in params.items()]))
+    def _log_request(self, method, url, headers="", data=""):
         # if "Authorization" in headers:
         #     headers["Authorization"] = "[SECRET]"
         if data is not None and "password" in data:
@@ -170,7 +168,7 @@ class ConsoleClient(ApiClient):
     def _make_request(self, path, data="", headers="", params=None, method="POST"):
         request = requests.Request(method.upper(), path, data=data, headers=headers)
         request = self._session.prepare_request(request)
-        self._log_request(method, path, headers, data, params)
+        self._log_request(method, path, headers, data)
         response = self._session.send(request)
         self._log_response(response.status_code, response.headers, response.text)
         if not response.ok:
@@ -273,7 +271,7 @@ class CfApiClient(AppClient):
             json=body
         )
         request = request.prepare()
-        self._log_request(method=request.method, url=request.url, headers=request.headers)
+        self._log_request(method=request.method, url=request.url, headers=request.headers, data=body)
         response = self._session.send(request)
         self._log_response(status=response.status_code, headers=response.headers, text=response.text)
         if not response.ok:
