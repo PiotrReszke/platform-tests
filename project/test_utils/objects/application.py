@@ -81,6 +81,7 @@ class Application(object):
 
     def change_consumer_group_in_manifest(self, new_consumer_group):
         self.manifest["applications"][0]["env"]["CONSUMER_GROUP"] = new_consumer_group
+        self.__save_manifest()
 
     @classmethod
     def get_list_from_settings_yml(cls, settings_yml, state="STARTED"):
@@ -233,12 +234,13 @@ class Application(object):
             app.cf_delete()
 
     def cf_push(self, organization, space):
-        cf.cf_target(organization, space)
+        cf.cf_target(organization.name, space.name)
         output = cf.cf_push(self._local_path, self._local_jar)
         self.TEST_APPS.append(self)
         for line in output.split("\n"):
             if line[0:5] == "urls:":
                 self.urls = (re.split(r'urls: ', line)[1],)
+        self.guid = next(app.guid for app in self.api_get_list(space.guid) if app.name == self.name)
 
     def cf_delete(self):
         if self in self.TEST_APPS:

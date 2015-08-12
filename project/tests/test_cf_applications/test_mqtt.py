@@ -41,7 +41,7 @@ class TestMqtt(ApiTestCase):
         cf.cf_create_service(self.DB_SERVICE_NAME, "free", self.DB_SERVICE_INSTANCE_NAME)
         cf.cf_create_service(self.MQTT_SERVICE_NAME, "free", self.MQTT_SERVICE_INSTANCE_NAME)
         application = Application(local_path=self.APP_REPO_PATH, name=self.APP_NAME)
-        application.cf_push(org.name, space.name)
+        application.cf_push(org, space)
         credentials = application.cf_env()["VCAP_SERVICES"][self.MQTT_SERVICE_NAME][0]["credentials"]
         port_mosquitto = credentials["port"]
 

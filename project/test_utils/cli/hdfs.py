@@ -2,7 +2,7 @@ import re
 
 import spur
 
-from test_utils import get_logger, log_command, get_config_value, TEST_SETTINGS
+from test_utils import get_logger, log_command, get_config_value, TEST_SETTINGS, get_ssh_key_passphrase
 
 
 __all__ = ["Hdfs"]
@@ -25,7 +25,7 @@ class Hdfs(object):
 
     def _execute(self, command):
         log_command(command)
-        with spur.SshShell(hostname=self.hostname, username=self.username, password=config.get_ssh_key_passphrase()) as shell:
+        with spur.SshShell(hostname=self.hostname, username=self.username, password=get_ssh_key_passphrase()) as shell:
             result = shell.run(command)
         if result.return_code != 0:
             raise result.to_error()
