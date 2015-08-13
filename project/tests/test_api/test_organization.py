@@ -35,7 +35,7 @@ class TestOrganization(ApiTestCase):
         deleted_org = Organization.create()
         orgs = Organization.get_list()
         self.assertInList(deleted_org, orgs)
-        deleted_org.delete()
+        deleted_org.api_delete()
         orgs = Organization.get_list()
         self.assertNotInList(deleted_org, orgs)
 

@@ -1,4 +1,6 @@
+from datetime import datetime
 import functools
+import time
 import unittest
 
 import test_utils.objects.organization as org
@@ -24,6 +26,9 @@ class ApiTestCase(unittest.TestCase):
                     '*\n'
                     '******************************************************************\n', self._testMethodName)
         return super().run(result=result)
+
+    def get_timestamp(self):
+        return datetime.now().strftime("%Y%m%d-%H%M%S%f")
 
     def assertInList(self, member, container, msg=None):
         """Modeled after TestCase.assertIn(), but testing for equality, not identity."""
@@ -68,6 +73,39 @@ class ApiTestCase(unittest.TestCase):
                 differences.append("{0}.{1}={2} not equal to {0}.{1}={3}".format(type(obj), attribute, obj_val, expected_val))
         if differences != []:
             self.fail("Objects are not equal:\n{}".format("\n".join(differences)))
+
+    def assertEqualWithinTimeout(self, timeout, expected_result, callableObj, *args, **kwargs):
+        now = time.time()
+        while time.time() - now < timeout:
+            result = callableObj(*args, **kwargs)
+            if result == expected_result:
+                return
+            time.sleep(5)
+        self.fail("{} and {} are not equal - within {}s".format(result, expected_result, timeout))
+
+    def assertLenEqualWithinTimeout(self, timeout, expected_len, callableObj, *args, **kwargs):
+        now = time.time()
+        while time.time() - now < timeout:
+            result = callableObj(*args, **kwargs)
+            if len(result) == expected_len:
+                return
+            time.sleep(5)
+        self.fail("{} != {} are not equal - within {}s".format(len(result), expected_len, timeout))
+
+    def exec_within_timeout(self, timeout, callable_obj, *args, **kwargs):
+        """Execute a callable until it does not raise an exception or until timeout"""
+        now = time.time()
+        exception = None
+        while time.time() - now < timeout:
+            try:
+                return callable_obj(*args, **kwargs)
+            except Exception as e:
+                exception = e
+                logger.warning("Exception {}".format(e))
+                time.sleep(5)
+        raise exception
+
+
 
 
 def cleanup_after_failed_setup(cleanup_method):

@@ -276,4 +276,6 @@ class CfApiClient(AppClient):
         self._log_response(status=response.status_code, headers=response.headers, text=response.text)
         if not response.ok:
             raise UnexpectedResponseError(response.status_code, response.text)
+        if response.text == "":
+            return response.text
         return json.loads(response.text)

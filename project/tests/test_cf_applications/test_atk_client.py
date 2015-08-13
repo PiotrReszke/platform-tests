@@ -1,9 +1,7 @@
 import os
-import re
-import shutil
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger
-from test_utils.objects import Organization, Space, Transfer, DataSet
+from test_utils import ApiTestCase, get_logger
+from test_utils.objects import Organization, Transfer, DataSet
 from test_utils.cli.cf_service import CfBroker, CfService
 from test_utils.cli.venv import Virtualenv
 import test_utils.cli.cloud_foundry as cf
@@ -57,12 +55,12 @@ class TestCreateAtkInstance(ApiTestCase):
             atk_vitualenv.pip_install(self.ATK_CLIENT_NAME, extra_index_url=self.ATK_CLIENT_INDEX_URL,
                                       trusted_host=self.TRUSTED_HOST)
             atk_response = atk_vitualenv.run_atk_script(self.ATK_TEST_SCRIPT_PATH,
-                                         arguments={
-                                             "--organization": org.name,
-                                             "--atk": expected_atk_service.URL,
-                                             "--transfer": transfer.title,
-                                             "--uaa_file_name": self.UAA_FILENAME
-                                         })
+                                                        arguments={
+                                                            "--organization": org.name,
+                                                            "--atk": expected_atk_service.URL,
+                                                            "--transfer": transfer.title,
+                                                            "--uaa_file_name": self.UAA_FILENAME
+                                                        })
         except Exception as e:
             logger(str(e))
             atk_vitualenv.delete()

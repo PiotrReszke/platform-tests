@@ -1,5 +1,6 @@
 import functools
 import subprocess
+import time
 
 from test_utils import CfApiClient, get_logger, log_command, get_config_value, TEST_SETTINGS
 
@@ -131,19 +132,6 @@ def cf_spaces():
     return subprocess.check_output(command).decode()
 
 
-@log_output_on_error
-def cf_routes():
-    command = ["cf", "routes"]
-    log_command(command)
-    return subprocess.check_output(command).decode()
-
-
-def cf_delete_route(domain, route):
-    command = ["cf", "delete-route", domain, "-n", route, "-f"]
-    log_command(command)
-    return subprocess.check_call(command)
-
-
 def cf_delete_service(service):
     command = ["cf", "delete-service", service, "-f"]
     log_command(command)
@@ -217,8 +205,23 @@ def cf_api_org_auditors(org_guid):
 
 def cf_api_get_space_routes(space_guid):
     logger.info("------------------ CF: get routes in space {} ------------------".format(space_guid))
-    response = CfApiClient.get_client().call(method="GET", path="spaces/{}/routes".format(space_guid))
+    return CfApiClient.get_client().call(method="GET", path="spaces/{}/routes".format(space_guid))
 
 
-
-
+def cf_api_delete_route(route_guid, timeout=120):
+    logger.info("------------------ CF: delete route {} ------------------".format(route_guid))
+    response = CfApiClient.get_client().call(method="DELETE",
+                                             path="routes/{}".format(route_guid),
+                                             params={"async": True})
+    if response != "":
+        # routes are deleted asynchronously - to check that a route was deleted, job status is checked
+        path = "jobs/{}".format(response["entity"]["guid"])
+        now = time.time()
+        while time.time() - now < timeout:
+            response = CfApiClient.get_client().call(method="GET", path=path)
+            job_status = response["entity"]["status"]
+            if job_status == "finished":
+                return
+            logger.info("Deleting route - job status: {}".format(job_status))
+            time.sleep(5)
+        raise TimeoutError("Job deleting route did not finish in {}s".format(timeout))

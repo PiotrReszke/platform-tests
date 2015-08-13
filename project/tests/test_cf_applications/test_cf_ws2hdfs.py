@@ -69,6 +69,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     def _push_ws2kafka(self, app_name, topic_name):
         self.app_ws2kafka = Application(local_path=self.WS2KAFKA_PATH, name=app_name, topic=topic_name)
+
         self.app_ws2kafka.change_name_in_manifest(self.app_ws2kafka.name)
         self.app_ws2kafka.cf_push(self.ORG_NAME, self.SPACE_NAME)
 

@@ -1,10 +1,8 @@
 from datetime import datetime
 import functools
-import time
 
-from test_utils import get_config_value, get_admin_client
 import test_utils.cli.cloud_foundry as cf
-from test_utils.objects import Application, ServiceInstance, User
+from test_utils.objects import Application, ServiceInstance
 from test_utils import get_config_value, get_admin_client
 import test_utils.api_calls.user_management_api_calls as api
 from test_utils.objects.user import User
@@ -85,24 +83,18 @@ class Space(object):
         if org:
             org.spaces.remove(self)
 
-    def cf_delete_everything(self, org_object):
-        apps, service_instances = self.cf_api_get_space_summary()
+    def delete_associations(self):
+        """Delete applications, service instances, and routes"""
+        apps = self.cf_api_get_space_summary()[0]
         for app in apps:
-            app.cf_delete()
+            app.api_delete(cascade=True)
+        service_instances = self.cf_api_get_space_summary()[1]  # app deletion deletes bound service instances
         for service_instance in service_instances:
-            try:
-                service_instance.api_delete()  # deleting using api due to cf timeouts on deleting atk instances: DPNG-1737
-            except:
-                pass  #service instance should be deleted together with app but sometimes it takes longer than script is running and server returns 404
-        # deleting routes
-        routes = []
-        routes_string = cf.cf_routes().split("\n")[3:]
-        for route_data in routes_string:
-            if route_data != "":
-                routes.append(route_data)
-        if routes[0] != "No routes found":
-            for route in routes:
-                cf.cf_delete_route(domain=get_config_value("api_endpoint"), route=route.split(" ", 1)[0])
+            service_instance.api_delete()  # delete using api due to cf timeouts with atk instances: DPNG-1737
+        route_info = cf.cf_api_get_space_routes(self.guid)
+        route_guids = [route_data["metadata"]["guid"] for route_data in route_info["resources"]]
+        for route_guid in route_guids:
+            cf.cf_api_delete_route(route_guid)
 
     def cf_api_get_space_summary(self):
         """Return tuple with list of Application and ServiceInstance objects."""
@@ -114,3 +106,4 @@ class Space(object):
     def add_admin(self, org_guid, roles=("developers",)):
         admin = User.get_admin()
         admin.add_to_space(org_guid, self.guid, list(roles))
+

@@ -4,7 +4,10 @@
     "/rest/apps":{
       "get": {
         "operationId": "get_filtered_applications",
-          "parameters": [{"name": "space", "in": "query", "type": "string"}],
+          "parameters": [
+            {"name": "space", "in": "query", "type": "string"},
+            {"name": "service_label", "in": "query", "type": "string"}
+          ],
           "responses": {"200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "Applications"}}}}
       }
     },
@@ -16,15 +19,30 @@
       },
       "delete": {
         "operationId": "delete_app",
-          "parameters": [{"name": "app_guid", "in": "path", "type": "string"}],
+          "parameters": [
+            {"name": "app_guid", "in": "path", "type": "string"},
+            {"name": "cascade", "in": "query", "type": "boolean"}
+          ],
           "responses": {"200": {"description": "OK", "schema": {"type": "string"}}}
+      }
+    },
+    "/rest/service_instances":{
+      "post": {
+        "operationId": "create_service_instance",
+        "parameters": [
+          {"name": "body", "in": "body", "required": "true", "schema": {"$ref": "NewServiceInstanceRequest"}}
+        ],
+        "responses": {
+          "200": {"description": "OK", "schema": {"type": "string"}},
+          "500": {"description": "Internal Server Error", "schema": {"type": "string"}}
+        }
       }
     },
     "/rest/service_instances/{instance}":{
       "delete": {
         "operationId": "delete_service_instance",
-          "parameters": [{"name": "instance", "in": "path", "required": "true", "type": "string"}],
-          "responses": {"200": {"description": "OK", "schema": {"type": "string"}}}
+        "parameters": [{"name": "instance", "in": "path", "required": "true", "type": "string"}],
+        "responses": {"200": {"description": "OK", "schema": {"type": "string"}}}
       }
     },
     "/rest/services": {
@@ -97,6 +115,15 @@
         },
         "dashboard_uri": {"type": "string"},
         "bound_app_count": {"type": "integer", "format": "int32"}
+      }
+    },
+    "NewServiceInstanceRequest": {
+      "properties": {
+        "name": {"type": "string"},
+        "organization_guid": {"type": "string"},
+        "parameters": {"properties": {"name": {"type": "string"}}},
+        "service_plan_guid": {"type": "string"},
+        "space_guid": {"type": "string"}
       }
     },
     "ServiceInstanceListResponse": {

@@ -97,15 +97,21 @@ class Application(object):
             applications.append(cls(name=name, state=state, space_guid=space_guid))
         return applications
 
-    def application_api_request(self, endpoint, method="GET", url=None):
+    def application_api_request(self, endpoint, method="GET", scheme="http", url=None, data=None, params=None):
         """Send a request to application api"""
         url = url or self.urls[0]
-        url = "http://{}/{}".format(url, endpoint)
+        url = "{}://{}/{}".format(scheme, url, endpoint)
         request_method = getattr(requests, method.lower())
-        response = request_method(url)
+        response = request_method(
+            url=url,
+            data=data,
+            params=params
+        )
         logger.info("------------------------------ {} {} ------------------------------".format(method.upper(), url))
-        if response.status_code != 200:
+        if not response.ok:
             raise Exception("Response code is {} {}".format(response.status_code, response.text))
+        if "DOCTYPE HTML" in response.text:
+            return response.text
         return json.loads(response.text)
 
     @staticmethod
@@ -132,14 +138,13 @@ class Application(object):
             "service_names": sorted([service["name"] for service in response["services"]])
         }
 
-
     # -------------------------------- platform api -------------------------------- #
 
     @classmethod
-    def api_get_list(cls, space_guid, client=None):
+    def api_get_list(cls, space_guid, service_label=None, client=None):
         """Get list of applications from Console / service-catalog API"""
         client = client or get_admin_client()
-        response = api.api_get_filtered_applications(client, space_guid)
+        response = api.api_get_filtered_applications(client, space_guid, service_label)
         applications = []
         for app in response:
             applications.append(cls(name=app["name"], space_guid=space_guid, guid=app["guid"], state=app["state"],
@@ -151,10 +156,9 @@ class Application(object):
         response = api.api_get_app_summary(client, self.guid)
         return self._get_details_from_response(response)
 
-    def api_delete(self, client=None):
-        # TODO
+    def api_delete(self, cascade=True, client=None):
         client = client or get_admin_client()
-        api.api_delete_app(client, self.guid)
+        api.api_delete_app(client, self.guid, cascade=cascade)
 
     def api_get_orphan_services(self, client=None):
         client = client or get_admin_client()
@@ -215,7 +219,11 @@ class Application(object):
         return self._get_details_from_response(response)
 
     def cf_api_env(self):
-        return cf.cf_api_env(self.guid)
+        response = cf.cf_api_env(self.guid)
+        return {
+            "VCAP_SERVICES": response["system_env_json"]["VCAP_SERVICES"],
+            "VCAP_APPLICATION": response["application_env_json"]["VCAP_APPLICATION"]
+        }
 
     # -------------------------------- cf cli -------------------------------- #
 

@@ -5,7 +5,6 @@ from test_utils import config, get_logger, get_admin_client
 import test_utils.api_calls.metrics_provider_api_calls as metrics_api
 import test_utils.api_calls.user_management_api_calls as api
 from test_utils.objects import Space, User
-from test_utils.cli import cloud_foundry as cf
 
 
 __all__ = ["Organization"]
@@ -66,8 +65,7 @@ class Organization(object):
     def api_delete_test_orgs(cls):
         while len(cls.TEST_ORGS) > 0:
             org = cls.TEST_ORGS.pop()
-            org.cf_delete_spaces()
-            org.delete()
+            org.api_delete(with_spaces=True)
 
     @classmethod
     def get_seedorg(cls):
@@ -78,24 +76,21 @@ class Organization(object):
         self.name = new_name
         return api.api_rename_organization(client, self.guid, new_name)
 
-    def delete(self, client=None):
+    def api_delete(self, with_spaces=False, client=None):
         client = client or get_admin_client()
         if self in self.TEST_ORGS:
             self.TEST_ORGS.remove(self)
-        return api.api_delete_organization(client, self.guid)
-
-    def cf_delete_spaces(self):
-        while len(self.spaces) > 0:
-            space = self.spaces.pop()
-            cf.cf_target(self.name, space.name)
-            space.cf_delete_everything(org_object=self)
-            space.api_delete()
+        if with_spaces:
+            while len(self.spaces) > 0:
+                space = self.spaces.pop()
+                space.delete_associations()
+                space.api_delete()
+        api.api_delete_organization(client, self.guid)
 
     def add_admin(self, roles=("managers",)):
         """Add admin user to the organization"""
         admin = User.get_admin()
         admin.add_to_organization(self.guid, list(roles))
-
 
     # @classmethod
     # def invite(cls, email=None, client=get_admin_client()):

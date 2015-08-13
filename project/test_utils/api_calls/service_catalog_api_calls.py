@@ -36,26 +36,27 @@ def api_create_service_instance(client, name, space_guid, service_plan_guid, par
     body = {
         "name": name,
         "service_plan_guid": service_plan_guid,
-        "space_guid": space_guid
+        "space_guid": space_guid,
+        "parameters": {"name": name}
     }
-    if parameters is not None:
-        body["parameters"] = parameters
-    raise NotImplementedError("Please add swagger schema for this method in swagger/service_catalog_swagger.json")
+    return client.call(APP_NAME, "create_service_instance", body=body)
 
 
 def api_delete_service_instance(client, service_instance_guid):
     """DELETE /rest/service_instances/{service_instance_guid}"""
     logger.debug("------------------ Delete service instance {} ------------------".format(service_instance_guid))
-    # raise NotImplementedError("Please add swagger schema for this method in swagger/service_catalog_swagger.json")
     return client.call(APP_NAME, "delete_service_instance", instance=service_instance_guid)
 
 
 # ----------------------------------------------- Applications ----------------------------------------------- #
 
-def api_get_filtered_applications(client, space):
+def api_get_filtered_applications(client, space, service_label=None):
     """GET /rest/apps"""
     logger.info("------------------ Get applications in space {} ------------------".format(space))
-    return client.call(APP_NAME, "get_filtered_applications", space=space)
+    params = {"space": space}
+    if service_label is not None:
+        params["service_label"] = service_label
+    return client.call(APP_NAME, "get_filtered_applications", **params)
 
 
 def api_get_app_summary(client, app_guid):
@@ -64,10 +65,10 @@ def api_get_app_summary(client, app_guid):
     return client.call(APP_NAME, "get_app_details", app_guid=app_guid)
 
 
-def api_delete_app(client, app_guid):
+def api_delete_app(client, app_guid, cascade=True):
     """DELETE /rest/apps/{app_guid}"""
     logger.debug("------------------ Delete app {} ------------------".format(app_guid))
-    raise NotImplementedError("Please add swagger schema for this method in swagger/service_catalog_swagger.json")
+    return client.call(APP_NAME, "delete_app", app_guid=app_guid, cascade=cascade)
 
 
 def api_get_app_orphan_services(client, app_guid):

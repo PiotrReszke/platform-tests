@@ -3,8 +3,8 @@ gitpython
 google-api-python-client
 paho-mqtt
 pexpect
+pyswagger
 requests
 spur
 teamcity-messages
-websocket
-
+websocket-client

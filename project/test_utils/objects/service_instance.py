@@ -92,9 +92,9 @@ class ServiceInstance(object):
         return instances
 
     @classmethod
-    def api_create(cls, name, service_plan_guid, service_type_guid, space_guid, parameters=None, client=None):
+    def api_create(cls, name, service_plan_guid, service_type_guid, space_guid, client=None):
         client = client or get_admin_client()
-        api.api_create_service_instance(client, name, space_guid, service_plan_guid, parameters)
+        api.api_create_service_instance(client, name, space_guid, service_plan_guid)
         # the response does not return service guid, it has to be retrieved from get
         instances = cls.api_get_list(space_guid, service_type_guid, client)
         return [i for i in instances if i["name"] == name][0]
@@ -102,7 +102,6 @@ class ServiceInstance(object):
     def api_delete(self, client=None):
         client = client or get_admin_client()
         api.api_delete_service_instance(client, self.guid)
-
 
 
 class AtkInstance(ServiceInstance):
