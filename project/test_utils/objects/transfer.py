@@ -19,12 +19,12 @@ class Transfer(object):
     TITLE_PREFIX = "transfer"
 
     COMPARABLE_ATTRIBUTES = ["category", "id", "is_public", "organization_guid", "source",
-                             "state", "token", "timestamps", "title", "user_id"]
+                             "state", "timestamps", "title", "user_id"]
     new_status = "NEW"
     finished_status = "FINISHED"
 
     def __init__(self, category=None, id=None, id_in_object_store=None, is_public=None, org_guid=None, source=None,
-                 state=None, token=None, timestamps=None, title=None, user_id=None):
+                 state=None, timestamps=None, title=None, user_id=None):
         self.category = category
         self.id = id
         self.id_in_object_store = id_in_object_store
@@ -32,7 +32,6 @@ class Transfer(object):
         self.organization_guid = org_guid
         self.source = source
         self.state = state
-        self.token = token
         self.timestamps = timestamps
         self.title = title
         self.user_id = user_id
@@ -51,8 +50,7 @@ class Transfer(object):
         return cls(category=api_response["category"], id=api_response["id"],
                    id_in_object_store=api_response["idInObjectStore"], is_public=api_response["publicRequest"],
                    org_guid=api_response["orgUUID"], source=api_response["source"], state=api_response["state"],
-                   token=api_response["token"], timestamps=["timestamps"], title=api_response["title"],
-                   user_id=api_response["userId"])
+                   timestamps=["timestamps"], title=api_response["title"], user_id=api_response["userId"])
 
     @classmethod
     def api_create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=0,
@@ -65,7 +63,7 @@ class Transfer(object):
                                                   source=source, title=title, user_id=user_id)
         return cls(category=category, id=api_response["id"], id_in_object_store=api_response["idInObjectStore"],
                    is_public=is_public, org_guid=org_guid, source=source, state=api_response["state"],
-                   token=api_response["token"], timestamps=["timestamps"], title=title, user_id=user_id)
+                   timestamps=["timestamps"], title=title, user_id=user_id)
 
     @classmethod
     def api_get_list(cls, orgs, client=None):

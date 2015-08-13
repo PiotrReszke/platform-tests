@@ -1,5 +1,9 @@
-from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger
+import time
+import unittest
+
+from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, get_admin_client, config
 from test_utils.objects import Organization, Transfer, DataSet
+import test_utils.api_calls.das_api_calls as das_api
 
 
 logger = get_logger("test data transfer")
@@ -34,4 +38,16 @@ class TestDataTransfer(ApiTestCase):
         datasets_data = DataSet.api_get_list_and_metadata(org_list=[self.org])
         datasets = datasets_data["data_sets"]
         self.assertInList(dataset, datasets)
+
+    @unittest.skipIf(config.TEST_SETTINGS["TEST_ENVIRONMENT"] == "demo-gotapaas.com", "Change not yet deployed on demo")
+    def test_no_token_in_create_transfer_response(self):
+        """Verify that the request to create a transfer does not leak 'token' field"""
+        response = das_api.api_create_das_request(
+            client=get_admin_client(),
+            source=Transfer.get_test_transfer_link(),
+            title="test-transfer-{}".format(time.time()),
+            is_public=False,
+            org_guid=self.org.guid
+        )
+        self.assertTrue("token" not in response, "token should not be returned in response")
 
