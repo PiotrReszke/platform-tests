@@ -41,7 +41,7 @@ class Organization(object):
     def create(cls, name=None, space_names=(), client=None):
         client = client or get_admin_client()
         if name is None:
-            name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+            name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]
         response = api.api_create_organization(client, name)
         response = response.strip('"')  # guid is returned together with quotation marks
         org = cls(name=name, guid=response)
@@ -65,7 +65,8 @@ class Organization(object):
     @classmethod
     def api_delete_test_orgs(cls):
         while len(cls.TEST_ORGS) > 0:
-            org = cls.TEST_ORGS[0]
+            org = cls.TEST_ORGS.pop()
+            org.cf_delete_spaces()
             org.delete()
 
     @classmethod
@@ -79,7 +80,6 @@ class Organization(object):
 
     def delete(self, client=None):
         client = client or get_admin_client()
-        self.cf_delete_spaces()
         if self in self.TEST_ORGS:
             self.TEST_ORGS.remove(self)
         return api.api_delete_organization(client, self.guid)
