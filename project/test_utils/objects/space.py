@@ -2,10 +2,9 @@ from datetime import datetime
 import functools
 
 import test_utils.cli.cloud_foundry as cf
-from test_utils.objects import Application, ServiceInstance
+from test_utils.objects import User, Application, ServiceInstance
 from test_utils import get_config_value, get_admin_client
 import test_utils.api_calls.user_management_api_calls as api
-from test_utils.objects.user import User
 
 
 __all__ = ["Space"]
@@ -29,10 +28,6 @@ class Space(object):
 
     def __lt__(self, other):
         return self.guid < other.guid
-
-    @classmethod
-    def get_seedspace(cls):
-        return cls(name="seedspace", guid=get_config_value("seedspace_guid"))
 
     @classmethod
     def delete_spaces_in_org(self, client=None, org_guid=None):
@@ -104,6 +99,6 @@ class Space(object):
         return apps, service_instances
 
     def add_admin(self, org_guid, roles=("developers",)):
-        admin = User.get_admin()
+        admin = User.get_admin_user(org_guid)
         admin.add_to_space(org_guid, self.guid, list(roles))
 

@@ -8,7 +8,7 @@ class MetricsTest(ApiTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.seedorg = Organization.get_seedorg()
+        cls.seedorg = Organization.get_org_and_space(org_name="seedorg")[0]
         cls.seedorg.api_get_metrics()
 
     @unittest.expectedFailure

@@ -32,8 +32,7 @@ class TestMqtt(ApiTestCase):
         app_source_utils.clone_repository("mqtt-demo", self.APP_REPO_PATH)
         app_source_utils.compile_mvn(self.APP_REPO_PATH)
 
-        org = Organization.get_seedorg()
-        space = Space.get_seedspace()
+        org, space = Organization.get_org_and_space("seedorg", "seedspace")
 
         cf.cf_login(org.name, space.name)
 

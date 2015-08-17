@@ -1,7 +1,7 @@
 import functools
 import time
 
-from test_utils import TEST_SETTINGS, get_config_value, get_admin_client
+from test_utils import TEST_SETTINGS, get_config_value, get_admin_client, get_password
 from test_utils.api_client import ConsoleClient, AppClient
 import test_utils.api_calls.user_management_api_calls as api
 
@@ -15,7 +15,7 @@ class User(object):
     TEST_EMAIL_FORM = TEST_EMAIL.replace('@', '+{}@')
     __ADMIN = None
 
-    def __init__(self, guid, username, roles=None, organization_guid=None, space_guid=None, client_type=None,
+    def __init__(self, guid=None, username=None, roles=None, organization_guid=None, space_guid=None, client_type=None,
                  password=None):
         self.guid = guid
         self.username = username
@@ -120,12 +120,15 @@ class User(object):
         api.api_delete_space_user(client, self.space_guid, self.organizations_guid[0])
 
     @classmethod
-    def get_admin(cls):
+    def get_admin_user(cls, organization_guid):
         if cls.__ADMIN is None:
-            admin_guid = get_config_value("admin_guid")
             admin_username = get_config_value("admin_username")
-            admin_password = TEST_SETTINGS["TEST_PASSWORD"]
-            cls.__ADMIN = cls(guid=admin_guid, username=admin_username, client_type=AppClient, password=admin_password)
+            admin_password = get_password(admin_username)
+            client_type = AppClient if TEST_SETTINGS["TEST_CLIENT_TYPE"] == "app" else ConsoleClient
+            cls.__ADMIN = cls(username=admin_username, client_type=client_type, password=admin_password)
+            response = api.api_get_organization_users(cls.__ADMIN._app_client, organization_guid)
+            user_details = next(user for user in response if user.username == admin_username)
+            cls.__ADMIN.guid = user_details["guid"]
         return cls.__ADMIN
 
 # fix deletion via org/space to delete from all org/space

@@ -4,7 +4,7 @@ import os
 
 
 __all__ = ["APP_SCHEMAS", "TEST_SETTINGS", "update_test_settings", "parse_arguments", "get_config_value",
-           "get_ssh_key_passphrase"]
+           "get_ssh_key_passphrase", "get_password"]
 
 
 # configuration variables depending on the environment
@@ -14,10 +14,7 @@ CONFIG = {
         "login.do_scheme": "https",
         "login_endpoint": "login.gotapaas.eu",
         "cf_endpoint": "api.gotapaas.eu",
-        "admin_guid": "c2c34a64-2869-4947-bd35-b2bed9f49dfe",
         "admin_username": "trusted.analytics.tester@gmail.com",
-        "seedorg_guid": "ee1c60ab-1d4f-4bbb-aeba-60ea8c67ba9b",
-        "seedspace_guid": "fceadf34-f597-4634-8dd2-1875c06b9c9c",
         "cdh_host": "cdh.gotapaas.eu",
         "uaa": "uaa.gotapaas.eu"
     },
@@ -26,12 +23,18 @@ CONFIG = {
         "login.do_scheme": "http",
         "login_endpoint": "login.demo-gotapaas.com",
         "cf_endpoint": "api.demo-gotapaas.com",
-        "admin_guid": "284b34e8-6c23-4d64-afd1-952a394df501",
         "admin_username": "trusted.analytics.tester@gmail.com",
-        "seedorg_guid": "79d9c4ec-292c-48b4-9d7e-87ff62f86b1e",
-        "seedspace_guid": "2b92e961-0ff8-4fe1-8a14-b8b491b05700",
         "cdh_host": "cdh.demo-gotapaas.com",
         "uaa": "login.demo-gotapaas.com"
+    },
+    "callisto.gotapaas.com": {
+        "api_endpoint": "api.callisto.gotapaas.com",
+        "login.do_scheme": "http",
+        "login_endpoint": "login.callisto.gotapaas.com",
+        "cf_endpoint": "api.callisto.gotapaas.com",
+        "admin_username": "trusted.analytics.tester@gmail.com",
+        "cdh_host": "cdh.callisto.gotapaas.com",
+        "uaa": "login.callisto.gotapaas.com"
     }
 }
 
@@ -97,15 +100,22 @@ def get_config_value(key):
     test_environment = TEST_SETTINGS["TEST_ENVIRONMENT"]
     return CONFIG[test_environment][key]
 
+
 def get_ssh_key_passphrase():
     if __SECRET.has_section("ssh"):
         return __SECRET["ssh"]["passphrase"]
 
+
 def get_github_username():
     return __SECRET["github"]["username"]
 
+
 def get_github_password():
     return __SECRET["github"]["password"]
+
+
+def get_password(username):
+    return __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]][username]
 
 
 # default settings

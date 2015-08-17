@@ -9,7 +9,7 @@ import yaml
 
 import test_utils.cli.cloud_foundry as cf
 from test_utils.api_calls import service_catalog_api_calls as api
-from test_utils import TEST_SETTINGS, get_config_value, get_logger, get_admin_client
+from test_utils import TEST_SETTINGS, get_logger, get_admin_client
 
 
 logger = get_logger("application")
@@ -86,15 +86,14 @@ class Application(object):
     def get_list_from_settings_yml(cls, settings_yml, state="STARTED"):
         applications = []
         settings = yaml.load(settings_yml)
-        space_guid = get_config_value("seedspace_guid")
         for app_info in settings["applications"] + settings["user_provided_service_instances"]:
             name = app_info["name"]
             if "credentials" in app_info and "host" in app_info["credentials"]:
                 name = urlparse(app_info["credentials"]["host"]).hostname.split(".")[0]
-            applications.append(cls(name=name, state=state, space_guid=space_guid))
+            applications.append(cls(name=name, state=state))
         for app_info in settings["service_brokers"]:
             name = urlparse(app_info["broker_url"]).hostname.split(".")[0]
-            applications.append(cls(name=name, state=state, space_guid=space_guid))
+            applications.append(cls(name=name, state=state))
         return applications
 
     def application_api_request(self, endpoint, method="GET", scheme="http", url=None, data=None, params=None):

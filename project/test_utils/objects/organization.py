@@ -1,7 +1,7 @@
 import functools
 from datetime import datetime
 
-from test_utils import config, get_logger, get_admin_client
+from test_utils import config, get_logger, get_admin_client, get_config_value
 import test_utils.api_calls.metrics_provider_api_calls as metrics_api
 import test_utils.api_calls.user_management_api_calls as api
 from test_utils.objects import Space, User
@@ -68,8 +68,17 @@ class Organization(object):
             org.api_delete(with_spaces=True)
 
     @classmethod
-    def get_seedorg(cls):
-        return cls(name="seedorg", guid=config.get_config_value("seedorg_guid"))
+    def get_org_and_space(cls, org_name=None, space_name=None, client=None):
+        client = client or get_admin_client()
+        response = api.api_get_organizations(client)
+        organization = space = None
+        if org_name is not None:
+            org_details = next(org for org in response if org.name == org_name)
+            organization = cls(name=org_details["name"], guid=org_details["guid"])
+        if space_name is not None:
+            space_details = next(space for space in org_details["spaces"] if space.name == space_name)
+            space = Space(name=space_details["name"], guid=space_details["guid"])
+        return organization, space
 
     def rename(self, new_name, client=None):
         client = client or get_admin_client()
@@ -89,8 +98,8 @@ class Organization(object):
 
     def add_admin(self, roles=("managers",)):
         """Add admin user to the organization"""
-        admin = User.get_admin()
-        admin.add_to_organization(self.guid, list(roles))
+        admin_username = get_config_value("admin_username")
+        User.create_via_organization(self.guid, admin_username, roles)
 
     # @classmethod
     # def invite(cls, email=None, client=get_admin_client()):

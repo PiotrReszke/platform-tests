@@ -1,5 +1,5 @@
 from test_utils import ApiTestCase, get_logger, config
-from test_utils.objects import Application, github_get_file_content
+from test_utils.objects import Application, github_get_file_content, Organization
 
 
 logger = get_logger("trusted_analytics_app_test")
@@ -15,7 +15,7 @@ class TrustedAnalyticsApplicationsSmokeTest(ApiTestCase):
         cls.expected_apps = Application.get_list_from_settings_yml(cls.settings_file)
         cls.expected_app_names = [app.name for app in cls.expected_apps]
         logger.info("{} apps are expected to be started".format(len(cls.expected_apps)))
-        cls.seedspace_guid = config.get_config_value("seedspace_guid")
+        cls.seedspace_guid = Organization.get_org_and_space("seedorg", "seedspace")[1].guid
 
     def test_cf_application_status(self):
         """Check that all applications from demo-settings.yml are started on cf"""
