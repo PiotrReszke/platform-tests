@@ -45,7 +45,7 @@ class ServiceInstance(object):
                    credentials=entity["credentials"])
 
     @classmethod
-    def cf_api_get_list(cls, org_guid):
+    def cf_api_get_list_for_org(cls, org_guid):
         service_instance_data = cf.cf_api_get_service_instances(org_guid)
         service_instances = []
         for data in service_instance_data:
@@ -55,21 +55,26 @@ class ServiceInstance(object):
     @classmethod
     def from_cf_api_space_summary_response(cls, response, space_guid):
         instances = []
-        url = None
         for instance_data in response["services"]:
-            service_type = instance_data["service_plan"]["service"]
-            try:
-                url = instance_data["dashboard_url"].replace("/dashboard", "")
-            except:
-                pass
+            service_type_guid = service_type = service_plan_guid = None
+            instance_data_service_plan = instance_data.get("service_plan")
+            if instance_data_service_plan:
+                service_plan_guid = instance_data_service_plan.get("guid")
+                service_plan = instance_data_service_plan.get("service")
+                if service_plan:
+                    service_type_guid = service_plan.get("guid")
+                    service_type = service_plan.get("label")
+            url = instance_data.get("dashboard_url")
+            if url:
+                url = url.replace("/dashboard", "")
             service_instance = cls(guid=instance_data["guid"], name=instance_data["name"], space_guid=space_guid,
-                                   service_type_guid=service_type["guid"], type=service_type["label"], url=url,
-                                   service_plan_guid=instance_data["service_plan"]["guid"])
+                                   service_type_guid=service_type_guid, type=service_type, url=url,
+                                   service_plan_guid=service_plan_guid)
             instances.append(service_instance)
         return instances
 
     @classmethod
-    def cf_api_get_list_in_space(cls, space_guid):
+    def cf_api_get_list(cls, space_guid):
         """Get list of service instances from Cloud Foundry API"""
         response = cf.cf_api_space_summary(space_guid)
         return cls.from_cf_api_space_summary_response(response, space_guid)

@@ -13,5 +13,5 @@ class MetricsTest(ApiTestCase):
 
     @unittest.expectedFailure
     def test_service_count(self):
-        cf_api_service_instances = ServiceInstance.cf_api_get_list(self.seedorg.guid)
+        cf_api_service_instances = ServiceInstance.cf_api_get_list_for_org(self.seedorg.guid)
         self.assertEqual(self.seedorg.metrics["service_usage"], len(cf_api_service_instances))

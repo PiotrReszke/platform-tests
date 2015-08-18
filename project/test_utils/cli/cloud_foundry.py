@@ -207,6 +207,10 @@ def cf_api_get_space_routes(space_guid):
     logger.info("------------------ CF: get routes in space {} ------------------".format(space_guid))
     return CfApiClient.get_client().call(method="GET", path="spaces/{}/routes".format(space_guid))
 
+def cf_api_get_space_service_brokers(space_guid):
+    logger.info("------------------ CF: service brokers for space {} ------------------".format(space_guid))
+    return __get_all_pages(path="service_brokers", query_params={"q": "space_guid:{}".format(space_guid)})
+
 
 def cf_api_delete_route(route_guid, timeout=120):
     logger.info("------------------ CF: delete route {} ------------------".format(route_guid))

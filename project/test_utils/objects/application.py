@@ -2,7 +2,6 @@ import base64
 import json
 import os
 import re
-from urllib.parse import urlparse
 
 import requests
 import yaml
@@ -83,19 +82,6 @@ class Application(object):
         self.manifest["applications"][0]["env"]["CONSUMER_GROUP"] = new_consumer_group
         self.__save_manifest()
 
-    @classmethod
-    def get_list_from_settings_yml(cls, settings_yml, state="STARTED"):
-        applications = []
-        settings = yaml.load(settings_yml)
-        for app_info in settings["applications"] + settings["user_provided_service_instances"]:
-            name = app_info["name"]
-            if "credentials" in app_info and "host" in app_info["credentials"]:
-                name = urlparse(app_info["credentials"]["host"]).hostname.split(".")[0]
-            applications.append(cls(name=name, state=state))
-        for app_info in settings["service_brokers"]:
-            name = urlparse(app_info["broker_url"]).hostname.split(".")[0]
-            applications.append(cls(name=name, state=state))
-        return applications
 
     def application_api_request(self, endpoint, method="GET", scheme="http", url=None, data=None, params=None):
         """Send a request to application api"""
