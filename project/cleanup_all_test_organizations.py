@@ -20,7 +20,7 @@ from test_utils import get_logger
 from test_utils.objects import Organization
 
 
-TEST_ORG_PATTERN = "^test_org_[0-9]{8}_[0-9]{6}_[0-9]{6}$"
+TEST_ORG_PATTERN = "(^|^new-)test_org_[0-9]{8}_[0-9]{6}_[0-9]{6}$"
 logger = get_logger("organization cleanup")
 
 
