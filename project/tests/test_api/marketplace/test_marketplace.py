@@ -14,7 +14,9 @@
 # limitations under the License.
 #
 
-from test_utils.objects import ServiceType, Organization
+from datetime import datetime
+
+from test_utils.objects import ServiceType, Organization, ServiceInstance
 from test_utils import ApiTestCase, get_logger
 
 
@@ -23,8 +25,33 @@ logger = get_logger("test marketplace")
 
 class TestMarketplaceServices(ApiTestCase):
 
+    def setUp(self):
+        self.test_organization = Organization.create(space_names=("test-space",))
+        self.test_space = self.test_organization.spaces[0]
+
+    def tearDown(self):
+        Organization.api_tear_down_test_orgs()
+
     def test_marketplace_services(self):
-        seedspace_guid = Organization.get_org_and_space_by_name("seedorg", "seedspace")[1].guid
-        api_marketplace = ServiceType.api_get_list_from_marketplace(seedspace_guid)
-        cf_marketplace = ServiceType.cf_api_get_list_from_marketplace(seedspace_guid)
+        api_marketplace = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
+        cf_marketplace = ServiceType.cf_api_get_list_from_marketplace(self.test_space.guid)
         self.assertListEqual(sorted(api_marketplace), sorted(cf_marketplace))
+
+    def test_create_instance_of_every_service(self):
+        marketplace_services = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
+        for service_type in marketplace_services:
+            with self.subTest(service=service_type):
+                service_instance_name = service_type.label + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+                instance = ServiceInstance.api_create(
+                    name=service_instance_name,
+                    service_plan_guid=service_type.service_plan_guids[0],
+                    space_guid=service_type.space_guid,
+                    org_guid=self.test_organization.guid
+                )
+                self.assertIsNotNone(instance,
+                                     "Instance of {} was not found on service instance list".format(service_type))
+
+                instance.api_delete()
+                instances = ServiceInstance.api_get_list(space_guid=service_type.space_guid,
+                                                         service_type_guid=service_type.guid)
+                self.assertNotInList(instance, instances)

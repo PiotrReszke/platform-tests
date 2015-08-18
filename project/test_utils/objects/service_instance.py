@@ -107,9 +107,9 @@ class ServiceInstance(object):
     @classmethod
     def api_create(cls, name, service_plan_guid, org_guid, space_guid, client=None):
         api.api_create_service_instance(name, service_plan_guid, org_guid, space_guid, client=client)
-        # the response does not return service guid, it has to be retrieved from get
+        # the response does not return service instance guid, it has to be retrieved with get list
         instances = cls.api_get_list(space_guid, client)
-        return next((i for i in instances if i["name"] == name), None)
+        return next((i for i in instances if i.name == name), None)
 
     @classmethod
     def cf_api_create(cls, space_guid, service_plan_guid, name):
@@ -132,7 +132,7 @@ class AtkInstance(ServiceInstance):
         self.scoring_engine = scoring_engine
 
     @classmethod
-    def api_get_list(cls, org_guid, service_type_guid, client=None):
+    def api_get_list(cls, org_guid, service_type_guid=None, client=None):
         response = api.api_get_atk_instances(org_guid, client=client)
         instances = []
         for data in response["instances"]:
