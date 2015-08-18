@@ -19,11 +19,16 @@ import shutil
 import subprocess
 
 from git import Repo
-from test_utils import config
+
+from test_utils import config, log_command, get_logger
+
+
+logger = get_logger("source utils")
 
 
 def clone_repository(repository_name, target_directory, owner="intel-data"):
     API_URL = "https://{}:{}@github.com/{}/{}.git".format(config.get_github_username(), config.get_github_password(), owner, repository_name)
+    logger.info("Clone from {} to {}".format(API_URL, target_directory))
     if os.path.exists(target_directory):
         shutil.rmtree(target_directory)
     os.mkdir(target_directory)
@@ -31,7 +36,10 @@ def clone_repository(repository_name, target_directory, owner="intel-data"):
 
 
 def compile_mvn(directory):
+    logger.info("Compile project {}".format(directory))
     current_path = os.getcwd()
     os.chdir(directory)
-    subprocess.call(["mvn", "clean", "package"])
+    command = ["mvn", "clean", "package"]
+    log_command(command)
+    subprocess.call(command)
     os.chdir(current_path)

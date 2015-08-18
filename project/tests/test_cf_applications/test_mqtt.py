@@ -25,7 +25,7 @@ import paho.mqtt.client as mqtt
 
 from test_utils import ApiTestCase, get_logger, config, app_source_utils, TEST_SETTINGS
 from test_utils.cli import cloud_foundry as cf
-from test_utils.objects import Application, Organization, Space
+from test_utils.objects import Application, Organization
 
 
 logger = get_logger("test_mqtt")
@@ -45,23 +45,28 @@ class TestMqtt(ApiTestCase):
     SERVER_CERTIFICATE = os.path.join(os.path.dirname(__file__), "mosquitto_demo_cert.pem")
     MQTT_TOPIC_NAME = "space-shuttle/test-data"
 
-    def test_connection(self):
-
+    def setUp(self):
         app_source_utils.clone_repository("mqtt-demo", self.APP_REPO_PATH)
         app_source_utils.compile_mvn(self.APP_REPO_PATH)
+        self.seedorg, self.seedspace = Organization.get_org_and_space("seedorg", "seedspace")
+        cf.cf_login(self.seedorg.name, self.seedspace.name)
 
-        org, space = Organization.get_org_and_space("seedorg", "seedspace")
+    def tearDown(self):
+        Application.delete_test_apps()
+        cf.cf_delete_service(self.DB_SERVICE_INSTANCE_NAME)
+        cf.cf_delete_service(self.MQTT_SERVICE_INSTANCE_NAME)
 
-        cf.cf_login(org.name, space.name)
-
+    def test_connection(self):
         cf.cf_create_service(self.DB_SERVICE_NAME, "free", self.DB_SERVICE_INSTANCE_NAME)
         cf.cf_create_service(self.MQTT_SERVICE_NAME, "free", self.MQTT_SERVICE_INSTANCE_NAME)
         application = Application(local_path=self.APP_REPO_PATH, name=self.APP_NAME)
-        application.cf_push(org, space)
-        credentials = application.cf_env()["VCAP_SERVICES"][self.MQTT_SERVICE_NAME][0]["credentials"]
+        application.cf_push(self.seedorg, self.seedspace)
+
+        credentials = application.cf_api_env()["VCAP_SERVICES"][self.MQTT_SERVICE_NAME][0]["credentials"]
         port_mosquitto = credentials["port"]
 
-        logs = subprocess.Popen(["cf","logs","mqtt-demo"], stdout=subprocess.PIPE)
+        # start reading logs
+        logs = subprocess.Popen(["cf", "logs", "mqtt-demo"], stdout=subprocess.PIPE)
         time.sleep(5)
 
         mqtt_client = mqtt.Client()
@@ -69,32 +74,22 @@ class TestMqtt(ApiTestCase):
         mqtt_client.tls_set(self.SERVER_CERTIFICATE, tls_version=ssl.PROTOCOL_TLSv1_2)
         mqtt_client.connect(self.MQTT_SERVER, int(port_mosquitto), 20)
         with open(self.TEST_DATA_FILE) as f:
-            data = f.readlines()
-        logger.info("Sending {0} data vectors to {1}:{2} on topic {3}...".format(len(data), self.MQTT_SERVER,
+            expected_data = f.read().split("\n")
+        logger.info("Sending {0} data vectors to {1}:{2} on topic {3}...".format(len(expected_data), self.MQTT_SERVER,
                                                                                  port_mosquitto, self.MQTT_TOPIC_NAME))
-        for line in data:
+        for line in expected_data:
             mqtt_client.publish(self.MQTT_TOPIC_NAME, line)
         logger.info("Done")
         connection_code = mqtt_client.disconnect()
         logger.info("Disconnected with code {}".format(connection_code))
 
-        grep =  subprocess.Popen(["grep","message:"], stdin = logs.stdout, stdout=subprocess.PIPE)
+        grep = subprocess.Popen(["grep", "message:"], stdin=logs.stdout, stdout=subprocess.PIPE)
         logs.stdout.close()
         time.sleep(50)
         os.kill(logs.pid, signal.SIGTERM)
-        cut = subprocess.Popen("cut -d ':' -f7 ", stdin = grep.stdout, stdout=subprocess.PIPE, shell=True)
+        cut = subprocess.Popen("cut -d ':' -f7 ", stdin=grep.stdout, stdout=subprocess.PIPE, shell=True)
         grep.stdout.close()
-        output = cut.communicate()[0]
-
-        log_result = str(output)
-        log_result = log_result.replace("'","")
-        log_result = log_result.replace("\\n ",'\n')[2:]
-        log_result = log_result.replace("\\n","\n")
-
-        f = open(self.TEST_DATA_FILE,"r")
-        input = f.read()
-        print(log_result == input)
-
-        cf.cf_delete(self.APP_NAME)
-        cf.cf_delete_service(self.DB_SERVICE_INSTANCE_NAME)
-        cf.cf_delete_service(self.MQTT_SERVICE_INSTANCE_NAME)
+        log_result = cut.communicate()[0].decode().split("\n")
+        log_result = [item.strip() for item in log_result if item not in (" ", "")]
+        self.maxDiff = None  # allows for full diff to be displayed
+        self.assertListEqual(log_result, expected_data, "Data in logs do not match sent data")
