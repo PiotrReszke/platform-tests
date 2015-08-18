@@ -124,14 +124,15 @@ class ApiTestCase(unittest.TestCase):
 
 
 
-def cleanup_after_failed_setup(cleanup_method):
+def cleanup_after_failed_setup(*cleanup_methods):
     def wrapper(func):
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
             try:
                 func(*args, **kwargs)
             except:
-                cleanup_method()
+                for cleanup_method in cleanup_methods:
+                    cleanup_method()
                 raise
         return wrapped
     return wrapper

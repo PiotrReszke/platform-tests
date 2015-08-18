@@ -51,18 +51,7 @@ class Space(object):
         spaces = Space.get_list(client, org_guid=org_guid)
         if spaces:
             for space in spaces:
-                space.delete()    
-                
-    # @classmethod
-    # def api_create(cls, org_guid=None, name=None, client=None):
-    #     client = client or get_admin_client()
-    #     if name is None:
-    #         name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]
-    #     api.api_create_space(client, org_guid, name)
-    #     spaces = Space.api_get_list(client)
-    #     for space in spaces:
-    #         if org_guid == space.org_guid and name == space.name:
-    #             return space
+                space.delete()
 
     @classmethod
     def api_create(cls, org=None, name=None, client=None):

@@ -17,18 +17,27 @@
 import os
 import subprocess
 import pexpect
+import tarfile
+import shutil
 
-from test_utils import log_command, config, get_logger
+from test_utils import log_command, get_logger
 from test_utils import config
+from test_utils import get_admin_client
+import test_utils.api_calls.file_server_api_calls as api
+from test_utils.api_client import ApiClient as api_client
 
 
-__all__ = ["Virtualenv"]
+__all__ = ["ATKtools"]
 
 
-logger = get_logger("virtualenv")
+logger = get_logger("ATKtools")
 
 
-class Virtualenv(object):
+class AtkScriptException(AssertionError):
+    pass
+
+
+class ATKtools(object):
 
     HOME = os.path.expanduser("~")
 
@@ -100,8 +109,26 @@ class Virtualenv(object):
         logger.info("Atk script output:\n{}".format(response))
 
         if "Connected" not in response:
-            return 2
+            raise AtkScriptException("Python client failed to connect to ATK instance")
         if "100.00% Tasks" not in response:
-            return 3
+            raise AtkScriptException("Hive could not find resources")
 
         return response
+
+    @classmethod
+    def api_get_atkfilename(cls, client=None):
+        client = client or get_admin_client()
+        response = api.api_get_atkfilename(client)
+        return response["file"]
+
+    @classmethod
+    def api_download(cls, filename, client=None):
+        client = client or get_admin_client()
+        url = "https://console.demo-gotapaas.com/files/{}".format(filename)
+        api_client.file_download(client, "GET", url)
+
+    @classmethod
+    def unpack_tar_file(cls, tar_path, destination_path):
+        tar = tarfile.open(tar_path)
+        tar.extractall(path=destination_path)
+        tar.close()

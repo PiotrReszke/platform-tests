@@ -28,12 +28,12 @@
     },
     "/rest/service_instances":{
       "get": {
-        "operationId": "get_service_instances",
+         "operationId": "get_service_instances",
           "parameters": [
-              {"name": "broker", "in": "query", "required": "false", "type": "string"},
-              {"name": "space", "in": "query", "required": "true", "type": "string"}
-          ],
-          "responses": {"200": {"description": "OK", "schema": {"$ref": "ServiceInstancesList"}}}
+            {"name": "broker", "in": "query", "required": "false", "type": "string"},
+            {"name": "space", "in": "query", "required": "true", "type": "string"}
+        ],
+        "responses": {"200": {"description": "OK", "schema": {"type": "array", "items": {"$ref": "ServiceInstanceDetails"}}}}
       },
       "post": {
         "operationId": "create_service_instance",
@@ -57,14 +57,14 @@
       "get": {
         "operationId": "get_marketplace_services",
         "parameters": [{"name": "space", "in": "query", "type": "string"}],
-        "responses": {"200": {"description": "OK", "schema": {"$ref": "ServiceInstanceListResponse"}}}
+        "responses": {"200": {"description": "OK", "schema": {"$ref": "ServiceListResponse"}}}
       }
     },
     "/rest/services/{service_guid}": {
       "get": {
         "operationId": "get_service",
         "parameters": [{"name": "service_guid", "in": "path", "type": "string"}],
-        "responses": {"200": {"description": "OK", "schema": {"$ref": "ServiceInstanceDetails"}}}
+        "responses": {"200": {"description": "OK", "schema": {"$ref": "ServiceDetails"}}}
       }
     }
   },
@@ -142,6 +142,22 @@
         "bound_app_count": {"type": "integer", "format": "int32"}
       }
     },
+    "ServiceInstanceDetails": {
+      "properties": {
+        "guid": {"type": "string"},
+        "name": {"type": "string"},
+        "service": {"type": "string"},
+        "service_plan": {"type": "string"},
+        "bound_apps": {"type": "array", "items": {"$ref": "BoundApp"}},
+        "dashboard_url": {"type": "string"}
+      }
+    },
+    "BoundApp": {
+      "properties": {
+        "guid": {"type": "string"},
+        "name": {"type": "string"}
+       }
+     },
     "NewServiceInstanceRequest": {
       "properties": {
         "name": {"type": "string"},
@@ -151,16 +167,16 @@
         "space_guid": {"type": "string"}
       }
     },
-    "ServiceInstanceListResponse": {
+    "ServiceListResponse": {
       "properties": {
         "total_results":  {"type": "integer", "format": "int32"},
         "total_pages": {"type": "integer", "format": "int32"},
         "prev_url": {"type": "string"},
         "next_url": {"type": "string"},
-        "resources": {"type":"array", "items":{"$ref": "ServiceInstanceDetails"}}
+        "resources": {"type":"array", "items":{"$ref": "ServiceDetails"}}
       }
     },
-    "ServiceInstanceDetails": {
+    "ServiceDetails": {
       "properties": {
         "metadata": {"$ref": "Metadata"},
         "entity": {

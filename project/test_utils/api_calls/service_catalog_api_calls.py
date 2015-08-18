@@ -43,7 +43,7 @@ def api_get_service_instances(client, space_guid, service_guid=None):
     """GET /rest/service_instances"""
     logger.debug("--------------- Get service instances for service {} in space {} ---------------".format(service_guid,
                                                                                                           space_guid))
-    return client.call(APP_NAME, "get_service_instances", space=space_guid, broker=service_guid)
+    return client.call(APP_NAME, "get_service_instances", broker=service_guid, space=space_guid)
 
 
 def api_create_service_instance(client, name, space_guid, service_plan_guid, parameters=None):

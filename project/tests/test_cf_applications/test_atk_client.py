@@ -15,11 +15,11 @@
 #
 
 import os
+import shutil
 
-from test_utils import ApiTestCase, get_logger
-from test_utils.objects import Organization, Transfer, DataSet
-from test_utils.cli.cf_service import CfBroker, CfService
-from test_utils.cli.venv import Virtualenv
+from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
+from test_utils.objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, Application
+from test_utils.cli.atk_tools import ATKtools
 import test_utils.cli.cloud_foundry as cf
 
 logger = get_logger("test transfer")
@@ -29,67 +29,68 @@ class TestCreateAtkInstance(ApiTestCase):
 
     DATA_SOURCE = Transfer.get_test_transfer_link()
     UAA_FILENAME = "pyclient.test"
-    UAA_FILE_PATH = os.path.join(os.path.dirname(__file__), "..", "atk_python2", UAA_FILENAME)
-    ATK_TEST_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "atk_python2", "atk_python_client")
-    ATK_CLIENT_INDEX_URL = "http://host.gao.intel.com/pypi/master/simple"
-    TRUSTED_HOST = "host.gao.intel.com"
-    ATK_CLIENT_NAME = "trustedanalytics"
+    TEST_DATA_DIRECTORY = os.path.join("tests", "atk_test_scripts")
+    UAA_FILE_PATH = os.path.join(TEST_DATA_DIRECTORY, UAA_FILENAME)
+    ATK_TEST_SCRIPT_PATH = os.path.join(TEST_DATA_DIRECTORY, "atk_python_client_test.py")
+    ATK_SERVICE_LABEL = "atk"
 
-    @classmethod
-    def tearDownClass(cls):
+    @cleanup_after_failed_setup(Organization.api_delete_test_orgs)
+    def setUp(self):
+        self.test_org = Organization.create(space_names=("test_space",))
+        self.test_org.add_admin()
+        self.test_space = self.test_org.spaces[0]
+        self.test_space.add_admin(self.test_org.guid)
+        cf.cf_login(self.test_org.name, self.test_space.name)
+        self.atk_virtualenv = self.atk_client_tar_file = self.atk_client_directory = None
+
+    def tearDown(self):
         Organization.api_delete_test_orgs()
-        try:
-            os.remove(cls.UAA_FILE_PATH)
-        except OSError:
-            pass
+        if os.path.exists(self.UAA_FILE_PATH):
+            os.remove(self.UAA_FILE_PATH)
+        if self.atk_virtualenv is not None:
+            self.atk_virtualenv.delete()
+        if self.atk_client_tar_file is not None and os.path.exists(self.atk_client_tar_file):
+            os.remove(self.atk_client_tar_file)
+        if self.atk_client_directory is not None and os.path.exists(self.atk_client_directory):
+            shutil.rmtree(self.atk_client_directory)
 
     def test_create_atk_instance(self):
-        org = Organization.create(space_names=("test_space",))
-        org.add_admin()
-        space = org.spaces[0]
-        space.add_admin(org.guid)
 
-        transfer = Transfer.api_create(source=self.DATA_SOURCE, org_guid=org.guid)
+        transfer = Transfer.api_create(source=self.DATA_SOURCE, org_guid=self.test_org.guid)
         transfer.ensure_finished()
-        transfers = Transfer.api_get_list(orgs=[org])
+        transfers = Transfer.api_get_list(orgs=[self.test_org])
         self.assertInList(transfer, transfers)
-        dataset = DataSet.api_get_matching_to_transfer(org_list=[org], transfer=transfer)
+        dataset = DataSet.api_get_matching_to_transfer(org_list=[self.test_org], transfer=transfer)
         dataset.publish_in_hive()
 
-        cf.cf_login(org.name, space.name)
-        broker = CfBroker("atk")
-        CfBroker.cf_service_target(org.name, space.name)  # without it service can be created in any space
-        expected_atk_service = CfService.cf_create_instance(broker_name=broker.name, plan=broker.plan)
-        service_list = CfService.cf_get_list()
-        expected_atk_service.add_URL_and_generated_name_via_space(space=space.guid)
-        self.assertInList(expected_atk_service, service_list)
+        marketplace_services = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
+        atk_service = next((s for s in marketplace_services if s.label == self.ATK_SERVICE_LABEL), None)
+        self.assertIsNotNone(atk_service, "No atk service found in marketplace in {}".format(self.test_space))
 
-        atk_vitualenv = Virtualenv("atk_virtualenv")
-        atk_response = 1
-        try:
-            atk_vitualenv.create()
-            atk_vitualenv.pip_install(self.ATK_CLIENT_NAME, extra_index_url=self.ATK_CLIENT_INDEX_URL,
-                                      trusted_host=self.TRUSTED_HOST)
-            atk_response = atk_vitualenv.run_atk_script(self.ATK_TEST_SCRIPT_PATH,
-                                                        arguments={
-                                                            "--organization": org.name,
-                                                            "--atk": expected_atk_service.URL,
-                                                            "--transfer": transfer.title,
-                                                            "--uaa_file_name": self.UAA_FILENAME
-                                                        })
-        except Exception as e:
-            logger(str(e))
-            atk_vitualenv.delete()
+        atk_service_instance = AtkInstance.cf_create(self.test_space.guid, atk_service.guid)
+        self.assertIsNotNone(atk_service_instance, "Atk instance is not found in {}".format(self.test_space))
+        test_space_apps = Application.api_get_list(space_guid=self.test_space.guid)
+        atk_app = next((app for app in test_space_apps if app.name.startswith("atk-")), None)
+        self.assertIsNotNone(atk_app, "atk application is not on application list")
 
-        if atk_response == 1:
-            raise Exception("ATK script has not run properly")
-        elif atk_response == 2:
-            raise Exception("Python client failed to connect to ATK instance")
-        elif atk_response == 3:
-            raise Exception("Hive could not find resources")
-        else:
-            print(atk_response)
+        atk_client_gz_name = ATKtools.api_get_atkfilename()
+        self.atk_client_tar_file = os.path.join(".", atk_client_gz_name)
+        ATKtools.api_download(atk_client_gz_name)
+        ATKtools.unpack_tar_file(atk_client_gz_name, self.TEST_DATA_DIRECTORY)
+        atk_client_name = atk_client_gz_name.split(".tar", 1)[0]
+        self.atk_client_directory = os.path.join(self.TEST_DATA_DIRECTORY, atk_client_name)
+
+        self.atk_virtualenv = ATKtools("atk_virtualenv")
+        self.atk_virtualenv.create()
+        self.atk_virtualenv.pip_install_local_package(self.atk_client_directory)
+        self.atk_virtualenv.run_atk_script(self.ATK_TEST_SCRIPT_PATH,
+                                           arguments={
+                                               "--organization": self.test_org.name,
+                                               "--atk": atk_app.urls[0],
+                                               "--transfer": transfer.title,
+                                               "--uaa_file_name": self.UAA_FILENAME
+                                           })
 
         with open(self.UAA_FILE_PATH) as f:
             content = f.read()
-        self.assertNotEqual(content, "")
+        self.assertNotEqual(content, "", "uaa file was not created by atk client")

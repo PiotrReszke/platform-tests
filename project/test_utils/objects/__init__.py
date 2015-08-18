@@ -15,7 +15,7 @@
 #
 
 from test_utils.objects.user import User
-from test_utils.objects.service_instance import ServiceInstance
+from test_utils.objects.service_instance import ServiceInstance, AtkInstance
 from test_utils.objects.application import Application, github_get_file_content
 from test_utils.objects.space import Space
 from test_utils.objects.organization import Organization

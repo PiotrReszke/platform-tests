@@ -15,6 +15,7 @@
 #
 
 import functools
+import datetime
 
 import test_utils.cli.cloud_foundry as cf
 import test_utils.api_calls.service_catalog_api_calls as api
@@ -96,10 +97,11 @@ class ServiceInstance(object):
         return cls.from_cf_api_space_summary_response(response, space_guid)
 
     @classmethod
-    def api_get_list(cls, space_guid, client=None):
+    def api_get_list(cls, space_guid, service_type_guid, client=None):
         client = client or get_admin_client()
         instances = []
-        response = api.api_get_service_instances(client, space_guid)
+        response = api.api_get_service_instances(client=client, space_guid=space_guid, service_guid=service_type_guid)
+        # response = api.api_get_service_instances(client, space_guid)
         for data in response:
             bindings = []
             for binding_data in data["bound_apps"]:
@@ -107,7 +109,8 @@ class ServiceInstance(object):
                     "app_guid": binding_data["guid"],
                     "service_instance_guid": data["guid"]
                 })
-            instance = cls(guid=data["guid"], name=data["name"], space_guid=space_guid, bindings=bindings)
+            instance = cls(guid=data["guid"], name=data["name"], space_guid=space_guid,
+                           service_type_guid=service_type_guid, bindings=bindings)
             instances.append(instance)
         return instances
 
@@ -119,6 +122,12 @@ class ServiceInstance(object):
         instances = cls.api_get_list(space_guid, service_type_guid, client)
         return [i for i in instances if i["name"] == name][0]
 
+    @classmethod
+    def cf_api_create(cls, space_guid, service_plan_guid, name):
+        response = cf.cf_api_create_service_instance(name, space_guid, service_plan_guid)
+        return cls(guid=response["metadata"]["guid"], name=name, space_guid=space_guid,
+                   service_plan_guid=service_plan_guid)
+
     def api_delete(self, client=None):
         client = client or get_admin_client()
         api.api_delete_service_instance(client, self.guid)
@@ -126,23 +135,33 @@ class ServiceInstance(object):
 
 class AtkInstance(ServiceInstance):
 
-    def __init__(self, guid, name, state, scoring_engine, service_guid, url, org_guid, service_plan_guid):
-        super().__init__(guid=guid, name=name, service_type_guid=service_guid, url=url, org_guid=org_guid,
-                         service_plan_guid=service_plan_guid)
-        self.state = state.upper()
+    def __init__(self, guid, name, space_guid=None, service_type_guid=None, type=None, url=None, org_guid=None,
+                 service_plan_guid=None, credentials=None, bindings=None, scoring_engine=None, state=None):
+        super().__init__(guid=guid, name=name, space_guid=space_guid, service_type_guid=service_type_guid, type=type,
+                         url=url, org_guid=org_guid, service_plan_guid=service_plan_guid, credentials=credentials,
+                         bindings=bindings)
+        self.state = state.upper() if state is not None else state
         self.scoring_engine = scoring_engine
 
     @classmethod
-    def get_list(cls, org_guid, client=None):
+    def api_get_list(cls, org_guid, service_type_guid, client=None):
         client = client or get_admin_client()
         response = app_launcher_helper_api.api_get_atk_instances(client, org_guid)
         instances = []
         for data in response["instances"]:
             instance = cls(guid=data["guid"], name=data["name"], state=data["state"], url=data["url"],
-                           scoring_engine=data["scoring_engine"], service_guid=data["service_guid"],
+                           scoring_engine=data["scoring_engine"], service_type_guid=data["service_guid"],
                            org_guid=org_guid, service_plan_guid=response["service_plan_guid"])
             instances.append(instance)
         return instances
+
+    @classmethod
+    def cf_create(cls, space_guid, service_type_guid=None, name=None, plan="simple"):
+        """Do not use this if bug DPNG-1735 is fixed. Use API instead and remove this method."""
+        name = name or "atk-test-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        cf.cf_create_service("atk", plan, name)
+        service_instances = super().api_get_list(space_guid, service_type_guid)  # use cls.api_get_list() when DPNG-1735 is fixed
+        return next((si for si in service_instances if si.name == name), None)
 
     def api_create_scoring_engine(self, instance_name, space_guid, client=None):
         client = client or get_admin_client()

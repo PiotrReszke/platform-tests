@@ -26,7 +26,7 @@ import argparse
 import sys, os
 sys.path.append("/usr/local/lib/python2.7/dist-packages/taprootanalytics")
 # import /usr/local/lib/python2.7/dist-packages/taprootanalytics as ta
-import trustedanalytics as ta
+import taprootanalytics as ta
 
 
 

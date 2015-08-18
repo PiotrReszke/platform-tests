@@ -42,15 +42,16 @@ def log_output_on_error(func):
     return wrapper
 
 
-def cf_login(organization, space):
+def cf_login(organization_name, space_name):
     api_url = get_config_value("cf_endpoint")
     username = TEST_SETTINGS["TEST_USERNAME"]
     password = TEST_SETTINGS["TEST_PASSWORD"]
+    command = ["cf", "login", "-a", api_url, "-u", username, "-p", password, "-o", organization_name, "-s", space_name]
     if TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"] is True:
-        command = ["cf", "login", "-a", api_url, "-u", username, "-p", password, "-o", organization, "-s", space,
+        command = ["cf", "login", "-a", api_url, "-u", username, "-p", password, "-o", organization_name, "-s", space_name,
                    "--skip-ssl-validation"]
     else:
-        command = ["cf", "login", "-a", api_url, "-u", username, "-p", password, "-o", organization, "-s", space]
+        command = ["cf", "login", "-a", api_url, "-u", username, "-p", password, "-o", organization_name, "-s", space_name]
     log_command(command, replace=(password, "[SECRET]"))
     subprocess.check_call(command)
 
@@ -186,6 +187,16 @@ def __get_all_pages(path, query_params=None):
 def cf_api_get_service_instances(org_guid):
     logger.info("------------------ CF: service instances for org {} ------------------".format(org_guid))
     return __get_all_pages(path="service_instances", query_params={"organization_guid": org_guid})
+
+
+def cf_api_create_service_instance(instance_name, space_guid, service_plan_guid):
+    logger.info("------------------ CF: create service instance {} ------------------".format(instance_name))
+    return CfApiClient.get_client().call(
+        method="POST",
+        path="service_instances",
+        params={"accepts_incomplete": "true"},
+        body={"name": instance_name, "space_guid": space_guid, "service_plan_guid": service_plan_guid}
+    )
 
 
 def cf_api_env(app_guid):

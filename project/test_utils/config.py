@@ -51,6 +51,15 @@ CONFIG = {
         "admin_username": "trusted.analytics.tester@gmail.com",
         "cdh_host": "cdh.callisto.gotapaas.com",
         "uaa": "login.callisto.gotapaas.com"
+    },
+    "10.91.120.35.xip.io": {
+        "api_endpoint": "api.10.91.120.35.xip.io",
+        "login.do_scheme": "http",
+        "login_endpoint": "login.10.91.120.35.xip.io",
+        "cf_endpoint": "api.10.91.120.35.xip.io",
+        "admin_username": "jacek.skowron@intel.com",
+        "cdh_host": "cdh.10.91.120.35.xip.io",
+        "uaa": "login.10.91.120.35.xip.io"
     }
 }
 
@@ -64,7 +73,8 @@ APP_SCHEMAS = {
     "user-management": "swagger/user_management_swagger.json",
     "service-catalog": "swagger/service_catalog_swagger.json",
     "app-launcher-helper": "swagger/app_launcher_helper_swagger.json",
-    "hive": "swagger/hive_swagger.json"
+    "hive": "swagger/hive_swagger.json",
+    "file-server": "swagger/file_server_swagger.json"
 }
 
 
