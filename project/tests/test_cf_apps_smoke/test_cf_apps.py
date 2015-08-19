@@ -17,7 +17,7 @@
 import yaml
 from urllib.parse import urlparse
 
-from test_utils import ApiTestCase, get_logger, config
+from test_utils import ApiTestCase, get_logger
 from test_utils.objects import Application, github_get_file_content, ServiceInstance, ServiceBroker, Organization
 
 
@@ -78,9 +78,11 @@ class TrustedAnalyticsApplicationsSmokeTest(ApiTestCase):
     def test_trusted_analytics_apps(self):
         """Verify applications on platform against demo-settings.yml"""
         platform_app_list = Application.api_get_list(self.seedspace_guid)
-        logger.info("There are {} apps on the platform".format(len(platform_app_list)))
-        platform_app_names = [app.name for app in platform_app_list]
-        missing_apps = [name for name in self.expected_app_and_service_names if name not in platform_app_names]
+        services_app_list = ServiceInstance.api_get_list(self.seedspace_guid)
+        logger.info("There are {} apps/services on the platform".format(len(platform_app_list + services_app_list)))
+        platform_app_and_service_names = [app.name for app in platform_app_list + services_app_list]
+        missing_apps = [name for name in self.expected_app_and_service_names
+                        if name not in platform_app_and_service_names + services_app_list]
         self.assertTrue(missing_apps == [], "Apps missing in platform: {}".format(missing_apps))
 
     def test_trusted_analytics_applications_details(self):
