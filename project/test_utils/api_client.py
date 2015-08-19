@@ -49,7 +49,7 @@ def get_admin_client():
     return __ADMIN_CLIENT
 
 
-class UnexpectedResponseError(Exception):
+class UnexpectedResponseError(AssertionError):
     def __init__(self, status, error_message, message=None):
         message = message or "{} {}".format(status, error_message)
         super(UnexpectedResponseError, self).__init__(message)
