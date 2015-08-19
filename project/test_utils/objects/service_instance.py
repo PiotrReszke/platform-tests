@@ -96,19 +96,18 @@ class ServiceInstance(object):
         return cls.from_cf_api_space_summary_response(response, space_guid)
 
     @classmethod
-    def api_get_list(cls, space_guid, service_type_guid, client=None):
+    def api_get_list(cls, space_guid, client=None):
         client = client or get_admin_client()
         instances = []
-        response = api.api_get_service_instances(client, space_guid, service_type_guid)
+        response = api.api_get_service_instances(client, space_guid)
         for data in response:
             bindings = []
-            for binding_data in response["bound_apps"]:
+            for binding_data in data["bound_apps"]:
                 bindings.append({
                     "app_guid": binding_data["guid"],
                     "service_instance_guid": data["guid"]
                 })
-            instance = cls(guid=data["guid"], name=data["name"], space_guid=space_guid,
-                           service_type_guid=service_type_guid, bindings=bindings)
+            instance = cls(guid=data["guid"], name=data["name"], space_guid=space_guid, bindings=bindings)
             instances.append(instance)
         return instances
 

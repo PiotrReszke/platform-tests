@@ -27,6 +27,14 @@
       }
     },
     "/rest/service_instances":{
+      "get": {
+        "operationId": "get_service_instances",
+          "parameters": [
+              {"name": "broker", "in": "query", "required": "false", "type": "string"},
+              {"name": "space", "in": "query", "required": "true", "type": "string"}
+          ],
+          "responses": {"200": {"description": "OK", "schema": {"$ref": "ServiceInstancesList"}}}
+      },
       "post": {
         "operationId": "create_service_instance",
         "parameters": [
@@ -103,6 +111,23 @@
         "guid": {"type": "string"},
         "host": {"type": "string"},
         "domain": {"properties": {"guid": {"type": "string"}, "name": {"type": "string"}}}
+      }
+    },
+    "ServiceInstancesList": {
+      "type": "array",
+      "items": {
+        "properties": {
+          "guid": {"type": "string"},
+          "name": {"type": "string"},
+          "service": {"type": "string"},
+          "service_plan": {"type": "string"},
+          "bound_apps": {"type": "array", "items": {
+            "properties": {
+              "guid": {"type": "string"},
+              "name": {"type": "string"}
+            }
+          }}
+        }
       }
     },
     "ServiceInstance": {
