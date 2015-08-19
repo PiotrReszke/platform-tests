@@ -37,7 +37,8 @@ if __name__ == "__main__":
     config.update_test_settings(client_type=args.client_type,
                                 test_environment=args.environment,
                                 test_username=args.username,
-                                proxy=args.proxy)
+                                proxy=args.proxy,
+                                disable_ssl_validation=args.disable_ssl_validation)
 
     if args.test is None:
         test_dir = "tests"

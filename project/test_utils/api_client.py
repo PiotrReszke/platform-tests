@@ -80,6 +80,8 @@ class ApiClient(BaseClient):
         self._domain = config.TEST_SETTINGS["TEST_ENVIRONMENT"]
         self._login_endpoint = config.CONFIG[self._domain]["login_endpoint"]
         self._session = requests.Session()
+        if config.TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"] is True:
+            self._session.verify = False
         proxy = config.TEST_SETTINGS["TEST_PROXY"]
         if proxy is not None:
             self._session.proxies = {"https": proxy, "http": proxy}

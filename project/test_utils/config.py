@@ -44,7 +44,7 @@ CONFIG = {
         "uaa": "login.demo-gotapaas.com"
     },
     "callisto.gotapaas.com": {
-        "api_endpoint": "api.callisto.gotapaas.com",
+        "api_endpoint": "callisto.gotapaas.com",
         "login.do_scheme": "http",
         "login_endpoint": "login.callisto.gotapaas.com",
         "cf_endpoint": "api.callisto.gotapaas.com",
@@ -75,14 +75,18 @@ __SECRET.read("test_utils/secrets/.secret.ini")
 
 TEST_SETTINGS = {
     "GITHUB_AUTH": (__SECRET["github"]["username"], __SECRET["github"]["password"]),
-    "TEST_EMAIL": "intel.data.tests@gmail.com"
+    "TEST_EMAIL": "intel.data.tests@gmail.com",
+    "TEST_DISABLE_SSL_VALIDATION": False
 }
 
 
-def update_test_settings(client_type=None, test_environment=None, test_username=None, proxy=None):
+def update_test_settings(client_type=None, test_environment=None, test_username=None, proxy=None,
+                         disable_ssl_validation=None):
     TEST_SETTINGS["TEST_ENVIRONMENT"] = test_environment or TEST_SETTINGS["TEST_ENVIRONMENT"]
     TEST_SETTINGS["TEST_USERNAME"] = test_username or TEST_SETTINGS["TEST_USERNAME"]
     TEST_SETTINGS["TEST_PROXY"] = proxy
+    TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"] = disable_ssl_validation or TEST_SETTINGS[
+        "TEST_DISABLE_SSL_VALIDATION"]
     TEST_SETTINGS["TEST_CLIENT_TYPE"] = client_type or TEST_SETTINGS["TEST_CLIENT_TYPE"]
     TEST_SETTINGS["TEST_PASSWORD"] = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]][TEST_SETTINGS["TEST_USERNAME"]]
     TEST_SETTINGS["TEST_LOGIN_TOKEN"] = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]]["login_token"]
@@ -108,6 +112,9 @@ def parse_arguments():
                         default="console",
                         choices=["console", "app"],
                         help="choose a client type for tests")
+    parser.add_argument("--disable-ssl-validation",
+                        action="store_true",
+                        help="Disable SSL validation")
     return parser.parse_args()
 
 
@@ -138,10 +145,12 @@ def get_password(username):
 update_test_settings(client_type="console",
                      test_environment="gotapaas.eu",
                      test_username="trusted.analytics.tester@gmail.com",
-                     proxy="proxy-mu.intel.com:911")
+                     proxy="proxy-mu.intel.com:911",
+                     disable_ssl_validation=False)
 # change settings when tests are run with PyCharm runner using environment variables
 update_test_settings(client_type=os.environ.get("TEST_CLIENT_TYPE"),
                      test_environment=os.environ.get("TEST_ENVIRONMENT"),
                      test_username=os.environ.get("TEST_USERNAME"),
-                     proxy=os.environ.get("TEST_PROXY"))
+                     proxy=os.environ.get("TEST_PROXY"),
+                     disable_ssl_validation=(os.environ.get("TEST_DISABLE_SSL_VALIDATION") == 'True'))
 
