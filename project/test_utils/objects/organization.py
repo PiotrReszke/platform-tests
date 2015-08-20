@@ -164,3 +164,13 @@ class Organization(object):
             guid = space_data["metadata"]["guid"]
             spaces.append(Space(name, guid, self.guid))
         return spaces
+
+    def cf_api_get_apps_and_services(self, client=None):
+        spaces = self.api_get_spaces(client=client)
+        org_apps = []
+        org_services = []
+        for space in spaces:
+            apps, services = space.cf_api_get_space_summary()
+            org_apps.extend(apps)
+            org_services.extend(services)
+        return org_apps, org_services
