@@ -16,9 +16,8 @@
 
 import functools
 
-import test_utils.api_calls.data_catalog_api_calls as api
-import test_utils.api_calls.hive_api_calls as hive_api
-from test_utils import get_logger, get_admin_client
+import test_utils.platform_api_calls as api
+from test_utils import get_logger
 
 
 logger = get_logger("dataset")
@@ -32,18 +31,9 @@ class DataSet(object):
 
     def __init__(self, category=None, creation_time=None, data_sample=None, format=None, id=None, is_public=None,
                  org_guid=None, record_count=None, size=None, source_uri=None, target_uri=None, title=None):
-        self.category = category
-        self.creation_time = creation_time
-        self.data_sample = data_sample
-        self.format = format
-        self.is_public = is_public
-        self.id = id
-        self.org_guid = org_guid
-        self.record_count = record_count
-        self.size = size
-        self.source = source_uri
-        self.target_uri = target_uri
-        self.title = title
+        self.category, self.creation_time, self.data_sample, self.format = category, creation_time, data_sample, format
+        self.is_public, self.id, self.record_count, self.size = is_public, id, record_count, size
+        self.source_uri, self.target_uri, self.title, self.org_guid = source_uri, target_uri, title, org_guid
 
     def __eq__(self, other):
         return all([getattr(self, attribute) == getattr(other, attribute) for attribute in self.COMPARABLE_ATTRIBUTES])
@@ -62,14 +52,13 @@ class DataSet(object):
                    source_uri=data["sourceUri"], target_uri=data["targetUri"])
 
     @classmethod
-    def api_get_list(cls, org_list, query="", filters=None, size=100, time_from=0, client=None):
+    def api_get_list(cls, org_list, query="", filters=(), size=100, time_from=0, client=None):
         return cls.api_get_list_and_metadata(org_list, query, filters, size, time_from, client)["data_sets"]
 
     @classmethod
-    def api_get_list_and_metadata(cls, org_list, query="", filters=None, size=100, time_from=0, client=None):
-        client = client or get_admin_client()
+    def api_get_list_and_metadata(cls, org_list, query="", filters=(), size=100, time_from=0, client=None):
         org_guids = [org.guid for org in org_list]
-        response = api.api_get_datasets(client, org_guids, query, filters, size, time_from)
+        response = api.api_get_datasets(org_guids, query, filters, size, time_from, client=client)
         return {
             "categories": response["categories"],
             "formats": response["formats"],
@@ -78,14 +67,10 @@ class DataSet(object):
         }
 
     @classmethod
-    def api_get_matching_to_transfer(cls, org_list, transfer, client=None):
-        """Find dataset which matches a transfer."""
-        client = client or get_admin_client()
-        datasets = DataSet.api_get_list(client=client, org_list=org_list)
-        for dataset in datasets:
-            if dataset.title == transfer.title:
-                return dataset
-        raise Exception("Transfer {} wasn't downloaded properly".format(transfer))
+    def api_get_matching_to_transfer(cls, org_list, transfer_title, client=None):
+        """Return dataset whose title matches transfer_title or return None if such dataset is not found."""
+        datasets = cls.api_get_list(org_list=org_list, client=client)
+        return next((ds for ds in datasets if ds.title == transfer_title), None)
 
     @classmethod
     def api_get(cls, data_set_id, client=None):
@@ -93,8 +78,7 @@ class DataSet(object):
 
     @classmethod
     def api_get_with_metadata(cls, data_set_id, client=None):
-        client = client or get_admin_client()
-        response = api.api_get_dataset(client, data_set_id)
+        response = api.api_get_dataset(data_set_id, client=client)
         return {
             "index": response["_index"],
             "found": response["found"],
@@ -104,9 +88,9 @@ class DataSet(object):
         }
 
     def publish_in_hive(self, client=None):
-        client = client or get_admin_client()
-        hive_api.api_publish_dataset(client, category=self.category, creationTime=self.creation_time,
-                                     dataSample=self.data_sample, format=self.format, is_public=self.is_public,
-                                     org_guid=self.org_guid, recordCount=self.record_count, size=self.size,
-                                     source=self.source, target_uri=self.target_uri, title=self.title)
+        return api.api_publish_dataset(category=self.category, creation_time=self.creation_time,
+                                       data_sample=self.data_sample, format=self.format, is_public=self.is_public,
+                                       org_guid=self.org_guid, record_count=self.record_count, size=self.size,
+                                       source_uri=self.source_uri, target_uri=self.target_uri, title=self.title,
+                                       client=client)
 

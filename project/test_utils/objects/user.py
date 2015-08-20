@@ -14,12 +14,16 @@
 # limitations under the License.
 #
 
+import datetime
 import functools
+import re
 import time
 
-from test_utils import TEST_SETTINGS, get_config_value, get_admin_client, get_password
-from test_utils.api_client import ConsoleClient, AppClient
-import test_utils.api_calls.user_management_api_calls as api
+from test_utils import config
+from test_utils.api_client import PlatformApiClient
+import test_utils.platform_api_calls as api
+from test_utils.objects import Organization
+import test_utils.cli.cloud_foundry as cf
 
 
 __all__ = ["User"]
@@ -27,124 +31,126 @@ __all__ = ["User"]
 
 @functools.total_ordering
 class User(object):
-    TEST_EMAIL = TEST_SETTINGS["TEST_EMAIL"]
+    TEST_EMAIL = config.TEST_SETTINGS["TEST_EMAIL"]
     TEST_EMAIL_FORM = TEST_EMAIL.replace('@', '+{}@')
     __ADMIN = None
 
-    def __init__(self, guid=None, username=None, roles=None, organization_guid=None, space_guid=None, client_type=None,
-                 password=None):
-        self.guid = guid
-        self.username = username
-        self.roles = [] if roles is None else roles
-        self.organizations_guid = [] if organization_guid is None else [organization_guid]
-        self.spaces_guid = [] if space_guid is None else [space_guid]
-        self._password = password
-        if client_type is not None:
-            self._app_client = client_type(self.username, self._password)
+    def __init__(self, guid=None, username=None, password=None):
+        self.guid, self.username, self.password = guid, username, password
+        self.org_roles = {}
+        self.space_roles = {}
 
     def __repr__(self):
         return "{0} (username={1}, guid={2})".format(self.__class__.__name__, self.username, self.guid)
 
     def __eq__(self, other):
-        return (self.username == other.username and self.guid == other.guid
-                and sorted(self.roles) == sorted(other.roles)
-                and sorted(self.organizations_guid) == sorted(other.organizations_guid)
-                and sorted(self.spaces_guid) == sorted(other.spaces_guid))
+        return self.username == other.username and self.guid == other.guid
 
     def __lt__(self, other):
         return self.guid < other.guid
 
-    @property
-    def app_client(self):
-        return self._app_client
-
-    @staticmethod
-    def get_default_username(prefix="test-user-"):
-        return prefix + str(time.time()) + "@mailinator.com"
+    @classmethod
+    def get_default_username(cls):
+        return cls.TEST_EMAIL_FORM.format(time.time())
 
     @classmethod
-    def create_via_organization(cls, organization_guid, username=None, roles=None, client=None, client_type=None):
-        client = client or get_admin_client()
-        username = cls.get_default_username() if username is None else username
-        response = api.api_create_organization_user(client, organization_guid, username, roles)
-        return cls(guid=response["guid"], username=username, roles=roles, organization_guid=organization_guid,
-                   client_type=client_type)
+    def api_onboard_and_login(cls, username=None, password="testPassw0rd", org_name=None, inviting_client=None):
+        """Send invite to a new user who then creates an account and an organization. Return new user and API client."""
+        org_name = org_name or "test_org_{}".format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
+        username = username or cls.get_default_username()
+        code = cls.api_invite(username, inviting_client)
+        return cls.api_register_and_login(code, username, password, org_name)
 
     @classmethod
-    def create_via_space(cls, space_guid, organization_guid=None, username=None, roles=None, client=None):
-        client = client or get_admin_client()
-        username = cls.get_default_username() if username is None else username
-        response = api.api_create_space_user(client, space_guid, username, organization_guid, roles)
-        return cls(guid=response["guid"], username=username, roles=roles, organization_guid=response["org_guid"],
-                   space_guid=space_guid)
+    def api_invite(cls, username=None, inviting_client=None):
+        """Send invitation to a new user using inviting_client. Return invitation code."""
+        username = username or cls.get_default_username()
+        response = api.api_invite_user(username, client=inviting_client)
+        return re.search("([a-z]|[0-9]|-)*$", response["details"]).group(0)
 
     @classmethod
-    def get_list_via_organization(cls, organization_guid, client=None):
-        client = client or get_admin_client()
-        response = api.api_get_organization_users(client, organization_guid)
+    def api_register_and_login(cls, code, username, password="testPassw0rd", org_name=None):
+        """Set password for new user and select name for their organization"""
+        org_name = org_name or Organization.get_default_name()
+        client = PlatformApiClient.get_client(username)
+        api.api_register_new_user(code, password, org_name, client=client)
+        new_org = Organization.get_org_and_space_by_name(org_name=org_name)[0]
+        Organization.TEST_ORGS.append(new_org)
+        new_user = cls.api_get_list_via_organization(new_org.guid)[0]  # need to obtain user's guid
+        new_user.password = password
+        new_user.org_roles[new_org.guid] = ["managers"]  # user is an org manager in the organization they create
+        client.authenticate(password)
+        return new_user, new_org, client
+
+    @classmethod
+    def api_create_by_adding_to_organization(cls, organization_guid, username=None, roles=None, client=None):
+        username = username or cls.get_default_username()
+        response = api.api_add_organization_user(organization_guid, username, roles, client=client)
+        user = cls(guid=response["guid"], username=username)
+        user.org_roles[organization_guid] = roles
+        return user
+
+    @classmethod
+    def api_get_list_via_organization(cls, organization_guid, client=None):
+        response = api.api_get_organization_users(organization_guid, client=client)
         users = []
         for user_data in response:
-            users.append(cls(guid=user_data["guid"], username=user_data["username"], roles=user_data["roles"],
-                             organization_guid=organization_guid))
+            user = cls(guid=user_data["guid"], username=user_data["username"])
+            user.org_roles[organization_guid] = user_data["roles"]
+            users.append(user)
         return users
 
     @classmethod
-    def get_list_via_space(cls, space_guid, client=None):
-        client = client or get_admin_client()
-        response = api.api_get_space_users(client, space_guid)
+    def api_get_list_via_space(cls, space_guid, client=None):
+        response = api.api_get_space_users(space_guid, client=client)
         users = []
         for user_data in response:
-            users.append(cls(guid=user_data["guid"], username=user_data["username"], roles=user_data["roles"],
-                             organization_guid=user_data["org_guid"], space_guid=space_guid))
+            user = cls(guid=user_data["guid"], username=user_data["username"])
+            user.space_roles[space_guid] = response["roles"]
+            users.append(user)
         return users
 
-    @classmethod
-    def create_user_for_client(cls, org_guid, role, extension=None):
-        username = cls.TEST_EMAIL_FORM.format(time.time() if extension is None else extension)
-        roles = list(role.value)
-        return cls.create_via_organization(org_guid, username, roles, client_type=ConsoleClient)
+    def api_add_to_organization(self, org_guid, roles=("managers",), client=None):
+        self.org_roles[org_guid] = roles
+        api.api_add_organization_user(org_guid, self.username, roles, client=client)
 
-    def add_to_organization(self, organization_guid, roles, client=None):
-        client = client or get_admin_client()
-        api.api_create_organization_user(client, organization_guid, self.username, roles)
+    def api_add_to_space(self, space_guid, org_guid, roles=("managers",), client=None):
+        api.api_create_space_user(org_guid=org_guid, space_guid=space_guid, username=self.username,
+                                  roles=roles, client=client)
+        self.space_roles[space_guid] = roles
 
-    def add_to_space(self, organization_guid, space_guid, roles, client=None):
-        client = client or get_admin_client()
-        api.api_create_space_user(client, organization_guid, space_guid, self.username, list(roles))
+    def api_update_via_organization(self, org_guid, new_roles=None, client=None):
+        self.org_roles[org_guid] = new_roles
+        api.api_update_organization_user(org_guid, self.guid, new_roles, client=client)
 
-    def update_via_organization(self, new_roles=None, client=None):
-        client = client or get_admin_client()
-        if new_roles is not None:
-            self.roles = new_roles
-        api.api_update_organization_user(client, self.organizations_guid[0], self.guid, new_roles)
-
-    def update_via_space(self, new_username=None, new_roles=None, client=None):
-        client = client or get_admin_client()
+    def api_update_via_space(self, org_guid, space_guid, new_username=None, new_roles=None, client=None):
         if new_username is not None:
             self.username = new_username
         if new_roles is not None:
-            self.roles = new_roles
-        api.api_update_space_user(client, self.organizations_guid[0], self.space_guid, self.guid, new_username,
-                                  new_roles)
+            self.space_roles[space_guid] = new_roles
+        api.api_update_space_user(org_guid, space_guid, self.guid, new_username, new_roles, client=client)
 
-    def delete_via_organization(self, client=None):
-        client = client or get_admin_client()
-        api.api_delete_organization_user(client, self.organizations_guid[0], self.guid)
+    def api_delete_via_organization(self, org_guid, client=None):
+        api.api_delete_organization_user(org_guid, self.guid, client=client)
 
-    def delete_via_space(self, client=None):
-        client = client or get_admin_client()
-        api.api_delete_space_user(client, self.space_guid, self.organizations_guid[0])
+    def api_delete_via_space(self, space_guid, client=None):
+        api.api_delete_space_user(space_guid, self.guid, client=client)
 
     @classmethod
-    def get_admin_user(cls, organization_guid):
+    def get_admin(cls):
+        """Return User object for admin user"""
         if cls.__ADMIN is None:
-            admin_username = get_config_value("admin_username")
-            admin_password = get_password(admin_username)
-            client_type = AppClient if TEST_SETTINGS["TEST_CLIENT_TYPE"] == "app" else ConsoleClient
-            cls.__ADMIN = cls(username=admin_username, client_type=client_type, password=admin_password)
-            response = api.api_get_organization_users(cls.__ADMIN._app_client, organization_guid)
-            user_details = next(user for user in response if user.username == admin_username)
-            cls.__ADMIN.guid = user_details["guid"]
+            testers_sandbox = Organization.get_org_and_space_by_name(org_name="testers-sandbox")[0]
+            users = cls.api_get_list_via_organization(testers_sandbox.guid)
+            admin_username = config.get_config_value("admin_username")
+            cls.__ADMIN = next(user for user in users if user.username == admin_username)
         return cls.__ADMIN
 
-# fix deletion via org/space to delete from all org/space
+    @classmethod
+    def cf_api_get_list_in_organization(cls, org_guid):
+        response = cf.cf_api_get_organization_users(org_guid)
+        users = []
+        for user_data in response:
+            user = cls(username=user_data["entity"]["username"], guid=user_data["metadata"]["guid"])
+            users.append(user)
+        return users

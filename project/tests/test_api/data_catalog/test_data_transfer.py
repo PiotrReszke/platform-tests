@@ -15,11 +15,10 @@
 #
 
 import time
-import unittest
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, get_admin_client, config
-from test_utils.objects import Organization, Transfer, DataSet
-import test_utils.api_calls.das_api_calls as das_api
+from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger
+from test_utils.objects import Organization, Transfer, DataSet, User
+import test_utils.platform_api_calls as api
 
 
 logger = get_logger("test data transfer")
@@ -27,43 +26,39 @@ logger = get_logger("test data transfer")
 
 class TestDataTransfer(ApiTestCase):
 
+    EXAMPLE_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
+
     @classmethod
-    @cleanup_after_failed_setup(Organization.api_delete_test_orgs)
+    @cleanup_after_failed_setup(Organization.api_tear_down_test_orgs)
     def setUpClass(cls):
         cls.org = Organization.create()
-        cls.org.add_admin()
+        User.get_admin().api_add_to_organization(org_guid=cls.org.guid)
 
     def test_get_transfers(self):
         transfers = Transfer.api_get_list(orgs=[self.org])
         logger.info("{} transfers".format(len(transfers)))
 
     def test_submit_transfer(self):
-        data_source = Transfer.get_test_transfer_link()
-        expected_transfer = Transfer.api_create(source=data_source, org_guid=self.org.guid)
+        expected_transfer = Transfer.api_create(source=self.EXAMPLE_LINK, org_guid=self.org.guid)
         expected_transfer.ensure_finished()
         transfer = Transfer.api_get(expected_transfer.id)
         self.assertAttributesEqual(transfer, expected_transfer)
 
     def test_match_dataset_to_transfer(self):
-        data_source = Transfer.get_test_transfer_link()
-        expected_transfer = Transfer.api_create(source=data_source, org_guid=self.org.guid)
+        expected_transfer = Transfer.api_create(source=self.EXAMPLE_LINK, org_guid=self.org.guid)
         expected_transfer.ensure_finished()
         transfers = Transfer.api_get_list(orgs=[self.org])
         self.assertInList(expected_transfer, transfers)
-        dataset = DataSet.api_get_matching_to_transfer(org_list=[self.org], transfer=expected_transfer)
-        datasets_data = DataSet.api_get_list_and_metadata(org_list=[self.org])
-        datasets = datasets_data["data_sets"]
-        self.assertInList(dataset, datasets)
+        dataset = DataSet.api_get_matching_to_transfer(org_list=[self.org], transfer_title=expected_transfer.title)
+        self.assertIsNotNone(dataset, "Dataset matching transfer {} was not found".format(expected_transfer))
 
-    @unittest.skipIf(config.TEST_SETTINGS["TEST_ENVIRONMENT"] == "demo-gotapaas.com", "Change not yet deployed on demo")
     def test_no_token_in_create_transfer_response(self):
         """Verify that the request to create a transfer does not leak 'token' field"""
-        response = das_api.api_create_das_request(
-            client=get_admin_client(),
-            source=Transfer.get_test_transfer_link(),
+        response = api.api_create_transfer(
+            source=self.EXAMPLE_LINK,
             title="test-transfer-{}".format(time.time()),
             is_public=False,
             org_guid=self.org.guid
         )
-        self.assertTrue("token" not in response, "token should not be returned in response")
+        self.assertTrue("token" not in response, "token field was returned in response")
 

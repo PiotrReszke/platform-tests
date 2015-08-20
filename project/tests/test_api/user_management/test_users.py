@@ -14,85 +14,111 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, ClientRole, get_admin_client
+from test_utils import ApiTestCase, cleanup_after_failed_setup
 from test_utils.objects import Organization, User
 
 
 class TestOrganizationUsers(ApiTestCase):
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.api_delete_test_orgs)
-    def setUpClass(cls):
-        cls.organization = Organization.create()
-        cls.org_manager_client = User.create_user_for_client(cls.organization.guid, ClientRole.org_manager).app_client
+    def tearDownClass(cls):
+        Organization.api_tear_down_test_orgs()
+
+    @cleanup_after_failed_setup(Organization.api_tear_down_test_orgs)
+    def setUp(self):
+        self.organization = Organization.create()
+        User.get_admin().api_add_to_organization(org_guid=self.organization.guid)
+        self.test_user, _, self.test_user_client = User.api_onboard_and_login()
+        self.test_user.api_add_to_organization(self.organization.guid, roles=("managers",))
 
     def test_create_organization_user_with_role(self):
         """Create a user with each of the roles allowed"""
         for role in ["managers", "auditors", "billing_managers"]:
             with self.subTest(role=role):
-                expected_user = User.create_via_organization(self.organization.guid, roles=[role])
-                users = User.get_list_via_organization(self.organization.guid)
-                self.assertInList(expected_user, users)
+                expected_roles = [role]
+                self.test_user.api_add_to_organization(self.organization.guid, roles=expected_roles)
+                users = User.api_get_list_via_organization(self.organization.guid)
+                self.assertInList(self.test_user, users)
+                user_roles = self.test_user.org_roles.get(self.organization.guid)
+                self.assertEqual(user_roles, expected_roles)
 
     def test_create_organization_user(self):
         """Verify that each, admin and organization manager, can create an organization user"""
-        for client in [self.org_manager_client, get_admin_client()]:
+        for client in [self.test_user_client, None]:
             with self.subTest(client=client):
-                expected_user = User.create_via_organization(self.organization.guid, client=client, roles=["managers"])
-                users = User.get_list_via_organization(self.organization.guid, client=client)
-                self.assertInList(expected_user, users)
+                expected_roles = ["managers"]
+                self.test_user.api_add_to_organization(self.organization.guid, client=client, roles=expected_roles)
+                users = User.api_get_list_via_organization(self.organization.guid, client=client)
+                self.assertInList(self.test_user, users)
+                roles = self.test_user.org_roles.get(self.organization.guid)
+                self.assertEqual(roles, expected_roles)
 
     def test_create_organization_user_two_roles(self):
-        expected_user = User.create_via_organization(self.organization.guid, roles=["managers", "auditors"])
-        users = User.get_list_via_organization(self.organization.guid)
-        self.assertInList(expected_user, users)
+        expected_roles = ["managers", "auditors"]
+        self.test_user.api_add_to_organization(self.organization.guid, roles=expected_roles)
+        users = User.api_get_list_via_organization(self.organization.guid)
+        self.assertInList(self.test_user, users)
+        roles = self.test_user.org_roles.get(self.organization.guid)
+        self.assertEqual(roles, expected_roles)
 
     def test_create_organization_user_all_roles(self):
-        expected_user = User.create_via_organization(self.organization.guid, roles=["managers", "auditors", "billing_managers"])
-        users = User.get_list_via_organization(self.organization.guid)
-        self.assertInList(expected_user, users)
+        expected_roles = ["managers", "auditors", "billing_managers"]
+        self.test_user.api_add_to_organization(self.organization.guid, roles=expected_roles)
+        users = User.api_get_list_via_organization(self.organization.guid)
+        self.assertInList(self.test_user, users)
+        roles = self.test_user.org_roles.get(self.organization.guid)
+        self.assertEqual(roles, expected_roles)
 
     def test_create_organization_user_incorrect_role(self):
-        self.assertRaisesUnexpectedResponse(400, "", User.create_via_organization,
-                                            organization_guid=self.organization.guid, roles=["i-don't-exist"])
+        self.assertRaisesUnexpectedResponse(400, "", self.test_user.api_add_to_organization,
+                                            org_guid=self.organization.guid, roles=["i-don't-exist"])
 
     def test_update_organization_user_add_role(self):
         roles = ["managers"]
         new_roles = ["managers", "auditors"]
-        expected_user = User.create_via_organization(self.organization.guid, roles=roles)
-        users = User.get_list_via_organization(self.organization.guid)
-        self.assertInList(expected_user, users)
-        expected_user.update_via_organization(new_roles=new_roles)
-        users = User.get_list_via_organization(self.organization.guid)
-        self.assertInList(expected_user, users)
+        self.test_user.api_add_to_organization(self.organization.guid, roles=roles)
+        users = User.api_get_list_via_organization(self.organization.guid)
+        self.assertInList(self.test_user, users)
+        self.assertEqual(self.test_user.org_roles.get(self.organization.guid), roles)
+        self.test_user.api_update_via_organization(org_guid=self.organization.guid, new_roles=new_roles)
+        users = User.api_get_list_via_organization(self.organization.guid)
+        self.assertInList(self.test_user, users)
+        user_roles = self.test_user.org_roles.get(self.organization.guid)
+        self.assertEqual(user_roles, new_roles)
 
     def test_update_organization_user_remove_role(self):
         roles = ["managers", "billing_managers"]
         new_roles = ["managers"]
-        expected_user = User.create_via_organization(self.organization.guid, roles=roles)
-        users = User.get_list_via_organization(self.organization.guid)
-        self.assertInList(expected_user, users)
-        expected_user.update_via_organization(new_roles=new_roles)
-        users = User.get_list_via_organization(self.organization.guid)
-        self.assertInList(expected_user, users)
+        self.test_user.api_add_to_organization(self.organization.guid, roles=roles)
+        users = User.api_get_list_via_organization(self.organization.guid)
+        self.assertInList(self.test_user, users)
+        self.assertEqual(self.test_user.org_roles.get(self.organization.guid), roles)
+        self.test_user.api_update_via_organization(org_guid=self.organization.guid, new_roles=new_roles)
+        users = User.api_get_list_via_organization(self.organization.guid)
+        self.assertInList(self.test_user, users)
+        user_roles = self.test_user.org_roles.get(self.organization.guid)
+        self.assertEqual(user_roles, new_roles)
 
     def test_update_organization_user_change_role(self):
         roles = ["managers"]
         new_roles = ["auditors"]
-        expected_user = User.create_via_organization(self.organization.guid, roles=roles)
-        users = User.get_list_via_organization(self.organization.guid)
-        self.assertInList(expected_user, users)
-        expected_user.update_via_organization(new_roles=new_roles)
-        users = User.get_list_via_organization(self.organization.guid)
-        self.assertInList(expected_user, users)
+        self.test_user.api_add_to_organization(self.organization.guid, roles=roles)
+        users = User.api_get_list_via_organization(self.organization.guid)
+        self.assertInList(self.test_user, users)
+        self.assertEqual(self.test_user.org_roles.get(self.organization.guid), roles)
+        self.test_user.api_update_via_organization(org_guid=self.organization.guid, new_roles=new_roles)
+        users = User.api_get_list_via_organization(self.organization.guid)
+        self.assertInList(self.test_user, users)
+        user_roles = self.test_user.org_roles.get(self.organization.guid)
+        self.assertEqual(user_roles, new_roles)
 
     def test_delete_organization_user(self):
-        expected_user = User.create_via_organization(self.organization.guid)
-        users = User.get_list_via_organization(self.organization.guid)
-        self.assertInList(expected_user, users)
-        expected_user.delete_via_organization()
-        users = User.get_list_via_organization(self.organization.guid)
-        self.assertNotInList(expected_user, users)
+        self.test_user.api_add_to_organization(self.organization.guid)
+        users = User.api_get_list_via_organization(self.organization.guid)
+        self.assertInList(self.test_user, users)
+        self.test_user.api_delete_via_organization(self.organization.guid)
+        users = User.api_get_list_via_organization(self.organization.guid)
+        self.assertNotInList(self.test_user, users)
 
 
 

@@ -18,10 +18,8 @@ import os
 import subprocess
 import pexpect
 
-from test_utils import log_command, get_logger
-from test_utils import config
-from test_utils import get_admin_client
-import test_utils.api_calls.file_server_api_calls as api
+from test_utils import log_command, get_logger, config
+import test_utils.platform_api_calls as api
 
 
 
@@ -114,13 +112,8 @@ class ATKtools(object):
         return response
 
     @classmethod
-    def api_get_atkfilename(cls, client=None):
-        client = client or get_admin_client()
-        response = api.api_get_atkfilename(client)
-        return response["file"]
-
-    @classmethod
-    def api_download(cls, filename, client=None):
-        client = client or get_admin_client()
-        client.file_download(filename=filename)
+    def api_get_atk_client_file(cls, client=None):
+        atk_file_name = api.api_get_atk_client_file_name(client)
+        api.api_get_file(atk_file_name, atk_file_name, client)
+        return atk_file_name
 

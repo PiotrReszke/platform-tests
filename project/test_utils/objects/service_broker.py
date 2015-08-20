@@ -29,15 +29,9 @@ class ServiceBroker(object):
 
     def __init__(self, guid, name, space_guid=None, url=None, created_at=None, updated_at=None, broker_url=None,
                  auth_username=None, org_guid=None):
-        self.guid = guid
-        self.name = name
-        self.space_guid = space_guid
-        self.created_at = created_at
-        self.url = url
-        self.updated_at = updated_at
-        self.broker_url = broker_url
+        self.guid, self.name, self.space_guid, self.org_guid, self.url = guid, name, space_guid, org_guid, url
+        self.created_at, self.updated_at, self.broker_url = created_at, updated_at, broker_url
         self.auth_username = auth_username
-        self.org_guid = org_guid
 
     def __repr__(self):
         return "{0} (name={1}, guid={2})".format(self.__class__.__name__, self.name, self.guid)

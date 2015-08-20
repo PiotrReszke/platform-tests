@@ -15,7 +15,8 @@
 #
 
 from test_utils import ApiTestCase
-from test_utils.objects import Organization, DataSet
+from test_utils.objects import Organization, DataSet, User
+
 
 expected_metrics_keys = ["privateDatasets", "serviceUsagePercent", "datasetCount", "memoryUsageAbsolute", "memoryUsage",
                          "totalUsers", "serviceUsage", "appsRunning", "domainsUsagePercent", "domainsUsage", "appsDown",
@@ -25,7 +26,7 @@ expected_metrics_keys = ["privateDatasets", "serviceUsagePercent", "datasetCount
 class MetricsTest(ApiTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.seedorg = Organization.get_org_and_space(org_name="seedorg")[0]
+        cls.seedorg = Organization.get_org_and_space_by_name(org_name="seedorg")[0]
         cls.seedorg.api_get_metrics()
 
     def test_metrics_contains_all_keys(self):
@@ -56,7 +57,7 @@ class MetricsTest(ApiTestCase):
                         % (dashboard_apps_running, len(cl_apps_running), dashboard_apps_down, len(cl_apps_down)))
 
     def test_user_count(self):
-        cl_user_list = self.seedorg.cf_api_get_users()
+        cl_user_list = User.cf_api_get_list_in_organization(org_guid=self.seedorg.guid)
         dashboard_total_users = self.seedorg.metrics["totalUsers"]
         self.assertTrue(dashboard_total_users == len(cl_user_list),
                         "\nUsers: %s - expected: %s" % (dashboard_total_users, len(cl_user_list)))

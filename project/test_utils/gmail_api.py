@@ -81,7 +81,7 @@ def get_recent_message_to(to_email):
         message_list = (list_messages_matching_query(service, to_email))
         message_numb = len(message_list)
         logger.info("---- Getting messages from {} email address, there are {} messages to {} ----".format(TEST_EMAIL,
-                                                                                                message_numb, to_email))
+                                                                                                    message_numb, to_email))
         # First message: reset password, second message: invitation to the platform
         if message_numb >= 2:
             for message in message_list:

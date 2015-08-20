@@ -39,7 +39,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
     @classmethod
     @cleanup_after_failed_setup(Application.delete_test_apps)
     def setUp(cls):
-        cls.seedorg, cls.seedspace = Organization.get_org_and_space("seedorg", "seedspace")
+        cls.seedorg, cls.seedspace = Organization.get_org_and_space_by_name("seedorg", "seedspace")
         cf_cli.cf_login(cls.seedorg.name, cls.seedspace.name)
         cf_cli.cf_create_service("kafka", "shared", "kafka-inst")
         cf_cli.cf_create_service("zookeeper", "shared", "zookeeper-inst")

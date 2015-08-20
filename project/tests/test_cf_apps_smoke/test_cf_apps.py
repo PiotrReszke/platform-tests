@@ -48,7 +48,7 @@ class TrustedAnalyticsApplicationsSmokeTest(ApiTestCase):
                 cls.expected_app_and_service_names.append(name)
         logger.info("{} apps/services/brokers are expected to be started"
                     .format(len(cls.expected_app_and_service_names) + len(cls.expected_service_broker_names)))
-        cls.seedspace_guid = Organization.get_org_and_space("seedorg", "seedspace")[1].guid
+        cls.seedspace_guid = Organization.get_org_and_space_by_name("seedorg", "seedspace")[1].guid
 
     def test_cf_application_status(self):
         """Check that all applications from demo-settings.yml are started on cf"""

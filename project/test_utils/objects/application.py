@@ -23,8 +23,8 @@ import requests
 import yaml
 
 import test_utils.cli.cloud_foundry as cf
-from test_utils.api_calls import service_catalog_api_calls as api
-from test_utils import TEST_SETTINGS, get_logger, get_admin_client
+import test_utils.platform_api_calls as api
+from test_utils import TEST_SETTINGS, get_logger
 
 
 logger = get_logger("application")
@@ -50,18 +50,14 @@ class Application(object):
     MANIFEST_NAME = "manifest.yml"
     TEST_APPS = []
 
-    def __init__(self, name, space_guid=None, org_guid=None, guid=None, local_path=None, state=None, instances=None,
+    def __init__(self, name, space_guid=None, guid=None, local_path=None, state=None, instances=None,
                  memory=None, service_names=(), disk=None, urls=(), topic=None):
         """local_path - directory where application manifest is located"""
-        self.name = name
-        self.space_guid = space_guid
-        self.guid = guid
-        self.instances = instances
-        self.service_names = tuple(service_names)
-        self.memory = memory
-        self.disk = disk
-        self.urls = tuple(urls)
+        self.name, self.guid, self.space_guid = name, guid, space_guid
+        self.instances, self.memory, self.disk = instances, memory, disk
+        self.service_names, self.urls = tuple(service_names), tuple(urls)
         self.topic = topic
+        self._state = state
         self._local_path = self._local_jar = local_path
         if self._local_path is not None:
             self.manifest_path = os.path.join(local_path, self.MANIFEST_NAME)
@@ -69,7 +65,6 @@ class Application(object):
                 self.manifest = yaml.load(f.read())
             if "path" in self.manifest["applications"][0]:
                 self._local_jar += ("/" + self.manifest["applications"][0]["path"])
-        self._state = state.upper() if state is not None else state
 
     def __repr__(self):
         return "{0} (name={1}, guid={2})".format(self.__class__.__name__, self.name, self.guid)
@@ -97,7 +92,6 @@ class Application(object):
     def change_consumer_group_in_manifest(self, new_consumer_group):
         self.manifest["applications"][0]["env"]["CONSUMER_GROUP"] = new_consumer_group
         self.__save_manifest()
-
 
     def application_api_request(self, endpoint, method="GET", scheme="http", url=None, data=None, params=None):
         """Send a request to application api"""
@@ -145,40 +139,35 @@ class Application(object):
     @classmethod
     def api_get_list(cls, space_guid, service_label=None, client=None):
         """Get list of applications from Console / service-catalog API"""
-        client = client or get_admin_client()
-        response = api.api_get_filtered_applications(client, space_guid, service_label)
+        response = api.api_get_filtered_applications(space_guid, service_label, client=client)
         applications = []
         for app in response:
-            applications.append(cls(name=app["name"], space_guid=space_guid, guid=app["guid"], state=app["state"],
-                                    urls=app["urls"], service_names=app["service_names"]))
+            application = cls(name=app["name"], space_guid=space_guid, guid=app["guid"], state=app["state"],
+                              urls=app["urls"], service_names=app["service_names"])
+            applications.append(application)
         return applications
 
     def api_get_summary(self, client=None):
-        client = client or get_admin_client()
-        response = api.api_get_app_summary(client, self.guid)
+        response = api.api_get_app_summary(self.guid, client=client)
         return self._get_details_from_response(response)
 
     def api_delete(self, cascade=True, client=None):
-        client = client or get_admin_client()
-        api.api_delete_app(client, self.guid, cascade=cascade)
+        api.api_delete_app(self.guid, cascade=cascade, client=None)
 
     def api_get_orphan_services(self, client=None):
-        client = client or get_admin_client()
-        response = api.api_get_app_orphan_services(client, self.guid)
+        response = api.api_get_app_orphan_services(self.guid, client=client)
         # TODO should probably return a list of ServiceInstance objects initialized from response
 
     def api_restage_app(self, new_name, client=None):
         # TODO
-        client = client or get_admin_client()
-        api.api_restage_app(client, self.guid, new_name)
+        api.api_restage_app(self.guid, new_name, client=client)
         self.name = new_name
 
     def api_get_service_bindings(self, client=None):
         # TODO
-        client = client or get_admin_client()
-        response = api.api_get_app_bindings(client, self.guid)
-        bindings = {}
-        for data in response["resources"]:
+        response = api.api_get_app_bindings(self.guid, client=client)
+        bindings = []
+        for data in response:
             bindings.append({
                 "guid": data["metadata"]["guid"],
                 "app_guid": self.guid,
@@ -188,14 +177,12 @@ class Application(object):
 
     def api_create_service_binding(self, service_instance_guid, client=None):
         # TODO
-        client = client or get_admin_client()
-        api.api_create_service_binding(client, self.guid, service_instance_guid)
+        api.api_create_service_binding(self.guid, service_instance_guid, client=client)
 
     @staticmethod
     def api_delete_service_binding(binding_guid, client=None):
         # TODO
-        client = client or get_admin_client()
-        api.api_delete_service_binding(client, binding_guid)
+        api.api_delete_service_binding(binding_guid, client=client)
 
     # -------------------------------- cf api -------------------------------- #
 

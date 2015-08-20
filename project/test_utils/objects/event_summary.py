@@ -14,8 +14,7 @@
 # limitations under the License.
 #
 
-import test_utils.api_calls.latest_events_service_api_calls as api
-from test_utils import get_admin_client
+import test_utils.platform_api_calls as api
 
 
 class EventSummary(object):
@@ -26,9 +25,5 @@ class EventSummary(object):
 
     @classmethod
     def api_get_latest_events(cls, client=None):
-        client = client or get_admin_client()
-        response = api.api_get_latest_events(client)
-        return {
-            "total": response["total"],
-            "events": response["events"]
-        }
+        return api.api_get_latest_events(client=client)
+

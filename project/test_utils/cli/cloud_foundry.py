@@ -165,15 +165,14 @@ def cf_get_service_guid(service):
 
 # ------------------------------- cf api ------------------------------- #
 
-def __get_all_pages(path, query_params=None):
+def __get_all_pages(endpoint, query_params=None):
     """For requests which return paginated results"""
     query_params = query_params or {}
     resources = []
     page_num = 1
     while True:
-        params = {"results-per-page": 100, "page": page_num}
-        params.update(query_params)
-        response = CfApiClient.get_client().call(method="GET", path=path, params=params)
+        params = {"results-per-page": 100, "page": page_num}.update(query_params)
+        response = CfApiClient.get_client().request(method="GET", endpoint=endpoint, params=params)
         resources.extend(response["resources"])
         if page_num == response["total_pages"]:
             break
@@ -183,12 +182,12 @@ def __get_all_pages(path, query_params=None):
 
 def cf_api_get_service_instances(org_guid):
     logger.info("------------------ CF: service instances for org {} ------------------".format(org_guid))
-    return __get_all_pages(path="service_instances", query_params={"organization_guid": org_guid})
+    return __get_all_pages(endpoint="service_instances", query_params={"organization_guid": org_guid})
 
 
 def cf_api_create_service_instance(instance_name, space_guid, service_plan_guid):
     logger.info("------------------ CF: create service instance {} ------------------".format(instance_name))
-    return CfApiClient.get_client().call(
+    return CfApiClient.get_client().request(
         method="POST",
         path="service_instances",
         params={"accepts_incomplete": "true"},
@@ -198,67 +197,69 @@ def cf_api_create_service_instance(instance_name, space_guid, service_plan_guid)
 
 def cf_api_env(app_guid):
     logger.info("------------------ CF: env for app {} ------------------".format(app_guid))
-    return CfApiClient.get_client().call(method="GET", path="apps/{}/env".format(app_guid))
+    return CfApiClient.get_client().request(method="GET", endpoint="apps/{}/env".format(app_guid))
 
 
 def cf_api_services(space_guid):
     logger.info("------------------ CF: services for space {} ------------------".format(space_guid))
-    return CfApiClient.get_client().call(method="GET", path="spaces/{}/services".format(space_guid))
+    return CfApiClient.get_client().request(method="GET", endpoint="spaces/{}/services".format(space_guid))
 
 
 def cf_api_app_summary(app_guid):
     logger.info("------------------ CF: summary for app {} ------------------".format(app_guid))
-    return CfApiClient.get_client().call("GET", "apps/{}/summary".format(app_guid))
+    return CfApiClient.get_client().request("GET", "apps/{}/summary".format(app_guid))
 
 
 def cf_api_space_summary(space_guid):
     """Equal to running cf apps and cf services"""
     logger.info("------------------ CF: summary for space {} ------------------".format(space_guid))
-    return CfApiClient.get_client().call("GET", "spaces/{}/summary".format(space_guid))
+    return CfApiClient.get_client().request("GET", "spaces/{}/summary".format(space_guid))
 
 
 def cf_api_org_managers(org_guid):
     logger.info("------------------ CF: managers in org {} ------------------".format(org_guid))
-    return __get_all_pages(path="organizations/{}/managers".format(org_guid))
+    return __get_all_pages(endpoint="organizations/{}/managers".format(org_guid))
 
 
 def cf_api_org_billing_managers(org_guid):
     logger.info("------------------ CF: billing managers in org {} ------------------".format(org_guid))
-    return __get_all_pages(path="organizations/{}/billing_managers".format(org_guid))
+    return __get_all_pages(endpoint="organizations/{}/billing_managers".format(org_guid))
 
 
 def cf_api_org_auditors(org_guid):
     logger.info("------------------ CF: auditors in org {} ------------------".format(org_guid))
-    return __get_all_pages(path="organizations/{}/auditors".format(org_guid))
+    return __get_all_pages(endpoint="organizations/{}/auditors".format(org_guid))
 
 
 def cf_api_get_organization_spaces(org_guid):
     logger.info("------------------ CF: spaces in org {} ------------------".format(org_guid))
-    return __get_all_pages(path="organizations/{}/spaces".format(org_guid))
+    return __get_all_pages(endpoint="organizations/{}/spaces".format(org_guid))
 
 def cf_api_get_space_routes(space_guid):
     logger.info("------------------ CF: get routes in space {} ------------------".format(space_guid))
-    return CfApiClient.get_client().call(method="GET", path="spaces/{}/routes".format(space_guid))
+    return CfApiClient.get_client().request(method="GET", endpoint="spaces/{}/routes".format(space_guid))
+
 
 def cf_api_get_space_service_brokers(space_guid):
     logger.info("------------------ CF: service brokers for space {} ------------------".format(space_guid))
-    return __get_all_pages(path="service_brokers", query_params={"space_guid": space_guid})
+    return __get_all_pages(endpoint="service_brokers", query_params={"space_guid": space_guid})
+
 
 def cf_api_get_organization_users(org_guid):
     logger.info("------------------ CF: get users in org {} ------------------".format(org_guid))
-    return __get_all_pages(path="organizations/{}/users".format(org_guid))
+    return __get_all_pages(endpoint="organizations/{}/users".format(org_guid))
+
 
 def cf_api_delete_route(route_guid, timeout=120):
     logger.info("------------------ CF: delete route {} ------------------".format(route_guid))
-    response = CfApiClient.get_client().call(method="DELETE",
-                                             path="routes/{}".format(route_guid),
-                                             params={"async": True})
+    response = CfApiClient.get_client().request(method="DELETE", endpoint="routes/{}".format(route_guid),
+                                                params={"async": True})
     if response != "":
         # routes are deleted asynchronously - to check that a route was deleted, job status is checked
         path = "jobs/{}".format(response["entity"]["guid"])
         now = time.time()
         while time.time() - now < timeout:
-            response = CfApiClient.get_client().call(method="GET", path=path)
+            response = CfApiClient.get_client().request(method="GET", endpoint=path)
             job_status = response["entity"]["status"]
             if job_status == "finished":
                 return

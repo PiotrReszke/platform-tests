@@ -19,7 +19,7 @@ import configparser
 import os
 
 
-__all__ = ["APP_SCHEMAS", "TEST_SETTINGS", "update_test_settings", "parse_arguments", "get_config_value",
+__all__ = ["TEST_SETTINGS", "update_test_settings", "parse_arguments", "get_config_value",
            "get_ssh_key_passphrase", "get_password"]
 
 
@@ -61,20 +61,6 @@ CONFIG = {
         "cdh_host": "cdh.10.91.120.35.xip.io",
         "uaa": "login.10.91.120.35.xip.io"
     }
-}
-
-
-# schema paths for each application
-APP_SCHEMAS = {
-    "das": "swagger/data_acquisition_service_swagger.json",
-    "data-catalog": "swagger/data_catalog_swagger.json",
-    "latest-events-service": "swagger/latest_events_service_swagger.json",
-    "metrics-provider": "swagger/metrics_provider_swagger.json",
-    "user-management": "swagger/user_management_swagger.json",
-    "service-catalog": "swagger/service_catalog_swagger.json",
-    "app-launcher-helper": "swagger/app_launcher_helper_swagger.json",
-    "hive": "swagger/hive_swagger.json",
-    "file-server": "swagger/file_server_swagger.json"
 }
 
 

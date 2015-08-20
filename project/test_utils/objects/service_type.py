@@ -17,8 +17,7 @@
 import functools
 import json
 
-from test_utils import get_admin_client
-import test_utils.api_calls.service_catalog_api_calls as api
+import test_utils.platform_api_calls as api
 import test_utils.cli.cloud_foundry as cf
 
 
@@ -33,14 +32,8 @@ class ServiceType(object):
 
     def __init__(self, guid, label, description, url, tags, space_guid, is_active, display_name,
                  service_plan_guids=None):
-        self.guid = guid
-        self.label = label
-        self.description = description
-        self.url = url
-        self.tags = tags
-        self.space_guid = space_guid
-        self.is_active = is_active
-        self.display_name = display_name
+        self.guid, self.label, self.description, self.display_name = guid, label, description, display_name
+        self.url, self.tags, self.space_guid, self.is_active = url, tags, space_guid, is_active
         self.service_plan_guids = service_plan_guids
 
     def __repr__(self):
@@ -54,13 +47,11 @@ class ServiceType(object):
 
     @classmethod
     def api_get_list_from_marketplace(cls, space_guid, client=None):
-        client = client or get_admin_client()
         response = api.api_get_marketplace_services(space_guid=space_guid, client=client)
-        return [cls._from_details(space_guid, data) for data in response["resources"]]
+        return [cls._from_details(space_guid, data) for data in response]
 
     @classmethod
     def api_get(cls, space_guid, service_guid, client=None):
-        client = client or get_admin_client()
         response = api.api_get_service(service_guid=service_guid, client=client)
         return cls._from_details(space_guid, response)
 

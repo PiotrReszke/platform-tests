@@ -26,47 +26,42 @@ class TestOrganization(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        Organization.api_delete_test_orgs()
+        Organization.api_tear_down_test_orgs()
 
     def test_get_organization_list(self):
-        orgs = Organization.get_list()
+        orgs = Organization.api_get_list()
         logger.info("There are {} organizations".format(len(orgs)))
         self.assertTrue(len(orgs) > 0)
 
     def test_create_organization(self):
         expected_org = Organization.create()
-        orgs = Organization.get_list()
+        orgs = Organization.api_get_list()
         self.assertInList(expected_org, orgs)
 
     def test_rename_organization(self):
         expected_org = Organization.create()
-        orgs = Organization.get_list()
+        orgs = Organization.api_get_list()
         self.assertInList(expected_org, orgs)
         new_name = "new-{}".format(expected_org.name)
         expected_org.rename(new_name)
-        orgs = Organization.get_list()
+        orgs = Organization.api_get_list()
         self.assertInList(expected_org, orgs)
 
     def test_delete_organization(self):
         deleted_org = Organization.create()
-        orgs = Organization.get_list()
+        orgs = Organization.api_get_list()
         self.assertInList(deleted_org, orgs)
         deleted_org.api_delete()
-        orgs = Organization.get_list()
+        orgs = Organization.api_get_list()
         self.assertNotInList(deleted_org, orgs)
 
     def test_get_more_than_50_organizations(self):
-        old_orgs = Organization.get_list()
+        old_orgs = Organization.api_get_list()
         orgs_num = len(old_orgs)
         new_orgs_num = (50 - orgs_num) + 1
-        new_orgs = [Organization.create() for x in range(new_orgs_num)]
+        new_orgs = [Organization.create() for _ in range(new_orgs_num)]
         expected_orgs = old_orgs + new_orgs
-        orgs = Organization.get_list()
+        orgs = Organization.api_get_list()
         self.assertTrue(len(orgs), len(expected_orgs))
         self.assertListEqual(sorted(orgs), sorted(expected_orgs))
 
-    """def test_onboarding(self):
-        org_name, code = Organization.invite()
-        expected_org = Organization.onboard(code=code)
-        orgs = Organization.get_list()
-        self.assertInList(expected_org, orgs)"""

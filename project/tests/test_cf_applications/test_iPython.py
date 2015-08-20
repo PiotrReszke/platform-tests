@@ -45,7 +45,7 @@ class iPythonConsoleTest(ApiTestCase):
             ServiceInstance.api_create(
                 name="iPython-test-{}".format(self.get_timestamp()),
                 service_plan_guid=ipython_service.service_plan_guids[0],
-                service_type_guid=ipython_service.guid,
+                org_guid=self.test_org.guid,
                 space_guid=self.test_space.guid
             )
         except UnexpectedResponseError as e:
@@ -59,11 +59,10 @@ class iPythonConsoleTest(ApiTestCase):
             timeout=120,
             expected_len=1,
             callableObj=Application.api_get_list,
-            space_guid=self.test_space.guid,
-            service_label=self.SERVICE_NAME
+            space_guid=self.test_space.guid
         )
 
-        ipython_app = Application.api_get_list(space_guid=self.test_space.guid, service_label=self.SERVICE_NAME)[0]
+        ipython_app = Application.api_get_list(space_guid=self.test_space.guid)[0]
         self.assertTrue(ipython_app.is_started, "The {} app is not started".format(ipython_app.name))
 
         # iPython Jupyter login

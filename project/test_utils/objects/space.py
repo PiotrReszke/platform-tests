@@ -18,9 +18,8 @@ from datetime import datetime
 import functools
 
 import test_utils.cli.cloud_foundry as cf
-from test_utils.objects import User, Application, ServiceInstance
-from test_utils import get_config_value, get_admin_client
-import test_utils.api_calls.user_management_api_calls as api
+from test_utils.objects import Application, ServiceInstance
+import test_utils.platform_api_calls as api
 
 
 __all__ = ["Space"]
@@ -46,28 +45,19 @@ class Space(object):
         return self.guid < other.guid
 
     @classmethod
-    def delete_spaces_in_org(self, client=None, org_guid=None):
-        client = client or get_admin_client()
-        spaces = Space.get_list(client, org_guid=org_guid)
-        if spaces:
-            for space in spaces:
-                space.delete()
-
-    @classmethod
     def api_create(cls, org=None, name=None, client=None):
-        client = client or get_admin_client()
-        if name is None:
-            name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-        api.api_create_space(client, org.guid, name)
-        spaces = Space.api_get_list(client)
-        for space in spaces:
-            if org.guid == space.org_guid and name == space.name:
-                org.spaces.append(space)
-                return space
+        name = name or cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        response = api.api_create_space(org.guid, name, client=client)
+        if response == "":  # Until DPNG-2051 is deployed on demo
+            spaces = cls.api_get_list()
+            space = next(space for space in spaces if space.org_guid == org.guid and space.name == name)
+        else:
+            space = cls(name=name, guid=response, org_guid=org.guid)
+        org.spaces.append(space)
+        return space
 
     @classmethod
     def api_get_list(cls, client=None):
-        client = client or get_admin_client()
         response = api.api_get_spaces(client)
         spaces = []
         for space_data in response:
@@ -78,8 +68,7 @@ class Space(object):
         return spaces
 
     def api_delete(self, org=None, client=None):
-        client = client or get_admin_client()
-        api.api_delete_space(client, self.guid)
+        api.api_delete_space(self.guid, client=client)
         if org:
             org.spaces.remove(self)
 
@@ -102,8 +91,4 @@ class Space(object):
         apps = Application.from_cf_api_space_summary_response(response, self.guid)
         service_instances = ServiceInstance.from_cf_api_space_summary_response(response, self.guid)
         return apps, service_instances
-
-    def add_admin(self, org_guid, roles=("developers",)):
-        admin = User.get_admin_user(org_guid)
-        admin.add_to_space(org_guid, self.guid, list(roles))
 

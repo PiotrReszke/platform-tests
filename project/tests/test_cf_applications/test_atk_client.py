@@ -19,33 +19,35 @@ import shutil
 import tarfile
 
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
-from test_utils.objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, Application
+from test_utils.objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, Application, User
 from test_utils.cli.atk_tools import ATKtools
 import test_utils.cli.cloud_foundry as cf
+
 
 logger = get_logger("test ATK")
 
 
 class TestCreateAtkInstance(ApiTestCase):
 
-    DATA_SOURCE = Transfer.get_test_transfer_link()
+    DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     UAA_FILENAME = "pyclient.test"
     TEST_DATA_DIRECTORY = os.path.join("tests", "atk_test_scripts")
     UAA_FILE_PATH = os.path.join(TEST_DATA_DIRECTORY, UAA_FILENAME)
     ATK_TEST_SCRIPT_PATH = os.path.join(TEST_DATA_DIRECTORY, "atk_python_client_test.py")
     ATK_SERVICE_LABEL = "atk"
 
-    @cleanup_after_failed_setup(Organization.api_delete_test_orgs)
+    @cleanup_after_failed_setup(Organization.api_tear_down_test_orgs)
     def setUp(self):
+        admin_user = User.get_admin()
         self.test_org = Organization.create(space_names=("test_space",))
-        self.test_org.add_admin()
+        admin_user.api_add_to_organization(org_guid=self.test_org.guid)
         self.test_space = self.test_org.spaces[0]
-        self.test_space.add_admin(self.test_org.guid)
+        admin_user.api_add_to_space(space_guid=self.test_space.guid, org_guid=self.test_org.guid)
         cf.cf_login(self.test_org.name, self.test_space.name)
         self.atk_virtualenv = self.atk_client_tar_file = self.atk_client_directory = None
 
     def tearDown(self):
-        Organization.api_delete_test_orgs()
+        Organization.api_tear_down_test_orgs()
         if os.path.exists(self.UAA_FILE_PATH):
             os.remove(self.UAA_FILE_PATH)
         if self.atk_virtualenv is not None:
@@ -61,7 +63,7 @@ class TestCreateAtkInstance(ApiTestCase):
         transfer.ensure_finished()
         transfers = Transfer.api_get_list(orgs=[self.test_org])
         self.assertInList(transfer, transfers)
-        dataset = DataSet.api_get_matching_to_transfer(org_list=[self.test_org], transfer=transfer)
+        dataset = DataSet.api_get_matching_to_transfer(org_list=[self.test_org], transfer_title=transfer.title)
         dataset.publish_in_hive()
 
         marketplace_services = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
@@ -74,13 +76,10 @@ class TestCreateAtkInstance(ApiTestCase):
         atk_app = next((app for app in test_space_apps if app.name.startswith("atk-")), None)
         self.assertIsNotNone(atk_app, "atk application is not on application list")
 
-        atk_client_gz_name = ATKtools.api_get_atkfilename()
-        self.atk_client_tar_file = os.path.join(atk_client_gz_name)
-        ATKtools.api_download(atk_client_gz_name)
-        with tarfile.open(atk_client_gz_name) as tar:
+        atk_client_file_path = ATKtools.api_get_atk_client_file()
+        with tarfile.open(atk_client_file_path) as tar:
             tar.extractall(path=self.TEST_DATA_DIRECTORY)
-        atk_client_name = atk_client_gz_name.split(".tar", 1)[0]
-        self.atk_client_directory = os.path.join(self.TEST_DATA_DIRECTORY, atk_client_name)
+        self.atk_client_directory = os.path.join(self.TEST_DATA_DIRECTORY, atk_client_file_path.split(".tar")[0])
 
         self.atk_virtualenv = ATKtools("atk_virtualenv")
         self.atk_virtualenv.create()

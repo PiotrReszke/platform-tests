@@ -14,9 +14,8 @@
 # limitations under the License.
 #
 
-from test_utils.objects import Organization, Space
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
-import test_utils.cli.cloud_foundry as cf_cli
+from test_utils.objects import Organization, Space
 
 
 logger = get_logger("test spaces")
@@ -28,14 +27,9 @@ class TestSpace(ApiTestCase):
     SPACE_NAME = "seedspace"
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.api_delete_test_orgs)
+    @cleanup_after_failed_setup(Organization.api_tear_down_test_orgs)
     def setUpClass(cls):
-        cf_cli.cf_login(cls.ORG_NAME, cls.SPACE_NAME)
         cls.org = Organization.create()
-
-    @classmethod
-    def tearDownClass(cls):
-        Organization.api_delete_test_orgs()
 
     def test_get_spaces_list(self):
         spaces = Space.api_get_list()

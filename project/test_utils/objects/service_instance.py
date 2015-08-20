@@ -18,9 +18,7 @@ import functools
 import datetime
 
 import test_utils.cli.cloud_foundry as cf
-import test_utils.api_calls.service_catalog_api_calls as api
-import test_utils.api_calls.app_launcher_helper_api_calls as app_launcher_helper_api
-from test_utils import get_admin_client
+import test_utils.platform_api_calls as api
 
 
 __all__ = ["ServiceInstance", "AtkInstance"]
@@ -33,16 +31,10 @@ class ServiceInstance(object):
 
     def __init__(self, guid, name, space_guid=None, service_type_guid=None, type=None, url=None, org_guid=None,
                  service_plan_guid=None, credentials=None, bindings=None):
-        self.guid = guid
-        self.name = name
-        self.space_guid = space_guid
-        self.service_type_guid = service_type_guid
-        self.type = type
-        self.url = url
-        self.org_guid = org_guid
-        self.service_plan_guid = service_plan_guid
-        self.credentials = credentials
-        self.bindings = bindings
+        self.guid, self.name, self.type, self.url = guid, name, type, url
+        self.space_guid, self.org_guid = space_guid, org_guid
+        self.service_type_guid, self.service_plan_guid = service_type_guid, service_plan_guid
+        self.credentials, self.bindings = credentials, bindings
 
     def __repr__(self):
         return "{0} (name={1}, guid={2})".format(self.__class__.__name__, self.name, self.guid)
@@ -98,9 +90,8 @@ class ServiceInstance(object):
 
     @classmethod
     def api_get_list(cls, space_guid, service_type_guid=None, client=None):
-        client = client or get_admin_client()
         instances = []
-        response = api.api_get_service_instances(client=client, space_guid=space_guid, service_guid=service_type_guid)
+        response = api.api_get_service_instances(space_guid=space_guid, service_guid=service_type_guid, client=client)
         for data in response:
             bindings = []
             for binding_data in data["bound_apps"]:
@@ -114,12 +105,11 @@ class ServiceInstance(object):
         return instances
 
     @classmethod
-    def api_create(cls, name, service_plan_guid, service_type_guid, space_guid, client=None):
-        client = client or get_admin_client()
-        api.api_create_service_instance(client, name, space_guid, service_plan_guid)
+    def api_create(cls, name, service_plan_guid, org_guid, space_guid, client=None):
+        api.api_create_service_instance(name, service_plan_guid, org_guid, space_guid, client=client)
         # the response does not return service guid, it has to be retrieved from get
-        instances = cls.api_get_list(space_guid, service_type_guid, client)
-        return [i for i in instances if i["name"] == name][0]
+        instances = cls.api_get_list(space_guid, client)
+        return next((i for i in instances if i["name"] == name), None)
 
     @classmethod
     def cf_api_create(cls, space_guid, service_plan_guid, name):
@@ -128,8 +118,7 @@ class ServiceInstance(object):
                    service_plan_guid=service_plan_guid)
 
     def api_delete(self, client=None):
-        client = client or get_admin_client()
-        api.api_delete_service_instance(client, self.guid)
+        api.api_delete_service_instance(self.guid, client=client)
 
 
 class AtkInstance(ServiceInstance):
@@ -144,8 +133,7 @@ class AtkInstance(ServiceInstance):
 
     @classmethod
     def api_get_list(cls, org_guid, service_type_guid, client=None):
-        client = client or get_admin_client()
-        response = app_launcher_helper_api.api_get_atk_instances(client, org_guid)
+        response = api.api_get_atk_instances(org_guid, client=client)
         instances = []
         for data in response["instances"]:
             instance = cls(guid=data["guid"], name=data["name"], state=data["state"], url=data["url"],
@@ -163,5 +151,4 @@ class AtkInstance(ServiceInstance):
         return next((si for si in service_instances if si.name == name), None)
 
     def api_create_scoring_engine(self, instance_name, space_guid, client=None):
-        client = client or get_admin_client()
-        api.api_create_scoring_engine(client, self.name, instance_name, space_guid, self.service_plan_guid)
+        api.api_create_scoring_engine(self.name, instance_name, space_guid, self.service_plan_guid, client=client)
