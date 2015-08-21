@@ -173,7 +173,8 @@ def __get_all_pages(path, query_params=None):
     resources = []
     page_num = 1
     while True:
-        params = {"results-per-page": 100, "page": page_num}.update(query_params)
+        params = {"results-per-page": 100, "page": page_num}
+        params.update(query_params)
         response = CfApiClient.get_client().call(method="GET", path=path, params=params)
         resources.extend(response["resources"])
         if page_num == response["total_pages"]:
@@ -184,7 +185,7 @@ def __get_all_pages(path, query_params=None):
 
 def cf_api_get_service_instances(org_guid):
     logger.info("------------------ CF: service instances for org {} ------------------".format(org_guid))
-    return __get_all_pages(path="service_instances", query_params={"q": "organization_guid:{}".format(org_guid)})
+    return __get_all_pages(path="service_instances", query_params={"organization_guid": org_guid})
 
 
 def cf_api_env(app_guid):
@@ -223,14 +224,21 @@ def cf_api_org_auditors(org_guid):
     return __get_all_pages(path="organizations/{}/auditors".format(org_guid))
 
 
+def cf_api_get_organization_spaces(org_guid):
+    logger.info("------------------ CF: spaces in org {} ------------------".format(org_guid))
+    return __get_all_pages(path="organizations/{}/spaces".format(org_guid))
+
 def cf_api_get_space_routes(space_guid):
     logger.info("------------------ CF: get routes in space {} ------------------".format(space_guid))
     return CfApiClient.get_client().call(method="GET", path="spaces/{}/routes".format(space_guid))
 
 def cf_api_get_space_service_brokers(space_guid):
     logger.info("------------------ CF: service brokers for space {} ------------------".format(space_guid))
-    return __get_all_pages(path="service_brokers", query_params={"q": "space_guid:{}".format(space_guid)})
+    return __get_all_pages(path="service_brokers", query_params={"space_guid": space_guid})
 
+def cf_api_get_organization_users(org_guid):
+    logger.info("------------------ CF: get users in org {} ------------------".format(org_guid))
+    return __get_all_pages(path="organizations/{}/users".format(org_guid))
 
 def cf_api_delete_route(route_guid, timeout=120):
     logger.info("------------------ CF: delete route {} ------------------".format(route_guid))

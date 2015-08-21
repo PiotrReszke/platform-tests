@@ -35,3 +35,28 @@ class MetricsTest(ApiTestCase):
     def test_service_count(self):
         apps, services = self.seedorg.cf_api_get_apps_and_services()
         self.assertEqual(self.seedorg.metrics["serviceUsage"], len(services))
+
+    def test_application_metrics(self):
+        cl_apps_running = []
+        cl_apps_down = []
+        org_spaces = self.seedorg.cf_api_get_spaces()
+        for space in org_spaces:
+            apps, _ = space.cf_api_get_space_summary()
+            for app in apps:
+                if app.is_started:
+                    cl_apps_running.append(app)
+                else:
+                    cl_apps_down.append(app)
+        dashboard_apps_running = self.seedorg.metrics["appsRunning"]
+        dashboard_apps_down = self.seedorg.metrics["appsDown"]
+        metrics_are_equal = (len(cl_apps_running) == dashboard_apps_running and
+                             len(cl_apps_down) == dashboard_apps_down)
+        self.assertTrue(metrics_are_equal,
+                        "\nApps running: %s - expected: %s\nApps down: %s - expected: %s"
+                        % (dashboard_apps_running, len(cl_apps_running), dashboard_apps_down, len(cl_apps_down)))
+
+    def test_user_count(self):
+        cl_user_list = self.seedorg.cf_api_get_users()
+        dashboard_total_users = self.seedorg.metrics["totalUsers"]
+        self.assertTrue(dashboard_total_users == len(cl_user_list),
+                        "\nUsers: %s - expected: %s" % (dashboard_total_users, len(cl_user_list)))

@@ -21,6 +21,7 @@ from test_utils import config, get_logger, get_admin_client, get_config_value
 import test_utils.api_calls.metrics_provider_api_calls as metrics_api
 import test_utils.api_calls.user_management_api_calls as api
 from test_utils.objects import Space, User
+import test_utils.cli.cloud_foundry as cf
 
 
 __all__ = ["Organization"]
@@ -51,6 +52,8 @@ class Organization(object):
 
     def __lt__(self, other):
         return self.guid < other.guid
+
+    # -------------------------------- platform api -------------------------------- #
 
     @classmethod
     def create(cls, name=None, space_names=(), client=None):
@@ -160,9 +163,16 @@ class Organization(object):
         response = api.api_get_spaces_in_org(client, org_guid=self.guid)
         spaces = []
         for space_data in response["resources"]:
-            name = space_data["entity"]["name"]
-            guid = space_data["metadata"]["guid"]
-            spaces.append(Space(name, guid, self.guid))
+            spaces.append(Space(name=space_data["entity"]["name"], guid=space_data["metadata"]["guid"]))
+        return spaces
+
+    # -------------------------------- cf api -------------------------------- #
+
+    def cf_api_get_spaces(self):
+        response = cf.cf_api_get_organization_spaces(self.guid)
+        spaces = []
+        for space_data in response:
+            spaces.append(Space(name=space_data["entity"]["name"], guid=space_data["metadata"]["guid"]))
         return spaces
 
     def cf_api_get_apps_and_services(self, client=None):
@@ -174,3 +184,10 @@ class Organization(object):
             org_apps.extend(apps)
             org_services.extend(services)
         return org_apps, org_services
+
+    def cf_api_get_users(self):
+        response = cf.cf_api_get_organization_users(self.guid)
+        users = []
+        for user_data in response:
+            users.append(User(username=user_data["entity"]["username"], guid=user_data["metadata"]["guid"]))
+        return users
