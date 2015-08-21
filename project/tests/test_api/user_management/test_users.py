@@ -26,7 +26,7 @@ class TestOrganizationUsers(ApiTestCase):
 
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUp(self):
-        self.organization = Organization.create()
+        self.organization = Organization.api_create()
         User.get_admin().api_add_to_organization(org_guid=self.organization.guid)
         self.test_user, _, self.test_user_client = User.api_onboard_and_login()
         self.test_user.api_add_to_organization(self.organization.guid, roles=("managers",))

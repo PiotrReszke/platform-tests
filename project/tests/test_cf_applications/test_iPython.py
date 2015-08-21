@@ -31,7 +31,7 @@ class iPythonConsoleTest(ApiTestCase):
     IPYTHON_PORT = 4443
 
     def setUp(self):
-        self.test_org = Organization.create(space_names=("test-space",))
+        self.test_org = Organization.api_create(space_names=("test-space",))
         self.test_space = self.test_org.spaces[0]
 
     def test_deploy_iPython_console_instance(self):

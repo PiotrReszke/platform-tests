@@ -26,7 +26,7 @@ logger = get_logger("test marketplace")
 class TestMarketplaceServices(ApiTestCase):
 
     def setUp(self):
-        self.test_organization = Organization.create(space_names=("test-space",))
+        self.test_organization = Organization.api_create(space_names=("test-space",))
         self.test_space = self.test_organization.spaces[0]
 
     def tearDown(self):

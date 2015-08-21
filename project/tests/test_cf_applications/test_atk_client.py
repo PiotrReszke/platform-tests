@@ -39,7 +39,7 @@ class TestCreateAtkInstance(ApiTestCase):
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUp(self):
         admin_user = User.get_admin()
-        self.test_org = Organization.create(space_names=("test_space",))
+        self.test_org = Organization.api_create(space_names=("test_space",))
         admin_user.api_add_to_organization(org_guid=self.test_org.guid)
         self.test_space = self.test_org.spaces[0]
         admin_user.api_add_to_space(space_guid=self.test_space.guid, org_guid=self.test_org.guid)

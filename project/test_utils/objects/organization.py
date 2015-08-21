@@ -57,7 +57,7 @@ class Organization(object):
     # -------------------------------- platform api -------------------------------- #
 
     @classmethod
-    def create(cls, name=None, space_names=(), client=None):
+    def api_create(cls, name=None, space_names=(), client=None):
         """If you pass a tuple of space names, spaces with those names are created in the organization."""
         name = name or cls.get_default_name()
         response = api.api_create_organization(name, client=client)

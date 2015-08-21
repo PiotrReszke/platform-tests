@@ -47,6 +47,8 @@ def github_get_file_content(repository, path, owner="trustedanalytics"):
 
 class Application(object):
 
+    STATUS = {"restage": "RESTAGING", "start": "STARTED", "stop": "STOPPED"}
+
     MANIFEST_NAME = "manifest.yml"
     TEST_APPS = []
 
@@ -73,7 +75,7 @@ class Application(object):
     def is_started(self):
         if self._state is None:
             return None
-        if self._state.upper() == "STARTED":
+        if self._state.upper() == self.STATUS["start"]:
             return True
         return False
 
@@ -158,10 +160,14 @@ class Application(object):
         response = api.api_get_app_orphan_services(self.guid, client=client)
         # TODO should probably return a list of ServiceInstance objects initialized from response
 
-    def api_restage_app(self, new_name, client=None):
-        # TODO
-        api.api_restage_app(self.guid, new_name, client=client)
-        self.name = new_name
+    def api_restage_app(self, client=None):
+        api.api_change_app_status(self.guid, self.STATUS["restage"], client=client)
+
+    def api_start_app(self, client=None):
+        api.api_change_app_status(self.guid, self.STATUS["start"], client=client)
+
+    def api_stop_app(self, client=None):
+        api.api_change_app_status(self.guid, self.STATUS["stop"], client=client)
 
     def api_get_service_bindings(self, client=None):
         # TODO
@@ -206,6 +212,13 @@ class Application(object):
     def cf_api_get_summary(self):
         response = cf.cf_api_app_summary(self.guid)
         return self._get_details_from_response(response)
+
+    def cf_api_app_is_running(self):
+        key = "running_instances"
+        summary = self.cf_api_get_summary()
+        if key in summary.keys():
+            return summary[key] >= 1
+        return False
 
     def cf_api_env(self):
         response = cf.cf_api_env(self.guid)

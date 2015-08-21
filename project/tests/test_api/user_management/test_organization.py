@@ -34,12 +34,12 @@ class TestOrganization(ApiTestCase):
         self.assertTrue(len(orgs) > 0)
 
     def test_create_organization(self):
-        expected_org = Organization.create()
+        expected_org = Organization.api_create()
         orgs = Organization.api_get_list()
         self.assertInList(expected_org, orgs)
 
     def test_rename_organization(self):
-        expected_org = Organization.create()
+        expected_org = Organization.api_create()
         orgs = Organization.api_get_list()
         self.assertInList(expected_org, orgs)
         new_name = "new-{}".format(expected_org.name)
@@ -48,7 +48,7 @@ class TestOrganization(ApiTestCase):
         self.assertInList(expected_org, orgs)
 
     def test_delete_organization(self):
-        deleted_org = Organization.create()
+        deleted_org = Organization.api_create()
         orgs = Organization.api_get_list()
         self.assertInList(deleted_org, orgs)
         deleted_org.api_delete()
@@ -59,7 +59,7 @@ class TestOrganization(ApiTestCase):
         old_orgs = Organization.api_get_list()
         orgs_num = len(old_orgs)
         new_orgs_num = (50 - orgs_num) + 1
-        new_orgs = [Organization.create() for _ in range(new_orgs_num)]
+        new_orgs = [Organization.api_create() for _ in range(new_orgs_num)]
         expected_orgs = old_orgs + new_orgs
         orgs = Organization.api_get_list()
         self.assertTrue(len(orgs), len(expected_orgs))

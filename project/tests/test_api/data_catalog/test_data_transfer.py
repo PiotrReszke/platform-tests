@@ -31,7 +31,7 @@ class TestDataTransfer(ApiTestCase):
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
-        cls.org = Organization.create()
+        cls.org = Organization.api_create()
         User.get_admin().api_add_to_organization(org_guid=cls.org.guid)
 
     def test_get_transfers(self):

@@ -29,7 +29,7 @@ class TestSpace(ApiTestCase):
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
-        cls.org = Organization.create()
+        cls.org = Organization.api_create()
 
     def test_get_spaces_list(self):
         spaces = Space.api_get_list()
@@ -44,7 +44,7 @@ class TestSpace(ApiTestCase):
         self.assertEqual(len(spaces)+1, len(new_spaces))
 
     def test_get_spaces_list_in_empty_org(self):
-        org = Organization.create()
+        org = Organization.api_create()
         spaces = org.api_get_spaces()
         logger.info("There are {} spaces in org {}".format(len(spaces), org.name))
         self.assertEqual(len(spaces), 0)
