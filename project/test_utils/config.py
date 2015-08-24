@@ -53,7 +53,7 @@ CONFIG = {
         "uaa": "login.callisto.gotapaas.com"
     },
     "10.91.120.35.xip.io": {
-        "api_endpoint": "api.10.91.120.35.xip.io",
+        "api_endpoint": "10.91.120.35.xip.io",
         "login.do_scheme": "http",
         "login_endpoint": "login.10.91.120.35.xip.io",
         "cf_endpoint": "api.10.91.120.35.xip.io",
