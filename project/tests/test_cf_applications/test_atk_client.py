@@ -16,13 +16,14 @@
 
 import os
 import shutil
+import tarfile
 
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
 from test_utils.objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, Application
 from test_utils.cli.atk_tools import ATKtools
 import test_utils.cli.cloud_foundry as cf
 
-logger = get_logger("test transfer")
+logger = get_logger("test ATK")
 
 
 class TestCreateAtkInstance(ApiTestCase):
@@ -74,9 +75,10 @@ class TestCreateAtkInstance(ApiTestCase):
         self.assertIsNotNone(atk_app, "atk application is not on application list")
 
         atk_client_gz_name = ATKtools.api_get_atkfilename()
-        self.atk_client_tar_file = os.path.join(".", atk_client_gz_name)
+        self.atk_client_tar_file = os.path.join(atk_client_gz_name)
         ATKtools.api_download(atk_client_gz_name)
-        ATKtools.unpack_tar_file(atk_client_gz_name, self.TEST_DATA_DIRECTORY)
+        with tarfile.open(atk_client_gz_name) as tar:
+            tar.extractall(path=self.TEST_DATA_DIRECTORY)
         atk_client_name = atk_client_gz_name.split(".tar", 1)[0]
         self.atk_client_directory = os.path.join(self.TEST_DATA_DIRECTORY, atk_client_name)
 
@@ -94,3 +96,4 @@ class TestCreateAtkInstance(ApiTestCase):
         with open(self.UAA_FILE_PATH) as f:
             content = f.read()
         self.assertNotEqual(content, "", "uaa file was not created by atk client")
+

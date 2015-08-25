@@ -17,14 +17,12 @@
 import os
 import subprocess
 import pexpect
-import tarfile
-import shutil
 
 from test_utils import log_command, get_logger
 from test_utils import config
 from test_utils import get_admin_client
 import test_utils.api_calls.file_server_api_calls as api
-from test_utils.api_client import ApiClient as api_client
+
 
 
 __all__ = ["ATKtools"]
@@ -124,11 +122,5 @@ class ATKtools(object):
     @classmethod
     def api_download(cls, filename, client=None):
         client = client or get_admin_client()
-        url = "https://console.demo-gotapaas.com/files/{}".format(filename)
-        api_client.file_download(client, "GET", url)
+        client.file_download(filename=filename)
 
-    @classmethod
-    def unpack_tar_file(cls, tar_path, destination_path):
-        tar = tarfile.open(tar_path)
-        tar.extractall(path=destination_path)
-        tar.close()

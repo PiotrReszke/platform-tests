@@ -137,18 +137,17 @@ class ApiClient(BaseClient):
             raise UnexpectedResponseError(response.status_code, response.text, "Client is not authorized")
         return response.data
 
-    def file_download(self, method, url):
-        local_filename = url.split('/')[-1]
-        # NOTE the stream=True parameter
-        r = requests.Request(method=method, url=url)
-        r = self._session.prepare_request(r)
-        response = self._session.send(r, stream=True)
-        with open(local_filename, 'w+b') as f:
+    def file_download(self, filename):
+        url = "{}://{}/files/{}".format(self._scheme, self._api_endpoint, filename)
+        request = requests.Request("GET", url=url)
+        request = self._session.prepare_request(request)
+        response = self._session.send(request, stream=True)
+        with open(filename, 'w+b') as f:
             for chunk in response.iter_content(chunk_size=1024):
-                if chunk:  # filter out keep-alive new chunks
+                if chunk:
                     f.write(chunk)
                     f.flush()
-        return local_filename
+        return filename
 
     def _log_request(self, method, url, headers="", data="", params=None):
         if params:

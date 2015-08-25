@@ -48,10 +48,7 @@ def cf_login(organization_name, space_name):
     password = TEST_SETTINGS["TEST_PASSWORD"]
     command = ["cf", "login", "-a", api_url, "-u", username, "-p", password, "-o", organization_name, "-s", space_name]
     if TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"] is True:
-        command = ["cf", "login", "-a", api_url, "-u", username, "-p", password, "-o", organization_name, "-s", space_name,
-                   "--skip-ssl-validation"]
-    else:
-        command = ["cf", "login", "-a", api_url, "-u", username, "-p", password, "-o", organization_name, "-s", space_name]
+        command.append("--skip-ssl-validation")
     log_command(command, replace=(password, "[SECRET]"))
     subprocess.check_call(command)
 

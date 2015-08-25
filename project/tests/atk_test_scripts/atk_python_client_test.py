@@ -23,26 +23,22 @@
 
 #!/usr/bin/python2.7
 import argparse
-import sys, os
-sys.path.append("/usr/local/lib/python2.7/dist-packages/taprootanalytics")
-# import /usr/local/lib/python2.7/dist-packages/taprootanalytics as ta
+import os
+
 import taprootanalytics as ta
 
-
+class AtkTestException(AssertionError):
+    pass
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="ATK Python Client Test")
     parser.add_argument("--organization",
-                        default=None,
                         help="organization where transfer was uploaded")
     parser.add_argument("--atk",
-                        default=None,
                         help="ATK instance server URI for client")
     parser.add_argument("--transfer",
-                        default=None,
                         help="transfer name of submitted document")
     parser.add_argument("--uaa_file_name",
-                        default=None,
                         help="uaa file name that will be created by script")
     return parser.parse_args()
 
@@ -51,33 +47,26 @@ parameters = parse_arguments()
 
 dir = os.path.dirname(__file__)
 
-# # my_dir = os.path.expanduser("~/pyclient.taproot")
-# my_dir = os.path.join(dir, "pytest.taproot")
+uaa_file_name = os.path.join(dir, parameters.uaa_file_name)
+ta.create_credentials_file(uaa_file_name)
 
-my_dir = os.path.join(dir, parameters.uaa_file_name)
-print(my_dir)
-ta.create_credentials_file(my_dir)
+if not os.path.isfile(uaa_file_name):
+    raise AtkTestException("authorization file not found")
+if os.stat(uaa_file_name).st_size == 0:
+    raise AtkTestException("authorization file is empty")
 
-if os.path.isfile(my_dir):
-    pass
-elif (os.stat(my_dir).st_size == 0):
-    raise Exception("authorization file is empty")
-else:
-    raise Exception("authorization file not found")
+print("uaa file found")
 
-print("file found")
-
-# ta.server.uri = 'atk-fa234cfb-54d2-4042-925b.demo-gotapaas.com'
 ta.server.uri = parameters.atk
 print("server set")
 
-ta.connect(my_dir)
+ta.connect(uaa_file_name)
 
 print("connected")
 
 query = "select * from " + parameters.organization + "." + parameters.transfer
 
-print(query)
+print("Query: {}".format(query))
 
 hq = ta.HiveQuery(query)
 

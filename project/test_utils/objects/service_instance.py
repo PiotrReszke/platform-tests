@@ -101,7 +101,6 @@ class ServiceInstance(object):
         client = client or get_admin_client()
         instances = []
         response = api.api_get_service_instances(client=client, space_guid=space_guid, service_guid=service_type_guid)
-        # response = api.api_get_service_instances(client, space_guid)
         for data in response:
             bindings = []
             for binding_data in data["bound_apps"]:
