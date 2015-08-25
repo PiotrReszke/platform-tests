@@ -97,7 +97,7 @@ class ServiceInstance(object):
         return cls.from_cf_api_space_summary_response(response, space_guid)
 
     @classmethod
-    def api_get_list(cls, space_guid, service_type_guid, client=None):
+    def api_get_list(cls, space_guid, service_type_guid=None, client=None):
         client = client or get_admin_client()
         instances = []
         response = api.api_get_service_instances(client=client, space_guid=space_guid, service_guid=service_type_guid)
