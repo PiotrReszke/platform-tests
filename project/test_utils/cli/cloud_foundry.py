@@ -171,7 +171,8 @@ def __get_all_pages(endpoint, query_params=None):
     resources = []
     page_num = 1
     while True:
-        params = {"results-per-page": 100, "page": page_num}.update(query_params)
+        params = {"results-per-page": 100, "page": page_num}
+        params.update(query_params)
         response = CfApiClient.get_client().request(method="GET", endpoint=endpoint, params=params)
         resources.extend(response["resources"])
         if page_num == response["total_pages"]:
