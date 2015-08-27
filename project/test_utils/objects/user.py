@@ -140,7 +140,7 @@ class User(object):
     def get_admin(cls):
         """Return User object for admin user"""
         if cls.__ADMIN is None:
-            testers_sandbox = Organization.get_org_and_space_by_name(org_name="testers-sandbox")[0]
+            testers_sandbox = Organization.get_org_and_space_by_name(org_name="seedorg")[0]
             users = cls.api_get_list_via_organization(testers_sandbox.guid)
             admin_username = config.get_config_value("admin_username")
             cls.__ADMIN = next(user for user in users if user.username == admin_username)
