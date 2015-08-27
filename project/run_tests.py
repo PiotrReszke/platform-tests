@@ -39,6 +39,8 @@ if __name__ == "__main__":
                                 test_username=args.username,
                                 proxy=args.proxy,
                                 disable_ssl_validation=args.disable_ssl_validation)
+    for key in ["TEST_ENVIRONMENT", "TEST_USERNAME", "TEST_CLIENT_TYPE", "TEST_PROXY", "TEST_DISABLE_SSL_VALIDATION"]:
+        logger.info("{}={}".format(key, config.TEST_SETTINGS[key]))
 
     if args.test is None:
         test_dir = "tests"
