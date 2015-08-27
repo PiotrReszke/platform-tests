@@ -219,13 +219,13 @@ class Application(object):
     @classmethod
     def delete_test_apps(cls):
         while len(cls.TEST_APPS) > 0:
-            app = cls.TEST_APPS[0]
+            app = cls.TEST_APPS.pop()
             app.cf_delete()
 
     def cf_push(self, organization, space):
+        self.TEST_APPS.append(self)
         cf.cf_target(organization.name, space.name)
         output = cf.cf_push(self._local_path, self._local_jar)
-        self.TEST_APPS.append(self)
         for line in output.split("\n"):
             if line[0:5] == "urls:":
                 self.urls = (re.split(r'urls: ', line)[1],)

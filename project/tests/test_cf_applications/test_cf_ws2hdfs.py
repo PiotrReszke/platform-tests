@@ -17,7 +17,7 @@
 import time
 import websocket
 
-from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
+from test_utils import ApiTestCase, get_logger
 from test_utils.objects import Application, Organization
 import test_utils.cli.cloud_foundry as cf_cli
 from test_utils.cli import Topic
@@ -37,7 +37,6 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         Application.delete_test_apps()
 
     @classmethod
-    @cleanup_after_failed_setup(Application.delete_test_apps)
     def setUp(cls):
         cls.seedorg, cls.seedspace = Organization.get_org_and_space_by_name("seedorg", "seedspace")
         cf_cli.cf_login(cls.seedorg.name, cls.seedspace.name)
