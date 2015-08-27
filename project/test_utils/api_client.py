@@ -16,7 +16,6 @@
 
 import abc
 import json
-import re
 import time
 
 import requests
@@ -49,10 +48,12 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
         self._password = platform_password
         self._domain = config.get_config_value("api_endpoint")
         self._login_endpoint = config.get_config_value("login_endpoint")
+        self._session = requests.Session()
         proxy = config.TEST_SETTINGS["TEST_PROXY"]
         if proxy is not None:
             self._session.proxies = {"https": proxy, "http": proxy}
-        self._session = requests.Session()
+        if config.TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"] is True:
+            self._session.verify = False
 
     def __repr__(self):
         return "{}: {}".format(self.__class__.__name__, self._username)
