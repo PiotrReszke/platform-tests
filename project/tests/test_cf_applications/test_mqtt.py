@@ -19,11 +19,10 @@ import signal
 import ssl
 import subprocess
 import time
-import unittest
 
 import paho.mqtt.client as mqtt
 
-from test_utils import ApiTestCase, get_logger, config, app_source_utils, TEST_SETTINGS
+from test_utils import ApiTestCase, get_logger, config, app_source_utils
 from test_utils.cli import cloud_foundry as cf
 from test_utils.objects import Application, Organization
 
@@ -31,7 +30,6 @@ from test_utils.objects import Application, Organization
 logger = get_logger("test_mqtt")
 
 
-@unittest.skipIf(TEST_SETTINGS["TEST_ENVIRONMENT"] == "gotapaas.eu", "Test can be run only on demo")
 class TestMqtt(ApiTestCase):
 
     DB_SERVICE_NAME = "influxdb088"
