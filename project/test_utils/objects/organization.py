@@ -17,7 +17,7 @@
 import functools
 from datetime import datetime
 
-from test_utils import get_logger
+from test_utils import get_logger, UnexpectedResponseError
 import test_utils.cli.cloud_foundry as cf
 from test_utils.objects import Space
 import test_utils.platform_api_calls as api
@@ -79,16 +79,6 @@ class Organization(object):
         return organizations
 
     @classmethod
-    def api_tear_down_test_orgs(cls):
-        if any([org.guid is None for org in cls.TEST_ORGS]):  # clean up also those orgs whose guid was not set
-            test_org_names = [org.name for org in cls.TEST_ORGS]
-            platform_orgs = cls.api_get_list()
-            cls.TEST_ORGS = [org for org in platform_orgs if org.name in test_org_names]
-        while len(cls.TEST_ORGS) > 0:
-            org = cls.TEST_ORGS.pop()
-            org.api_delete(with_spaces=True)
-
-    @classmethod
     def get_org_and_space_by_name(cls, org_name, space_name=None, client=None):
         """Return organization and space objects for existing org and space"""
         response = api.api_get_organizations(client=client)
@@ -138,6 +128,14 @@ class Organization(object):
 
     # -------------------------------- cf api -------------------------------- #
 
+    @classmethod
+    def cf_api_get_list(cls):
+        response = cf.cf_api_get_orgs()
+        org_list = []
+        for org_info in response:
+            org_list.append(cls(name=org_info["entity"]["name"], guid=org_info["metadata"]["guid"]))
+        return org_list
+
     def cf_api_get_spaces(self):
         response = cf.cf_api_get_organization_spaces(self.guid)
         spaces = []
@@ -156,3 +154,22 @@ class Organization(object):
             org_apps.extend(apps)
             org_services.extend(services)
         return org_apps, org_services
+
+    def cf_api_delete(self):
+        try:
+            cf.cf_api_delete_org(self.guid)
+        except UnexpectedResponseError as e:
+            if "CF-AssociationNotEmpty" in e.error_message:  # routes are not deleted by cf api delete
+                spaces = self.cf_api_get_spaces()
+                for space in spaces:
+                    space.cf_api_delete_routes()
+                cf.cf_api_delete_org(self.guid)
+            elif "CF-OrganizationNotFound" in e.error_message:
+                logger.warning("Organization {} was not found".format(self.guid))
+
+    @classmethod
+    def cf_api_tear_down_test_orgs(cls):
+        """Use this method in tearDown and tearDownClass."""
+        while len(cls.TEST_ORGS) > 0:
+            org = cls.TEST_ORGS.pop()
+            org.cf_api_delete()

@@ -27,7 +27,7 @@ class TestSpace(ApiTestCase):
     SPACE_NAME = "seedspace"
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.api_tear_down_test_orgs)
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
         cls.org = Organization.create()
 

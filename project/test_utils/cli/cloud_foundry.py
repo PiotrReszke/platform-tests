@@ -21,9 +21,12 @@ import time
 from test_utils import CfApiClient, get_logger, log_command, get_config_value, TEST_SETTINGS
 
 
-__all__ = ["cf_login", "cf_target", "cf_push", "cf_marketplace", "cf_create_service", "cf_stop", "cf_start", "cf_delete",
-           "cf_env", "cf_api_get_service_instances", "cf_api_app_summary", "cf_api_env", "cf_api_services",
-           "cf_api_space_summary", "cf_api_org_auditors", "cf_api_org_managers", "cf_api_org_billing_managers"]
+__all__ = ["cf_login", "cf_target", "cf_push", "cf_create_service", "cf_delete", "cf_env", "cf_delete_service",
+           "cf_api_get_service_instances", "cf_api_create_service_instance", "cf_api_env", "cf_api_services",
+           "cf_api_app_summary", "cf_api_space_summary", "cf_api_get_org_managers", "cf_api_get_org_billing_managers",
+           "cf_api_get_org_auditors", "cf_api_get_organization_spaces", "cf_api_get_space_routes",
+           "cf_api_get_space_service_brokers", "cf_api_get_organization_users", "cf_api_delete_org",
+           "cf_api_delete_route"]
 
 
 logger = get_logger("cloud_foundry_cli")
@@ -71,44 +74,10 @@ def cf_push(local_path, local_jar):
 
 
 @log_output_on_error
-def cf_apps():
-    command = ["cf", "apps"]
-    log_command(command)
-    return subprocess.check_output(command).decode()
-
-
-@log_output_on_error
-def cf_marketplace(service_name=None):
-    command = ["cf", "marketplace"]
-    if service_name is not None:
-        command += ["-s", service_name]
-    log_command(command)
-    return subprocess.check_output(command).decode()
-
-
-@log_output_on_error
 def cf_create_service(broker_name, plan, instance_name):
     command = ["cf", "create-service", broker_name, plan, instance_name]
     log_command(command)
     return subprocess.check_output(command).decode()
-
-
-def cf_services():
-    command = ["cf", "services"]
-    log_command(command)
-    return subprocess.check_output(command).decode()
-
-
-def cf_stop(app_name):
-    command = ["cf", "stop", app_name]
-    log_command(command)
-    subprocess.check_call(command)
-
-
-def cf_start(app_name):
-    command = ["cf", "start", app_name]
-    log_command(command)
-    subprocess.check_call(command)
 
 
 def cf_delete(app_name):
@@ -124,43 +93,10 @@ def cf_env(app_name):
     return subprocess.check_output(command).decode()
 
 
-@log_output_on_error
-def cf_delete_with_routes(app_name):
-    command = ["cf", "delete", app_name, "-f", "-r"]
-    log_command(command)
-    return subprocess.check_output(command).decode()
-
-
-def cf_delete_space(space_name):
-    command = ["cf", "delete-space", space_name, "-f"]
-    log_command(command)
-    return subprocess.check_call(command)
-
-
-def cf_unbind_service(app_name, service_name):
-    command = ["cf", "unbind-service", app_name, service_name]
-    log_command(command)
-    return subprocess.check_call(command)
-
-
-@log_output_on_error
-def cf_spaces():
-    command = ["cf", "spaces"]
-    log_command(command)
-    return subprocess.check_output(command).decode()
-
-
 def cf_delete_service(service):
     command = ["cf", "delete-service", service, "-f"]
     log_command(command)
     return subprocess.check_call(command)
-
-
-@log_output_on_error
-def cf_get_service_guid(service):
-    command = ["cf", "service", service, "--guid"]
-    log_command(command)
-    return subprocess.check_output(command).decode()
 
 
 # ------------------------------- cf api ------------------------------- #
@@ -181,12 +117,28 @@ def __get_all_pages(endpoint, query_params=None):
     return resources
 
 
+def __ensure_job_finished(job_id, job_name, timeout=120):
+    """Ensure that job requested asynchronously is finished within timeout."""
+    endpoint = "jobs/{}".format(job_id)
+    now = time.time()
+    while time.time() - now < timeout:
+        response = CfApiClient.get_client().request(method="GET", endpoint=endpoint)
+        job_status = response["entity"]["status"]
+        if job_status == "finished":
+            return
+        logger.info("{} - job status: {}".format(job_name, job_status))
+        time.sleep(5)
+    raise TimeoutError("Job {} did not finish in {}s".format(job_name, timeout))
+
+
 def cf_api_get_service_instances(org_guid):
+    """GET /v2/service_instances"""
     logger.info("------------------ CF: service instances for org {} ------------------".format(org_guid))
     return __get_all_pages(endpoint="service_instances", query_params={"organization_guid": org_guid})
 
 
 def cf_api_create_service_instance(instance_name, space_guid, service_plan_guid):
+    """POST /v2/service_instances"""
     logger.info("------------------ CF: create service instance {} ------------------".format(instance_name))
     return CfApiClient.get_client().request(
         method="POST",
@@ -197,73 +149,88 @@ def cf_api_create_service_instance(instance_name, space_guid, service_plan_guid)
 
 
 def cf_api_env(app_guid):
+    """GET /apps/{app_guid}/env"""
     logger.info("------------------ CF: env for app {} ------------------".format(app_guid))
     return CfApiClient.get_client().request(method="GET", endpoint="apps/{}/env".format(app_guid))
 
 
 def cf_api_services(space_guid):
+    """GET /v2/apps/{app_guid}/services"""
     logger.info("------------------ CF: services for space {} ------------------".format(space_guid))
     return CfApiClient.get_client().request(method="GET", endpoint="spaces/{}/services".format(space_guid))
 
 
 def cf_api_app_summary(app_guid):
+    """GET /v2/apps/{app_guid}/summary"""
     logger.info("------------------ CF: summary for app {} ------------------".format(app_guid))
     return CfApiClient.get_client().request("GET", "apps/{}/summary".format(app_guid))
 
 
 def cf_api_space_summary(space_guid):
-    """Equal to running cf apps and cf services"""
+    """GET /v2/spaces/{space_guid}/summary - Equal to running cf apps and cf services"""
     logger.info("------------------ CF: summary for space {} ------------------".format(space_guid))
     return CfApiClient.get_client().request("GET", "spaces/{}/summary".format(space_guid))
 
 
-def cf_api_org_managers(org_guid):
+def cf_api_get_org_managers(org_guid):
+    """GET /v2/organizations/{org_guid}/managers"""
     logger.info("------------------ CF: managers in org {} ------------------".format(org_guid))
     return __get_all_pages(endpoint="organizations/{}/managers".format(org_guid))
 
 
-def cf_api_org_billing_managers(org_guid):
+def cf_api_get_org_billing_managers(org_guid):
+    """GET /v2/organizations/{org_guid}/billing_managers"""
     logger.info("------------------ CF: billing managers in org {} ------------------".format(org_guid))
     return __get_all_pages(endpoint="organizations/{}/billing_managers".format(org_guid))
 
 
-def cf_api_org_auditors(org_guid):
+def cf_api_get_org_auditors(org_guid):
+    """GET /v2/organizations/{org_guid}/auditors"""
     logger.info("------------------ CF: auditors in org {} ------------------".format(org_guid))
     return __get_all_pages(endpoint="organizations/{}/auditors".format(org_guid))
 
 
 def cf_api_get_organization_spaces(org_guid):
+    """GET /v2/organizations/{org_guid}/spaces"""
     logger.info("------------------ CF: spaces in org {} ------------------".format(org_guid))
     return __get_all_pages(endpoint="organizations/{}/spaces".format(org_guid))
 
+
 def cf_api_get_space_routes(space_guid):
+    """GET /v2/spaces/{space_guid}/routes"""
     logger.info("------------------ CF: get routes in space {} ------------------".format(space_guid))
     return CfApiClient.get_client().request(method="GET", endpoint="spaces/{}/routes".format(space_guid))
 
 
 def cf_api_get_space_service_brokers(space_guid):
+    """GET /v2/spaces/{space_guid}/service_brokers"""
     logger.info("------------------ CF: service brokers for space {} ------------------".format(space_guid))
     return __get_all_pages(endpoint="service_brokers", query_params={"space_guid": space_guid})
 
 
 def cf_api_get_organization_users(org_guid):
+    """GET /v2/organizations/{org_guid}/users"""
     logger.info("------------------ CF: get users in org {} ------------------".format(org_guid))
     return __get_all_pages(endpoint="organizations/{}/users".format(org_guid))
 
 
-def cf_api_delete_route(route_guid, timeout=120):
+def cf_api_get_orgs():
+    """GET /v2/organizations"""
+    logger.info("------------------ CF: get all organizations ------------------")
+    return __get_all_pages(endpoint="organizations")
+
+
+def cf_api_delete_org(org_guid):
+    """DELETE /v2/organizations/{org_guid}"""
+    logger.info("------------------ CF: delete organization {} ------------------".format(org_guid))
+    response = CfApiClient.get_client().request("DELETE", endpoint="organizations/{}".format(org_guid),
+                                                params={"async": "true", "recursive": "true"})
+    __ensure_job_finished(job_id=response["entity"]["guid"], job_name="delete org")
+
+
+def cf_api_delete_route(route_guid):
+    """DELETE /v2/routes/{route_guid}"""
     logger.info("------------------ CF: delete route {} ------------------".format(route_guid))
     response = CfApiClient.get_client().request(method="DELETE", endpoint="routes/{}".format(route_guid),
-                                                params={"async": True})
-    if response != "":
-        # routes are deleted asynchronously - to check that a route was deleted, job status is checked
-        path = "jobs/{}".format(response["entity"]["guid"])
-        now = time.time()
-        while time.time() - now < timeout:
-            response = CfApiClient.get_client().request(method="GET", endpoint=path)
-            job_status = response["entity"]["status"]
-            if job_status == "finished":
-                return
-            logger.info("Deleting route - job status: {}".format(job_status))
-            time.sleep(5)
-        raise TimeoutError("Job deleting route did not finish in {}s".format(timeout))
+                                                params={"async": "true"})
+    __ensure_job_finished(job_id=response["entity"]["guid"], job_name="delete route")

@@ -36,7 +36,7 @@ class TestCreateAtkInstance(ApiTestCase):
     ATK_TEST_SCRIPT_PATH = os.path.join(TEST_DATA_DIRECTORY, "atk_python_client_test.py")
     ATK_SERVICE_LABEL = "atk"
 
-    @cleanup_after_failed_setup(Organization.api_tear_down_test_orgs)
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUp(self):
         admin_user = User.get_admin()
         self.test_org = Organization.create(space_names=("test_space",))
@@ -47,7 +47,7 @@ class TestCreateAtkInstance(ApiTestCase):
         self.atk_virtualenv = self.atk_client_tar_file = self.atk_client_directory = None
 
     def tearDown(self):
-        Organization.api_tear_down_test_orgs()
+        Organization.cf_api_tear_down_test_orgs()
         if os.path.exists(self.UAA_FILE_PATH):
             os.remove(self.UAA_FILE_PATH)
         if self.atk_virtualenv is not None:

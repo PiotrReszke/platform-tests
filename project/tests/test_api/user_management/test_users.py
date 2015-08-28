@@ -22,9 +22,9 @@ class TestOrganizationUsers(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        Organization.api_tear_down_test_orgs()
+        Organization.cf_api_tear_down_test_orgs()
 
-    @cleanup_after_failed_setup(Organization.api_tear_down_test_orgs)
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUp(self):
         self.organization = Organization.create()
         User.get_admin().api_add_to_organization(org_guid=self.organization.guid)

@@ -33,7 +33,7 @@ class ApiTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        org.Organization.api_tear_down_test_orgs()
+        org.Organization.cf_api_tear_down_test_orgs()
 
     def run(self, result=None):
         logger.info('\n******************************************************************\n'

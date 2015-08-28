@@ -26,7 +26,7 @@ class TestOrganization(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        Organization.api_tear_down_test_orgs()
+        Organization.cf_api_tear_down_test_orgs()
 
     def test_get_organization_list(self):
         orgs = Organization.api_get_list()

@@ -29,7 +29,7 @@ class TestDataTransfer(ApiTestCase):
     EXAMPLE_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.api_tear_down_test_orgs)
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
         cls.org = Organization.create()
         User.get_admin().api_add_to_organization(org_guid=cls.org.guid)

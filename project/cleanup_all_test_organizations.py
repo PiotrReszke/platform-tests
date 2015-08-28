@@ -26,13 +26,13 @@ logger = get_logger("organization cleanup")
 
 if __name__ == "__main__":
 
-    all_orgs = Organization.api_get_list()
+    all_orgs = Organization.cf_api_get_list()
     test_orgs = [o for o in all_orgs if re.match(TEST_ORG_PATTERN, o.name)]
     logger.info("Deleting {} organizations: {}".format(len(test_orgs), test_orgs))
     failed_to_delete = []
     for org in test_orgs:
         try:
-            org.api_delete(with_spaces=True)
+            org.cf_api_delete()
         except Exception as e:
             failed_to_delete.append(org)
             logger.error("Could not delete {}\n{}\n".format(org, e))

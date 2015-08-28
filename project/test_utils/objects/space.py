@@ -80,10 +80,7 @@ class Space(object):
         service_instances = self.cf_api_get_space_summary()[1]  # app deletion deletes bound service instances
         for service_instance in service_instances:
             service_instance.api_delete()  # delete using api due to cf timeouts with atk instances: DPNG-1737
-        route_info = cf.cf_api_get_space_routes(self.guid)
-        route_guids = [route_data["metadata"]["guid"] for route_data in route_info["resources"]]
-        for route_guid in route_guids:
-            cf.cf_api_delete_route(route_guid)
+        self.cf_api_delete_routes()
 
     def cf_api_get_space_summary(self):
         """Return tuple with list of Application and ServiceInstance objects."""
@@ -91,4 +88,10 @@ class Space(object):
         apps = Application.from_cf_api_space_summary_response(response, self.guid)
         service_instances = ServiceInstance.from_cf_api_space_summary_response(response, self.guid)
         return apps, service_instances
+
+    def cf_api_delete_routes(self):
+        route_info = cf.cf_api_get_space_routes(self.guid)
+        route_guids = [route_data["metadata"]["guid"] for route_data in route_info["resources"]]
+        for route_guid in route_guids:
+            cf.cf_api_delete_route(route_guid)
 
