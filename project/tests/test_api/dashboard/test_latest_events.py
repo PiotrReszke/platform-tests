@@ -19,7 +19,7 @@ from test_utils import ApiTestCase
 from objects import EventSummary, Organization
 
 
-class LatestEventsTest(ApiTestCase):
+class DashboardLatestEvents(ApiTestCase):
 
     @classmethod
     def setUpClass(cls):

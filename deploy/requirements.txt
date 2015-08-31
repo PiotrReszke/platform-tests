@@ -3,9 +3,9 @@ gitpython
 google-api-python-client
 paho-mqtt
 pexpect
+pyaml
 requests
+retry
 spur
 teamcity-messages
 websocket-client
-retry
-pyaml

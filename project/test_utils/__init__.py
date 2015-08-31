@@ -22,3 +22,4 @@ from .api_test_case import *
 from .hdfs import *
 from .hdfs_topic import Topic
 from .atk_tools import ATKtools
+from .platform_api_calls import *

@@ -398,12 +398,12 @@ def api_update_organization_user(org_guid, user_guid, new_roles=None, client=Non
     client = client or PlatformApiClient.get_admin_client()
     body = {"guid": org_guid}
     if new_roles is not None:
-        body["roles"] = new_roles
+        body["roles"] = list(new_roles)
     response = client.request("PUT", "rest/orgs/{}/users/{}".format(org_guid, user_guid), body=body)
     return response
 
 
-def api_create_space_user(org_guid, space_guid, username, roles=(), client=None):
+def api_add_space_user(org_guid, space_guid, username, roles=(), client=None):
     """POST /rest/spaces/{space_guid}/users"""
     logger.debug("------------------ Create user {} in space {} ------------------".format(username, space_guid))
     client = client or PlatformApiClient.get_admin_client()

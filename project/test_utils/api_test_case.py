@@ -63,17 +63,16 @@ class ApiTestCase(unittest.TestCase):
     def assertUnorderedListEqual(self, list1, list2, msg=None):
         self.assertListEqual(sorted(list1), sorted(list2), msg=msg)
 
-    def assertRaisesUnexpectedResponse(self, status, error_message, callableObj, *args, **kwargs):
-        """If error message does not need to be checked, pass None"""
+    def assertRaisesUnexpectedResponse(self, status, error_message_phrase, callableObj, *args, **kwargs):
+        """error_message_phrase - a phrase which should be a part of error message"""
         with self.assertRaises(UnexpectedResponseError) as e:
             callableObj(*args, **kwargs)
-        if error_message is not None:
-            error = [e.exception.status, e.exception.error_message]
-            expected = [status, error_message]
-            self.assertEqual(error, expected, "Error is {0} \"{1}\", expected {2} \"{3}\"".format(*(error+expected)))
-        else:
-            self.assertEqual(e.exception.status, status,
-                             "Error status is {0}, expected {1}".format(e.exception.status, status))
+        status_correct = e.exception.status == status
+        error_message_contains_string = error_message_phrase in e.exception.error_message
+        self.assertTrue(status_correct and error_message_contains_string,
+                        "Error is {0} \"{1}\", expected {2} \"{3}\"".format(e.exception.status,
+                                                                            e.exception.error_message,
+                                                                            status, error_message_phrase))
 
     def assertAttributesEqual(self, obj, expected_obj):
         if getattr(obj, "COMPARABLE_ATTRIBUTES", None) is None:
@@ -106,7 +105,6 @@ class ApiTestCase(unittest.TestCase):
                 return
             time.sleep(5)
         self.fail("{} != {} are not equal - within {}s".format(len(result), expected_len, timeout))
-
 
     def exec_within_timeout(self, timeout, callable_obj, *args, **kwargs):
         """Execute a callable until it does not raise an exception or until timeout"""
