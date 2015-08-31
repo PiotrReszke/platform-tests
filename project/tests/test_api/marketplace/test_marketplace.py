@@ -30,7 +30,7 @@ class TestMarketplaceServices(ApiTestCase):
         self.test_space = self.test_organization.spaces[0]
 
     def tearDown(self):
-        Organization.api_tear_down_test_orgs()
+        Organization.cf_api_tear_down_test_orgs()
 
     def test_marketplace_services(self):
         api_marketplace = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
