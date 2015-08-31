@@ -34,8 +34,6 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="ATK Python Client Test")
     parser.add_argument("--organization",
                         help="organization where transfer was uploaded")
-    parser.add_argument("--atk",
-                        help="ATK instance server URI for client")
     parser.add_argument("--transfer",
                         help="transfer name of submitted document")
     parser.add_argument("--uaa_file_name",
@@ -56,11 +54,6 @@ if os.stat(uaa_file_name).st_size == 0:
     raise AtkTestException("authorization file is empty")
 
 print("uaa file found")
-
-ta.server.uri = parameters.atk
-print("server set")
-
-ta.connect(uaa_file_name)
 
 print("connected")
 

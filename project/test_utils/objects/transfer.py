@@ -64,7 +64,7 @@ class Transfer(object):
     @classmethod
     def api_create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=0,
                    client=None):
-        title = title or "test-transfer" + datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        title = title or "test_transfer" + datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')
         response = api.api_create_transfer(category=category, is_public=is_public, org_guid=org_guid,
                                            source=source, title=title, client=client)
         return cls(category=category, id=response["id"], id_in_object_store=response["idInObjectStore"],

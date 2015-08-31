@@ -123,6 +123,8 @@ class ServiceInstance(object):
 
 class AtkInstance(ServiceInstance):
 
+    started_status = "STARTED"
+
     def __init__(self, guid, name, space_guid=None, service_type_guid=None, type=None, url=None, org_guid=None,
                  service_plan_guid=None, credentials=None, bindings=None, scoring_engine=None, state=None):
         super().__init__(guid=guid, name=name, space_guid=space_guid, service_type_guid=service_type_guid, type=type,

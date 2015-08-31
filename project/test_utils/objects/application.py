@@ -18,6 +18,7 @@ import base64
 import json
 import os
 import re
+import time
 
 import requests
 import yaml
@@ -189,6 +190,18 @@ class Application(object):
     def api_delete_service_binding(binding_guid, client=None):
         # TODO
         api.api_delete_service_binding(binding_guid, client=client)
+
+    @classmethod
+    def ensure_started(cls, space_guid, application_name_prefix, timeout=120):
+        start = time.time()
+        while time.time() - start < timeout:
+            applications = cls.api_get_list(space_guid)
+            application = next((app for app in applications if app.name.startswith(application_name_prefix)), None)
+            if application is not None:
+                if application._state == cls.STATUS["start"]:
+                    return application
+            time.sleep(40)
+        raise TimeoutError("No application with prefix {} found in space {}".format(application_name_prefix, space_guid))
 
     # -------------------------------- cf api -------------------------------- #
 

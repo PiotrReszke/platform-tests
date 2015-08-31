@@ -17,6 +17,7 @@
 import os
 import subprocess
 import pexpect
+import time
 
 from test_utils import log_command, get_logger, config
 import test_utils.platform_api_calls as api
@@ -81,24 +82,25 @@ class ATKtools(object):
         log_command(command)
         return subprocess.check_call(command)
 
-    def run_atk_script(self, script_path, arguments=None):
+    def run_atk_script(self, script_path, atk_url, arguments=None):
         command = [self.interpreter, script_path]
         if arguments is not None:
             for k, v in arguments.items():
                 command += [k, v]
         log_command(command)
 
-        login_server = config.get_config_value("uaa")
         username = config.TEST_SETTINGS["TEST_USERNAME"]
         password = config.TEST_SETTINGS["TEST_PASSWORD"]
 
         child = pexpect.spawn(" ".join(command))
         child.expect("URI of ATK or OAuth server:")
-        child.sendline(login_server)
+        child.sendline(atk_url)
         child.expect("User name:")
         child.sendline(username)
         child.expect("Password:")
         child.sendline(password)
+        time.sleep(30)
+        child.sendline("y")
         child.expect(pexpect.EOF, timeout=120)
         response = child.before.decode("utf-8")
 

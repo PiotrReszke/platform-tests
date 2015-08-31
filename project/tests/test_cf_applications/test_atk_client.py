@@ -17,6 +17,7 @@
 import os
 import shutil
 import tarfile
+import time
 
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
 from test_utils.objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, Application, User
@@ -42,20 +43,21 @@ class TestCreateAtkInstance(ApiTestCase):
         self.test_org = Organization.api_create(space_names=("test_space",))
         admin_user.api_add_to_organization(org_guid=self.test_org.guid)
         self.test_space = self.test_org.spaces[0]
-        admin_user.api_add_to_space(space_guid=self.test_space.guid, org_guid=self.test_org.guid)
+        admin_user.api_add_to_space(space_guid=self.test_space.guid, org_guid=self.test_org.guid, roles=("managers",
+                                                                                                         "developers"))
         cf.cf_login(self.test_org.name, self.test_space.name)
-        self.atk_virtualenv = self.atk_client_tar_file = self.atk_client_directory = None
+        self.atk_virtualenv = self.atk_client_tar_file_path = self.atk_client_directory = None
 
     def tearDown(self):
-        Organization.cf_api_tear_down_test_orgs()
         if os.path.exists(self.UAA_FILE_PATH):
             os.remove(self.UAA_FILE_PATH)
         if self.atk_virtualenv is not None:
             self.atk_virtualenv.delete()
-        if self.atk_client_tar_file is not None and os.path.exists(self.atk_client_tar_file):
-            os.remove(self.atk_client_tar_file)
+        if self.atk_client_tar_file_path is not None and os.path.exists(self.atk_client_tar_file_path):
+            os.remove(self.atk_client_tar_file_path)
         if self.atk_client_directory is not None and os.path.exists(self.atk_client_directory):
             shutil.rmtree(self.atk_client_directory)
+        Organization.cf_api_tear_down_test_orgs()
 
     def test_create_atk_instance(self):
 
@@ -72,22 +74,22 @@ class TestCreateAtkInstance(ApiTestCase):
 
         atk_service_instance = AtkInstance.cf_create(self.test_space.guid, atk_service.guid)
         self.assertIsNotNone(atk_service_instance, "Atk instance is not found in {}".format(self.test_space))
-        test_space_apps = Application.api_get_list(space_guid=self.test_space.guid)
-        atk_app = next((app for app in test_space_apps if app.name.startswith("atk-")), None)
+        time.sleep(20)  # ATK application needs time before it appears on application list
+        atk_app = Application.ensure_started(space_guid=self.test_space.guid, application_name_prefix="atk-", timeout=840)
         self.assertIsNotNone(atk_app, "atk application is not on application list")
 
-        atk_client_file_path = ATKtools.api_get_atk_client_file()
-        with tarfile.open(atk_client_file_path) as tar:
+        atk_client_file_name = ATKtools.api_get_atk_client_file()
+        self.atk_client_tar_file_path = os.path.join(atk_client_file_name)
+        with tarfile.open(atk_client_file_name) as tar:
             tar.extractall(path=self.TEST_DATA_DIRECTORY)
-        self.atk_client_directory = os.path.join(self.TEST_DATA_DIRECTORY, atk_client_file_path.split(".tar")[0])
+        self.atk_client_directory = os.path.join(self.TEST_DATA_DIRECTORY, atk_client_file_name.split(".tar")[0])
 
         self.atk_virtualenv = ATKtools("atk_virtualenv")
         self.atk_virtualenv.create()
         self.atk_virtualenv.pip_install_local_package(self.atk_client_directory)
-        self.atk_virtualenv.run_atk_script(self.ATK_TEST_SCRIPT_PATH,
+        self.atk_virtualenv.run_atk_script(self.ATK_TEST_SCRIPT_PATH, atk_app.urls[0],
                                            arguments={
                                                "--organization": self.test_org.name,
-                                               "--atk": atk_app.urls[0],
                                                "--transfer": transfer.title,
                                                "--uaa_file_name": self.UAA_FILENAME
                                            })

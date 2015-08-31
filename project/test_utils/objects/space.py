@@ -20,10 +20,12 @@ import functools
 import test_utils.cli.cloud_foundry as cf
 from test_utils.objects import Application, ServiceInstance
 import test_utils.platform_api_calls as api
+from test_utils import UnexpectedResponseError, get_logger
 
 
 __all__ = ["Space"]
 
+logger = get_logger("space")
 
 @functools.total_ordering
 class Space(object):
@@ -79,7 +81,15 @@ class Space(object):
             app.api_delete(cascade=True)
         service_instances = self.cf_api_get_space_summary()[1]  # app deletion deletes bound service instances
         for service_instance in service_instances:
-            service_instance.api_delete()  # delete using api due to cf timeouts with atk instances: DPNG-1737
+            try:
+                service_instance.api_delete()  # delete using api due to cf timeouts with atk instances: DPNG-1737
+            except UnexpectedResponseError as e:
+                if e.status == 404:
+                    logger.info("This is an expected error as service {} could be removed together with application".format(service_instance.name))
+                elif e.status == 500 and "Read timed out" in e.error_message:
+                    logger.info("Server returned expected while deleting {}: Read timed out".format(service_instance.name))
+                else:
+                    raise
         self.cf_api_delete_routes()
 
     def cf_api_get_space_summary(self):
