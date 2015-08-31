@@ -30,7 +30,7 @@ class TestApps(ApiTestCase):
     APP_NAME_PREFIX = "cf_env"
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.api_tear_down_test_orgs)
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
         app_source_utils.clone_repository("cf-env", cls.APP_REPO_PATH, owner="cloudfoundry-community")
         cls.organization = Organization.api_create(space_names=["test-space"])
@@ -40,7 +40,7 @@ class TestApps(ApiTestCase):
     @classmethod
     def tearDownClass(cls):
         Application.delete_test_apps()
-        Organization.api_tear_down_test_orgs()
+        Organization.cf_api_tear_down_test_orgs()
 
     def test_api_push_stop_start_delete(self):
         name = self.APP_NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')

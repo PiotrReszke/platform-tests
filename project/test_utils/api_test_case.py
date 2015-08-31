@@ -108,6 +108,7 @@ class ApiTestCase(unittest.TestCase):
             time.sleep(5)
         self.fail("{} != {} are not equal - within {}s".format(len(result), expected_len, timeout))
 
+
     def exec_within_timeout(self, timeout, callable_obj, *args, **kwargs):
         """Execute a callable until it does not raise an exception or until timeout"""
         now = time.time()
@@ -122,8 +123,6 @@ class ApiTestCase(unittest.TestCase):
         raise exception
 
 
-
-
 def cleanup_after_failed_setup(*cleanup_methods):
     def wrapper(func):
         @functools.wraps(func)
@@ -136,3 +135,5 @@ def cleanup_after_failed_setup(*cleanup_methods):
                 raise
         return wrapped
     return wrapper
+
+

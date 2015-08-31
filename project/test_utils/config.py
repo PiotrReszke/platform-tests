@@ -81,8 +81,8 @@ def update_test_settings(client_type=None, test_environment=None, test_username=
     TEST_SETTINGS["TEST_ENVIRONMENT"] = test_environment or TEST_SETTINGS["TEST_ENVIRONMENT"]
     TEST_SETTINGS["TEST_USERNAME"] = test_username or TEST_SETTINGS["TEST_USERNAME"]
     TEST_SETTINGS["TEST_PROXY"] = proxy
-    TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"] = disable_ssl_validation or TEST_SETTINGS[
-        "TEST_DISABLE_SSL_VALIDATION"]
+    TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"] = (disable_ssl_validation or
+                                                    TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"])
     TEST_SETTINGS["TEST_CLIENT_TYPE"] = client_type or TEST_SETTINGS["TEST_CLIENT_TYPE"]
     TEST_SETTINGS["TEST_PASSWORD"] = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]][TEST_SETTINGS["TEST_USERNAME"]]
     TEST_SETTINGS["TEST_LOGIN_TOKEN"] = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]]["login_token"]

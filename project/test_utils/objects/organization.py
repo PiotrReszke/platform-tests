@@ -45,7 +45,7 @@ class Organization(object):
         return "{0} (name={1}, guid={2}, spaces={3})".format(self.__class__.__name__, self.name, self.guid, self.spaces)
 
     def __eq__(self, other):
-        return self.name == other.name and self.guid == other.guid and sorted(self.spaces) == sorted(other.spaces)
+        return self.name == other.name and self.guid == other.guid
 
     def __lt__(self, other):
         return self.guid < other.guid

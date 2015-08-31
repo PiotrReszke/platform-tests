@@ -28,7 +28,7 @@ class TestOrganizationUsers(ApiTestCase):
     def setUp(self):
         self.organization = Organization.api_create()
         User.get_admin().api_add_to_organization(org_guid=self.organization.guid)
-        self.test_user, _, self.test_user_client = User.api_onboard_and_login()
+        self.test_user, _, self.test_user_client = User.api_onboard()
         self.test_user.api_add_to_organization(self.organization.guid, roles=("managers",))
 
     def test_create_organization_user_with_role(self):

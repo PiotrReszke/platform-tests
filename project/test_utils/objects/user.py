@@ -14,12 +14,10 @@
 # limitations under the License.
 #
 
-import datetime
 import functools
-import re
 import time
 
-from test_utils import config
+from test_utils import config, gmail_api
 from test_utils.api_client import PlatformApiClient
 import test_utils.platform_api_calls as api
 from test_utils.objects import Organization
@@ -54,23 +52,23 @@ class User(object):
         return cls.TEST_EMAIL_FORM.format(time.time())
 
     @classmethod
-    def api_onboard_and_login(cls, username=None, password="testPassw0rd", org_name=None, inviting_client=None):
-        """Send invite to a new user who then creates an account and an organization. Return new user and API client."""
-        org_name = org_name or "test_org_{}".format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
-        username = username or cls.get_default_username()
-        code = cls.api_invite(username, inviting_client)
+    def api_onboard(cls, username=None, password="testPassw0rd", org_name=None, inviting_client=None):
+        """Onboarding of a new user. Return new User, Organization, user's PlatformApiClient objects."""
+        username = username or User.get_default_username()
+        cls.api_invite(username, inviting_client)
+        time.sleep(30)
+        code = gmail_api.get_invitation_code(username)
         return cls.api_register_and_login(code, username, password, org_name)
 
     @classmethod
     def api_invite(cls, username=None, inviting_client=None):
-        """Send invitation to a new user using inviting_client. Return invitation code."""
-        username = username or cls.get_default_username()
-        response = api.api_invite_user(username, client=inviting_client)
-        return re.search("([a-z]|[0-9]|-)*$", response["details"]).group(0)
+        """Send invitation to a new user using inviting_client."""
+        api.api_invite_user(username, client=inviting_client)
 
     @classmethod
     def api_register_and_login(cls, code, username, password="testPassw0rd", org_name=None):
-        """Set password for new user and select name for their organization"""
+        """ Set password for new user and select name for their organization.
+            Return new User, Organization, and user's PlatformApiClient objects. """
         org_name = org_name or Organization.get_default_name()
         client = PlatformApiClient.get_client(username)
         api.api_register_new_user(code, password, org_name, client=client)
