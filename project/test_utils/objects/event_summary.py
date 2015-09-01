@@ -14,16 +14,51 @@
 # limitations under the License.
 #
 
+import functools
+
 import test_utils.platform_api_calls as api
 
 
-class EventSummary(object):
 
-    def __init__(self, total, events):
-        self.total = total
-        self.events = events
+@functools.total_ordering
+class EventSummary(object):
+    def __init__(self, id, category=None, message=None, organization_id=None, source_id=None, source_name=None,
+                 timestamp=None):
+        self.id = id
+        self.category = category
+        self.message = message
+        self.organization_id = organization_id
+        self.source_id = source_id
+        self.source_name = source_name
+        self.timestamp = timestamp
+
+    def __eq__(self, other):
+        return (self.id == other.id and self.category == other.category and self.message == other.message and
+                self.timestamp == other.timestamp)
+
+    def __lt__(self, other):
+        return self.timestamp < other.timestamp
+
+    def __hash__(self):
+        return hash((self.id, self.category, self.message, self.timestamp))
+
+    @classmethod
+    def _get_events_from_response(cls, response):
+        response = response.get("latestEvents") or response.get("events")
+        events_list = []
+        if response is not None:
+            for event in response:
+                events_list.append(cls(id=event["id"], category=event.get("category"), message=event.get("message"),
+                                       organization_id=event.get("organizationId"), source_id=event.get("sourceId"),
+                                       source_name=event.get("sourceName"), timestamp=event.get("timestamp")))
+        return events_list
 
     @classmethod
     def api_get_latest_events(cls, client=None):
-        return api.api_get_latest_events(client=client)
+        response = api.api_get_latest_events(client)
+        return cls._get_events_from_response(response)
 
+    @classmethod
+    def api_get_latest_events_from_org_metrics(cls, org_guid, client=None):
+        response = api.api_get_org_metrics(org_guid, client)
+        return cls._get_events_from_response(response)

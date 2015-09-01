@@ -22,4 +22,4 @@ class LatestEventsTest(ApiTestCase):
 
     def test_latest_events(self):
         event_summary = EventSummary.api_get_latest_events()
-        self.assertLessEqual(0, event_summary["total"])
+        self.assertLessEqual(0, len(event_summary))
