@@ -18,7 +18,7 @@ import re
 
 import spur
 
-from test_utils import get_logger, log_command, get_config_value, TEST_SETTINGS, get_ssh_key_passphrase
+from . import get_logger, log_command, get_config_value, TEST_SETTINGS, get_ssh_key_passphrase
 
 
 __all__ = ["Hdfs"]

@@ -20,7 +20,7 @@ import subprocess
 
 from git import Repo
 
-from test_utils import config, log_command, get_logger
+from . import config, log_command, get_logger
 
 
 logger = get_logger("source utils")

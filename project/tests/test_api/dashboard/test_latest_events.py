@@ -15,7 +15,7 @@
 #
 
 from test_utils import ApiTestCase
-from test_utils.objects import EventSummary, Organization
+from objects import EventSummary, Organization
 
 
 class LatestEventsTest(ApiTestCase):

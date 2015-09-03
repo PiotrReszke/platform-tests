@@ -17,7 +17,7 @@
 import unittest
 
 from test_utils import ApiTestCase, UnexpectedResponseError, get_logger, config
-from test_utils.objects import Application, Organization, ServiceInstance, ServiceType
+from objects import Application, Organization, ServiceInstance, ServiceType
 
 
 logger = get_logger("iPython test")

@@ -17,12 +17,11 @@
 import unittest
 from datetime import datetime
 
-from test_utils.objects import ServiceType, Organization, ServiceInstance
+from objects import ServiceType, Organization, ServiceInstance
 from test_utils import ApiTestCase, get_logger
 
 
 logger = get_logger("test marketplace")
-
 
 
 class TestMarketplaceServices(ApiTestCase):

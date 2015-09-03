@@ -15,7 +15,7 @@
 #
 
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
-from test_utils.objects import Organization, Space
+from objects import Organization, Space
 
 
 logger = get_logger("test spaces")

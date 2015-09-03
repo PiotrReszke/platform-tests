@@ -16,7 +16,7 @@
 
 import functools
 
-import test_utils.platform_api_calls as api
+from test_utils import platform_api_calls as api
 
 
 

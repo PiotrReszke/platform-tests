@@ -19,10 +19,9 @@ import shutil
 import tarfile
 import time
 
-from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
-from test_utils.objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, Application, User
-from test_utils.cli.atk_tools import ATKtools
-import test_utils.cli.cloud_foundry as cf
+from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, cloud_foundry as cf
+from objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, Application, User
+from test_utils.atk_tools import ATKtools
 
 
 logger = get_logger("test ATK")

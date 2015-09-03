@@ -23,10 +23,7 @@ import time
 import requests
 import yaml
 
-import test_utils.cli.cloud_foundry as cf
-import test_utils.platform_api_calls as api
-from test_utils import TEST_SETTINGS, get_logger
-
+from test_utils import cloud_foundry as cf, platform_api_calls as api, TEST_SETTINGS, get_logger
 
 logger = get_logger("application")
 

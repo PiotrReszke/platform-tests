@@ -19,9 +19,8 @@ import functools
 import time
 import unittest
 
-import test_utils.objects.organization as org
-from test_utils import get_logger, UnexpectedResponseError
-
+from objects import organization as org
+from . import get_logger, UnexpectedResponseError
 
 logger = get_logger("api_test_case")
 

@@ -16,8 +16,7 @@
 
 import functools
 
-import test_utils.platform_api_calls as api
-from test_utils import get_logger
+from test_utils import platform_api_calls as api, get_logger
 
 
 logger = get_logger("dataset")

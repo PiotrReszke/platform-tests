@@ -17,9 +17,7 @@
 import functools
 import json
 
-import test_utils.platform_api_calls as api
-import test_utils.cli.cloud_foundry as cf
-
+from test_utils import platform_api_calls as api, cloud_foundry as cf
 
 __all__ = ["ServiceType"]
 

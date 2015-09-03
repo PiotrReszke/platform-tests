@@ -16,11 +16,9 @@
 
 import datetime
 import functools
-import random
 import time
 
-import test_utils.platform_api_calls as api
-from test_utils import get_logger, config
+from test_utils import get_logger, platform_api_calls as api
 
 
 __all__ = ["Transfer"]

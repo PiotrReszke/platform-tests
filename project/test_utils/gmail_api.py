@@ -21,7 +21,7 @@ from apiclient import discovery, errors
 import httplib2
 import oauth2client
 
-from test_utils import config, get_logger
+from . import config, get_logger
 
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'

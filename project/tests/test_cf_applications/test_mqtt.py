@@ -22,9 +22,8 @@ import time
 
 import paho.mqtt.client as mqtt
 
-from test_utils import ApiTestCase, get_logger, config, app_source_utils
-from test_utils.cli import cloud_foundry as cf
-from test_utils.objects import Application, Organization
+from test_utils import ApiTestCase, get_logger, config, app_source_utils, cloud_foundry as cf
+from objects import Application, Organization
 
 
 logger = get_logger("test_mqtt")

@@ -20,9 +20,7 @@ import unittest
 from teamcity import is_running_under_teamcity
 from teamcity.unittestpy import TeamcityTestRunner
 
-from test_utils.logger import get_logger
-from test_utils import config
-
+from test_utils import config, get_logger
 
 
 logger = get_logger("run tests")

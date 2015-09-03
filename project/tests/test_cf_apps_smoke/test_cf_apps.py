@@ -14,11 +14,12 @@
 # limitations under the License.
 #
 
-import yaml
 from urllib.parse import urlparse
 
+import yaml
+
 from test_utils import ApiTestCase, get_logger
-from test_utils.objects import Application, github_get_file_content, ServiceInstance, ServiceBroker, Organization
+from objects import Application, github_get_file_content, ServiceInstance, ServiceBroker, Organization
 
 
 logger = get_logger("trusted_analytics_app_test")

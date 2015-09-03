@@ -19,10 +19,7 @@ import subprocess
 import pexpect
 import time
 
-from test_utils import log_command, get_logger, config
-import test_utils.platform_api_calls as api
-
-
+from . import log_command, get_logger, config, platform_api_calls as api
 
 __all__ = ["ATKtools"]
 

@@ -16,7 +16,7 @@
 
 import json
 
-from test_utils import get_logger, PlatformApiClient
+from . import get_logger, PlatformApiClient
 
 
 logger = get_logger("Platform api calls")

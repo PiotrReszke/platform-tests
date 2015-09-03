@@ -17,11 +17,8 @@
 import functools
 import time
 
-from test_utils import config, gmail_api
-from test_utils.api_client import PlatformApiClient
-import test_utils.platform_api_calls as api
-from test_utils.objects import Organization
-import test_utils.cli.cloud_foundry as cf
+from test_utils import config, PlatformApiClient, platform_api_calls as api, cloud_foundry as cf, gmail_api
+from . import Organization
 
 
 __all__ = ["User"]

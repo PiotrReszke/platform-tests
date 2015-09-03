@@ -18,7 +18,7 @@ import functools
 import subprocess
 import time
 
-from test_utils import CfApiClient, get_logger, log_command, get_config_value, TEST_SETTINGS
+from . import CfApiClient, get_logger, log_command, get_config_value, TEST_SETTINGS
 
 
 __all__ = ["cf_login", "cf_target", "cf_push", "cf_create_service", "cf_delete", "cf_env", "cf_delete_service",

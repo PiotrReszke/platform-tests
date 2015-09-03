@@ -15,7 +15,7 @@
 #
 
 from test_utils import ApiTestCase
-from test_utils.objects import Organization, DataSet, User
+from objects import Organization, DataSet, User
 
 
 expected_metrics_keys = ["privateDatasets", "serviceUsagePercent", "datasetCount", "memoryUsageAbsolute", "memoryUsage",

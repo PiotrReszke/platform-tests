@@ -17,10 +17,9 @@
 from datetime import datetime
 import functools
 
-import test_utils.cli.cloud_foundry as cf
-from test_utils.objects import Application, ServiceInstance
-import test_utils.platform_api_calls as api
-from test_utils import UnexpectedResponseError, get_logger
+from .application import Application
+from .service_instance import ServiceInstance
+from test_utils import platform_api_calls as api, cloud_foundry as cf, UnexpectedResponseError, get_logger
 
 
 __all__ = ["Space"]

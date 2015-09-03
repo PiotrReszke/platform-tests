@@ -16,7 +16,7 @@
 
 import functools
 
-import test_utils.cli.cloud_foundry as cf
+from test_utils import cloud_foundry as cf
 
 
 __all__ = ["ServiceBroker"]

@@ -16,9 +16,9 @@
 
 import time
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger
-from test_utils.objects import Organization, Transfer, DataSet, User
-import test_utils.platform_api_calls as api
+from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api
+from objects import Organization, Transfer, DataSet, User
+
 
 
 logger = get_logger("test data transfer")

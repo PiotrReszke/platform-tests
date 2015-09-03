@@ -17,8 +17,7 @@
 import functools
 import datetime
 
-import test_utils.cli.cloud_foundry as cf
-import test_utils.platform_api_calls as api
+from test_utils import platform_api_calls as api, cloud_foundry as cf
 
 
 __all__ = ["ServiceInstance", "AtkInstance"]

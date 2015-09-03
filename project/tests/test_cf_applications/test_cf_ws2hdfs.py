@@ -15,12 +15,13 @@
 #
 
 import time
+
 import websocket
 
 from test_utils import ApiTestCase, get_logger
-from test_utils.objects import Application, Organization
-import test_utils.cli.cloud_foundry as cf_cli
-from test_utils.cli import Topic
+from objects import Application, Organization
+import test_utils.cloud_foundry as cf_cli
+from test_utils import Topic
 
 
 logger = get_logger("cf_ws2kafka_kafka2hdfs")

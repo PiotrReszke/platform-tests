@@ -14,8 +14,11 @@
 # limitations under the License.
 #
 
-from test_utils.logger import *
-from test_utils.config import *
-from test_utils.gmail_api import *
-from test_utils.api_client import *
-from test_utils.api_test_case import *
+from .logger import *
+from .config import *
+from .gmail_api import *
+from .api_client import *
+from .api_test_case import *
+from .hdfs_topic import Topic
+from .hdfs import Hdfs
+from .atk_tools import ATKtools

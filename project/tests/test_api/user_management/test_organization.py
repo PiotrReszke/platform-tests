@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from test_utils.objects import Organization
+from objects import Organization
 from test_utils import ApiTestCase, get_logger
 
 

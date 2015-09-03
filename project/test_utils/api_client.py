@@ -20,7 +20,7 @@ import time
 
 import requests
 
-from test_utils import config, get_logger
+from . import config, get_logger
 
 
 __all__ = ["UnexpectedResponseError", "PlatformApiClient", "ConsoleClient", "AppClient", "CfApiClient"]

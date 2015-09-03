@@ -1,9 +1,8 @@
 import datetime
 import time
 
-from test_utils import config, gmail_api
-from test_utils.api_test_case import get_logger, ApiTestCase
-from test_utils.objects import User, Organization
+from test_utils import config, gmail_api, get_logger, ApiTestCase
+from objects import User, Organization
 
 
 logger = get_logger("test onboarding")

@@ -16,9 +16,8 @@
 
 from datetime import datetime
 
-from test_utils import get_logger, ApiTestCase, app_source_utils, cleanup_after_failed_setup
-from test_utils.objects import Organization, Application
-from test_utils.cli import cloud_foundry as cf
+from test_utils import get_logger, ApiTestCase, app_source_utils, cleanup_after_failed_setup, cloud_foundry as cf
+from objects import Organization, Application
 
 
 logger = get_logger("test_api_apps")

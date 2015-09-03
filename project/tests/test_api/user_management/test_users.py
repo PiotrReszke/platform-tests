@@ -15,7 +15,7 @@
 #
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup
-from test_utils.objects import Organization, User
+from objects import Organization, User
 
 
 class TestOrganizationUsers(ApiTestCase):
