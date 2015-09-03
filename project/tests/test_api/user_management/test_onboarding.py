@@ -9,7 +9,6 @@ logger = get_logger("test onboarding")
 
 
 class TestOnboarding(ApiTestCase):
-
     EXPECTED_EMAIL_SUBJECT = "Invitation to join Trusted Analytics platform"
     CLIENT_ID = "intel.data.tests@gmail.com"
 
@@ -20,12 +19,13 @@ class TestOnboarding(ApiTestCase):
                         "Link to create account leads to another environment: {}, expected: {}".format(message_link,
                                                                                                        expected_link))
         correct_inviting_user = (config.TEST_SETTINGS["TEST_USERNAME"] in message_content,
-                                 "Inviting user {} was not found in message content.".format(config.TEST_SETTINGS["TEST_USERNAME"]))
+                                 "Inviting user {} was not found in message content.".format(
+                                     config.TEST_SETTINGS["TEST_USERNAME"]))
         correct_subject = (self.EXPECTED_EMAIL_SUBJECT in message_subject,
                            "Message subject {}. Expected: {}".format(message_subject, self.EXPECTED_EMAIL_SUBJECT))
         error_message = [error_msg for condition, error_msg in [correct_link, correct_inviting_user, correct_subject]
                          if not condition]
-        self.assertTrue(correct_link[0] and correct_inviting_user[0] and correct_subject[0], error_message)
+        self.assertTrue(all(correct_link[0], correct_inviting_user[0], correct_subject[0]), error_message)
 
     def test_simple_onboarding(self):
         username = User.get_default_username()

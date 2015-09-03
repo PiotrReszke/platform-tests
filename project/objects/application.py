@@ -152,7 +152,7 @@ class Application(object):
         return self._get_details_from_response(response)
 
     def api_delete(self, cascade=True, client=None):
-        api.api_delete_app(self.guid, cascade=cascade, client=None)
+        api.api_delete_app(self.guid, cascade=cascade, client=client)
 
     def api_get_orphan_services(self, client=None):
         response = api.api_get_app_orphan_services(self.guid, client=client)

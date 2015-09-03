@@ -34,7 +34,7 @@ class TestSpace(ApiTestCase):
     def test_get_spaces_list(self):
         spaces = Space.api_get_list()
         logger.info("There are {} spaces".format(len(spaces)))
-        self.assertTrue(len(spaces) > 0)
+        self.assertNotEqual(len(spaces), 0)
 
     def test_get_spaces_list_in_org(self):
         spaces = Space.api_get_list()

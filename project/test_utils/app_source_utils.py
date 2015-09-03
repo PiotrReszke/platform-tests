@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,7 +27,8 @@ logger = get_logger("source utils")
 
 
 def clone_repository(repository_name, target_directory, owner="intel-data"):
-    API_URL = "https://{}:{}@github.com/{}/{}.git".format(config.get_github_username(), config.get_github_password(), owner, repository_name)
+    API_URL = "https://{}:{}@github.com/{}/{}.git".format(config.get_github_username(), config.get_github_password(),
+                                                          owner, repository_name)
     logger.info("Clone from {} to {}".format(API_URL, target_directory))
     if os.path.exists(target_directory):
         shutil.rmtree(target_directory)

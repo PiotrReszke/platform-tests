@@ -89,19 +89,19 @@ class ApiTestCase(unittest.TestCase):
         if differences != []:
             self.fail("Objects are not equal:\n{}".format("\n".join(differences)))
 
-    def assertEqualWithinTimeout(self, timeout, expected_result, callableObj, *args, **kwargs):
+    def assertEqualWithinTimeout(self, timeout, expected_result, callable_obj, *args, **kwargs):
         now = time.time()
         while time.time() - now < timeout:
-            result = callableObj(*args, **kwargs)
+            result = callable_obj(*args, **kwargs)
             if result == expected_result:
                 return
             time.sleep(5)
         self.fail("{} and {} are not equal - within {}s".format(result, expected_result, timeout))
 
-    def assertLenEqualWithinTimeout(self, timeout, expected_len, callableObj, *args, **kwargs):
+    def assertLenEqualWithinTimeout(self, timeout, expected_len, callable_obj, *args, **kwargs):
         now = time.time()
         while time.time() - now < timeout:
-            result = callableObj(*args, **kwargs)
+            result = callable_obj(*args, **kwargs)
             if len(result) == expected_len:
                 return
             time.sleep(5)

@@ -36,7 +36,7 @@ class TestMarketplaceServices(ApiTestCase):
     def test_marketplace_services(self):
         api_marketplace = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
         cf_marketplace = ServiceType.cf_api_get_list_from_marketplace(self.test_space.guid)
-        self.assertListEqual(sorted(api_marketplace), sorted(cf_marketplace))
+        self.assertCountEqual(api_marketplace, cf_marketplace)
 
     def test_create_instance_of_every_service(self):
         excluded_services = ("atk", "ipython-proxy", "ipython")  # services which are tested elsewhere

@@ -18,10 +18,8 @@ import time
 
 import websocket
 
-from test_utils import ApiTestCase, get_logger
+from test_utils import ApiTestCase, get_logger, Topic, cloud_foundry as cf
 from objects import Application, Organization
-import test_utils.cloud_foundry as cf_cli
-from test_utils import Topic
 
 
 logger = get_logger("cf_ws2kafka_kafka2hdfs")
@@ -40,10 +38,10 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
     @classmethod
     def setUp(cls):
         cls.seedorg, cls.seedspace = Organization.get_org_and_space_by_name("seedorg", "seedspace")
-        cf_cli.cf_login(cls.seedorg.name, cls.seedspace.name)
-        cf_cli.cf_create_service("kafka", "shared", "kafka-inst")
-        cf_cli.cf_create_service("zookeeper", "shared", "zookeeper-inst")
-        cf_cli.cf_create_service("hdfs", "shared", "hdfs-inst")
+        cf.cf_login(cls.seedorg.name, cls.seedspace.name)
+        cf.cf_create_service("kafka", "shared", "kafka-inst")
+        cf.cf_create_service("zookeeper", "shared", "zookeeper-inst")
+        cf.cf_create_service("hdfs", "shared", "hdfs-inst")
 
     def test_cf_app_ws2kafka_kafka2hdfs(self):
         """Base case test for procedure ws2kafka and kafka2hdfs"""

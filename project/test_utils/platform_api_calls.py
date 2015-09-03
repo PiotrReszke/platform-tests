@@ -387,14 +387,14 @@ def api_get_organization_users(org_guid, client=None):
 
 def api_delete_organization_user(org_guid, user_guid, client=None):
     """DELETE /rest/orgs/{organization_guid}/users/{user_guid}"""
-    logger.debug("------------------ Delete user {} from organization {} ------------------".format(user_guid, org_guid))
+    logger.debug("----------------- Delete user {} from organization {} -----------------".format(user_guid, org_guid))
     client = client or PlatformApiClient.get_admin_client()
     client.request("DELETE", "rest/orgs/{}/users/{}".format(org_guid, user_guid))
 
 
 def api_update_organization_user(org_guid, user_guid, new_roles=None, client=None):
     """PUT /rest/orgs/{organization_guid}/users/{user_guid}"""
-    logger.debug("------------------ Update user {} from organization {} ------------------".format(user_guid, org_guid))
+    logger.debug("----------------- Update user {} from organization {} -----------------".format(user_guid, org_guid))
     client = client or PlatformApiClient.get_admin_client()
     body = {"guid": org_guid}
     if new_roles is not None:
@@ -494,4 +494,3 @@ def api_delete_space(space_guid, client=None):
     logger.info("------------------ Delete space {} ------------------".format(space_guid))
     client = client or PlatformApiClient.get_admin_client()
     client.request("DELETE", "rest/spaces/{}".format(space_guid))
-

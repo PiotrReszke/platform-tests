@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,11 +27,10 @@ class LatestEventsTest(ApiTestCase):
         cls.latest_events_response = EventSummary.api_get_latest_events()
 
     def test_latest_events_dashboard(self):
-        latest_events = sorted(self.latest_events_response, reverse=True)[:10]
-        dashboard_latest_events = sorted(self.dashboard_latest_events, reverse=True)
-        self.assertCountEqual(latest_events, dashboard_latest_events, "\nLatest events differ")
+        ten_latest_events = sorted(self.latest_events_response, reverse=True)[:10]
+        self.assertCountEqual(ten_latest_events, self.dashboard_latest_events, "\nLatest events differ")
 
     def test_latest_events_dashboard_contains_only_current_org_events(self):
         for event in self.dashboard_latest_events:
-            self.assertTrue(event.organization_id == self.seedorg.guid,
-                            "Latest events in dashboard contain events from other organizations")
+            self.assertEqual(event.organization_id, self.seedorg.guid,
+                             "Latest events in dashboard contain events from other organizations")

@@ -17,7 +17,7 @@
 import os
 import re
 
-from .hdfs import Hdfs
+from . import Hdfs
 
 
 __all__ = ["Topic"]

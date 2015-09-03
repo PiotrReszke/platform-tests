@@ -15,12 +15,12 @@
 #
 
 from .dataset import DataSet
-from .organization import Organization
 from .application import Application, github_get_file_content
 from .service_instance import ServiceInstance, AtkInstance
+from .space import Space
+from .organization import Organization
 from .user import User
 from .service_type import ServiceType
-from .space import Space
 from .transfer import Transfer
 from .service_broker import ServiceBroker
 from .event_summary import EventSummary

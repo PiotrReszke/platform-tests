@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,8 +17,7 @@
 from datetime import datetime
 import functools
 
-from .application import Application
-from .service_instance import ServiceInstance
+from . import Application, ServiceInstance
 from test_utils import platform_api_calls as api, cloud_foundry as cf, UnexpectedResponseError, get_logger
 
 
@@ -26,9 +25,9 @@ __all__ = ["Space"]
 
 logger = get_logger("space")
 
+
 @functools.total_ordering
 class Space(object):
-
     NAME_PREFIX = "test_space_"
 
     def __init__(self, name, guid=None, org_guid=None):
@@ -84,9 +83,12 @@ class Space(object):
                 service_instance.api_delete()  # delete using api due to cf timeouts with atk instances: DPNG-1737
             except UnexpectedResponseError as e:
                 if e.status == 404:
-                    logger.info("This is an expected error as service {} could be removed together with application".format(service_instance.name))
+                    logger.info(
+                        "This is an expected error as service {} could be removed together with application".format(
+                            service_instance.name))
                 elif e.status == 500 and "Read timed out" in e.error_message:
-                    logger.info("Server returned expected while deleting {}: Read timed out".format(service_instance.name))
+                    logger.info(
+                        "Server returned expected while deleting {}: Read timed out".format(service_instance.name))
                 else:
                     raise
         self.cf_api_delete_routes()

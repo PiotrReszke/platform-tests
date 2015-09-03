@@ -39,6 +39,7 @@ def get_query(username, email_subject=None):
         query += " subject:{}".format(email_subject)
     return query
 
+
 def get_credentials():
     directory = os.path.dirname(__file__)
     credential_path = os.path.join(directory, 'secrets/gmail-code.json')

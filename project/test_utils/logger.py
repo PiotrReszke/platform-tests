@@ -29,7 +29,6 @@ logging.getLogger("pyswagger.getter").setLevel(logging.WARNING)
 logging.getLogger("paramiko.transport").setLevel(logging.WARNING)
 
 
-
 def get_logger(name):
     return logging.getLogger(name)
 

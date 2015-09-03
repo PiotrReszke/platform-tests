@@ -19,6 +19,6 @@ from .config import *
 from .gmail_api import *
 from .api_client import *
 from .api_test_case import *
+from .hdfs import *
 from .hdfs_topic import Topic
-from .hdfs import Hdfs
 from .atk_tools import ATKtools

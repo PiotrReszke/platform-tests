@@ -18,7 +18,6 @@ from objects import Organization
 from test_utils import ApiTestCase, get_logger
 
 
-
 logger = get_logger("test organization")
 
 
@@ -62,6 +61,6 @@ class TestOrganization(ApiTestCase):
         new_orgs = [Organization.api_create() for _ in range(new_orgs_num)]
         expected_orgs = old_orgs + new_orgs
         orgs = Organization.api_get_list()
-        self.assertTrue(len(orgs), len(expected_orgs))
-        self.assertListEqual(sorted(orgs), sorted(expected_orgs))
+        self.assertEqual(len(orgs), len(expected_orgs))
+        self.assertCountEqual(orgs, expected_orgs)
 

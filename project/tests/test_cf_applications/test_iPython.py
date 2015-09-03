@@ -58,7 +58,7 @@ class iPythonConsoleTest(ApiTestCase):
         self.assertLenEqualWithinTimeout(
             timeout=120,
             expected_len=1,
-            callableObj=Application.api_get_list,
+            callable_obj=Application.api_get_list,
             space_guid=self.test_space.guid
         )
 

@@ -53,24 +53,24 @@ class MetricsTest(ApiTestCase):
         metrics_are_equal = (len(cl_apps_running) == dashboard_apps_running and
                              len(cl_apps_down) == dashboard_apps_down)
         self.assertTrue(metrics_are_equal,
-                        "\nApps running: %s - expected: %s\nApps down: %s - expected: %s"
-                        % (dashboard_apps_running, len(cl_apps_running), dashboard_apps_down, len(cl_apps_down)))
+                        "\nApps running: {} - expected: {}\nApps down: {} - expected: {}".format(
+                            dashboard_apps_running, len(cl_apps_running), dashboard_apps_down, len(cl_apps_down)))
 
     def test_user_count(self):
         cl_user_list = User.cf_api_get_list_in_organization(org_guid=self.seedorg.guid)
         dashboard_total_users = self.seedorg.metrics["totalUsers"]
         self.assertTrue(dashboard_total_users == len(cl_user_list),
-                        "\nUsers: %s - expected: %s" % (dashboard_total_users, len(cl_user_list)))
+                        "\nUsers: {} - expected: {}".format(dashboard_total_users, len(cl_user_list)))
 
     def test_data_metrics(self):
         public_datasets = []
         private_datasets = []
         datasets = DataSet.api_get_list([self.seedorg])
-        for set in datasets:
-            if set.is_public:
-                public_datasets.append(set)
+        for table in datasets:
+            if table.is_public:
+                public_datasets.append(table)
             else:
-                private_datasets.append(set)
+                private_datasets.append(table)
         dashboard_datasets_count = self.seedorg.metrics['datasetCount']
         dashboard_private_datasets = self.seedorg.metrics['privateDatasets']
         dashboard_public_datasets = self.seedorg.metrics['publicDatasets']
@@ -78,7 +78,7 @@ class MetricsTest(ApiTestCase):
                              len(private_datasets) == dashboard_private_datasets and
                              len(public_datasets) == dashboard_public_datasets)
         self.assertTrue(metrics_are_equal,
-                        "\nDatasets count: %s - expected: %s\nPrivate datasets: %s - expected: %s"
-                        "\nPublic datasets: %s - expected: %s"
-                        % (dashboard_datasets_count, len(datasets), dashboard_private_datasets, len(private_datasets),
-                           dashboard_public_datasets, len(public_datasets)))
+                        "\nDatasets count: {} - expected: {}\nPrivate datasets: {} - expected: {}"
+                        "\nPublic datasets: {} - expected: {}".format(dashboard_datasets_count, len(datasets),
+                                                                      dashboard_private_datasets, len(private_datasets),
+                                                                      dashboard_public_datasets, len(public_datasets)))

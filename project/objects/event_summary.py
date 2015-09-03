@@ -19,7 +19,6 @@ import functools
 from test_utils import platform_api_calls as api
 
 
-
 @functools.total_ordering
 class EventSummary(object):
     def __init__(self, id, category=None, message=None, organization_id=None, source_id=None, source_name=None,

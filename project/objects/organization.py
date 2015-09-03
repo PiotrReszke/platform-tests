@@ -17,7 +17,7 @@
 import functools
 from datetime import datetime
 
-from .space import Space
+from . import Space
 from test_utils import get_logger, UnexpectedResponseError, platform_api_calls as api, cloud_foundry as cf
 
 __all__ = ["Organization"]
