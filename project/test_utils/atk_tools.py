@@ -79,7 +79,7 @@ class ATKtools(object):
         log_command(command)
         return subprocess.check_call(command)
 
-    def run_atk_script(self, script_path, atk_url, arguments=None):
+    def run_atk_script(self, script_path, atk_url, arguments=None, timeout=None):
         command = [self.interpreter, script_path]
         if arguments is not None:
             for k, v in arguments.items():
@@ -96,9 +96,10 @@ class ATKtools(object):
         child.sendline(username)
         child.expect("Password:")
         child.sendline(password)
+
         time.sleep(30)
         child.sendline("y")
-        child.expect(pexpect.EOF, timeout=120)
+        child.expect(pexpect.EOF, timeout=480)
         response = child.before.decode("utf-8")
 
         logger.info("Atk script output:\n{}".format(response))
@@ -116,3 +117,6 @@ class ATKtools(object):
         api.api_get_file(atk_file_name, atk_file_name, client)
         return atk_file_name
 
+    @classmethod
+    def hive_clean_up(cls, atk_virtualenv, table_removal_script, atk_url, uaa_file):
+        atk_virtualenv.run_atk_script(table_removal_script, atk_url, arguments={"--uaa_file_name": uaa_file}, timeout=960)

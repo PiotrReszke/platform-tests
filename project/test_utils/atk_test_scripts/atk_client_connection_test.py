@@ -21,46 +21,22 @@
 # must be express and approved by Intel in writing.
 ##############################################################################
 
-#!/usr/bin/python2.7
-import argparse
 import os
 
-import taprootanalytics as ta
+import trustedanalytics as ta
 
-class AtkTestException(AssertionError):
-    pass
+from common import AtkTestException, parse_arguments, check_uaa_file
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(description="ATK Python Client Test")
-    parser.add_argument("--organization",
-                        help="organization where transfer was uploaded")
-    parser.add_argument("--transfer",
-                        help="transfer name of submitted document")
-    parser.add_argument("--uaa_file_name",
-                        help="uaa file name that will be created by script")
-    return parser.parse_args()
-
-print("starting")
 parameters = parse_arguments()
 
-dir = os.path.dirname(__file__)
+directory = os.path.dirname(__file__)
 
-uaa_file_name = os.path.join(dir, parameters.uaa_file_name)
+uaa_file_name = os.path.join(directory, parameters.uaa_file_name)
 ta.create_credentials_file(uaa_file_name)
 
-if not os.path.isfile(uaa_file_name):
-    raise AtkTestException("authorization file not found")
-if os.stat(uaa_file_name).st_size == 0:
-    raise AtkTestException("authorization file is empty")
-
-print("uaa file found")
-
-print("connected")
+check_uaa_file(uaa_file_name)
 
 query = "select * from " + parameters.organization + "." + parameters.transfer
-
-print("Query: {}".format(query))
-
+print("\nQuery: {}".format(query))
 hq = ta.HiveQuery(query)
-
 frame = ta.Frame(hq)
