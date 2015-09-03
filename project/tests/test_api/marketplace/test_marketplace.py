@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import unittest
 from datetime import datetime
 
 from test_utils.objects import ServiceType, Organization, ServiceInstance
@@ -21,6 +22,7 @@ from test_utils import ApiTestCase, get_logger
 
 
 logger = get_logger("test marketplace")
+
 
 
 class TestMarketplaceServices(ApiTestCase):
@@ -37,6 +39,7 @@ class TestMarketplaceServices(ApiTestCase):
         cf_marketplace = ServiceType.cf_api_get_list_from_marketplace(self.test_space.guid)
         self.assertListEqual(sorted(api_marketplace), sorted(cf_marketplace))
 
+    @unittest.skip("Organizations are not deleted after this test. Waiting for DPNG-2133")
     def test_create_instance_of_every_service(self):
         marketplace_services = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
         for service_type in marketplace_services:
