@@ -14,17 +14,24 @@
 # limitations under the License.
 #
 
+import argparse
 import re
 
-from test_utils import get_logger
+from test_utils import get_logger, config
 from objects import Organization
-
 
 TEST_ORG_PATTERN = "(^|^new-)test_org_[0-9]{8}_[0-9]{6}_[0-9]{6}$"
 logger = get_logger("organization cleanup")
 
-
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description="Test org cleanup script")
+    parser.add_argument("-e",
+                        "--environment",
+                        default=None,
+                        help="environment where tests are to be run, e.g. gotapaas.eu")
+    args = parser.parse_args()
+    config.update_test_settings(test_environment=args.environment)
 
     all_orgs = Organization.cf_api_get_list()
     test_orgs = [o for o in all_orgs if re.match(TEST_ORG_PATTERN, o.name)]
