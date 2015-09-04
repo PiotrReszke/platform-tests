@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-from objects import Organization
 from test_utils import ApiTestCase, get_logger
+from objects import Organization
 
 
 logger = get_logger("test organization")
@@ -62,5 +62,5 @@ class TestOrganization(ApiTestCase):
         expected_orgs = old_orgs + new_orgs
         orgs = Organization.api_get_list()
         self.assertEqual(len(orgs), len(expected_orgs))
-        self.assertCountEqual(orgs, expected_orgs)
+        self.assertUnorderedListEqual(orgs, expected_orgs)
 

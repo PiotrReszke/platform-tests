@@ -25,7 +25,7 @@ class TestOnboarding(ApiTestCase):
                            "Message subject {}. Expected: {}".format(message_subject, self.EXPECTED_EMAIL_SUBJECT))
         error_message = [error_msg for condition, error_msg in [correct_link, correct_inviting_user, correct_subject]
                          if not condition]
-        self.assertTrue(all(correct_link[0], correct_inviting_user[0], correct_subject[0]), error_message)
+        self.assertTrue(all((correct_link[0], correct_inviting_user[0], correct_subject[0])), error_message)
 
     def test_simple_onboarding(self):
         username = User.get_default_username()

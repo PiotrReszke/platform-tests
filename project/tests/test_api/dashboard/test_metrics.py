@@ -31,7 +31,7 @@ class MetricsTest(ApiTestCase):
 
     def test_metrics_contains_all_keys(self):
         keys = list(self.seedorg.metrics.keys())
-        self.assertCountEqual(keys, expected_metrics_keys)
+        self.assertUnorderedListEqual(keys, expected_metrics_keys)
 
     def test_service_count(self):
         apps, services = self.seedorg.cf_api_get_apps_and_services()
