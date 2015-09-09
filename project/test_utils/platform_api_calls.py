@@ -201,6 +201,17 @@ def api_get_org_metrics(org_guid, client=None):
     return response
 
 
+# ================================================= platform-context ================================================= #
+
+
+def api_get_external_tools(client=None):
+    """GET /rest/platform_context"""
+    logger.debug("------------------ Get info about external tools ------------------")
+    client = client or PlatformApiClient.get_admin_client()
+    response = client.request("GET", "rest/platform_context")
+    return response
+
+
 # ================================================= service-catalog ================================================== #
 
 
