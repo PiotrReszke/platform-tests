@@ -18,6 +18,7 @@ import os
 import shutil
 import tarfile
 import time
+import unittest
 
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, cloud_foundry as cf, ATKtools
 from objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, Application, User
@@ -26,6 +27,7 @@ from objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, A
 logger = get_logger("test ATK")
 
 
+@unittest.skip("Skipped due to problems caused by creating atk instances")
 class TestCreateAtkInstance(ApiTestCase):
 
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
