@@ -15,7 +15,7 @@
 #
 
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
-from objects import Organization, Space
+from objects import Organization, Space, User
 
 
 logger = get_logger("test spaces")
@@ -70,3 +70,24 @@ class TestSpace(ApiTestCase):
         logger.info("Deleted space {}".format(space.name))
         self.assertNotInList(space, spaces)
 
+    def test_delete_not_existing_space(self):
+        space = Space.api_create(org=self.org)
+        space.api_delete(org=self.org)
+        self.assertRaisesUnexpectedResponse(404, None, space.api_delete, org=self.org)
+
+    def test_create_space_with_long_name(self):
+        long_name = Space.NAME_PREFIX + "t" * 400
+        space = Space.api_create(org=self.org, name=long_name)
+        spaces = Space.api_get_list()
+        self.assertInList(space, spaces)
+
+    def test_create_space_with_empty_name(self):
+        self.assertRaisesUnexpectedResponse(400, None, Space.api_create, name="", org=self.org)
+
+    def test_delete_space_with_user(self):
+        test_user = User.api_create_by_adding_to_organization(self.org.guid)
+        space = Space.api_create(org=self.org)
+        test_user.api_add_to_space(space.guid, self.org.guid)
+        space.api_delete(org=self.org)
+        spaces = Space.api_get_list()
+        self.assertInList(space, spaces, "Space that contained user, was deleted.")

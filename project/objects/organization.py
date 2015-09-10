@@ -16,7 +16,6 @@
 
 import functools
 from datetime import datetime
-from retry import retry
 
 from . import Space
 from test_utils import get_logger, UnexpectedResponseError, JobFailedException, platform_api_calls as api, \
@@ -153,7 +152,6 @@ class Organization(object):
             org_services.extend(services)
         return org_apps, org_services
 
-    @retry(JobFailedException, tries=3)
     def cf_api_delete(self, async=True):
         try:
             cf.cf_api_delete_org(self.guid, async=async)

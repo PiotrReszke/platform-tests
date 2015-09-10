@@ -44,6 +44,8 @@ class Space(object):
     def __lt__(self, other):
         return self.guid < other.guid
 
+    # -------------------------------- platform api -------------------------------- #
+
     @classmethod
     def api_create(cls, org=None, name=None, client=None):
         name = name or cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
@@ -72,6 +74,8 @@ class Space(object):
         if org:
             org.spaces.remove(self)
 
+    # -------------------------------- cf api -------------------------------- #
+
     def delete_associations(self):
         """Delete applications, service instances, and routes"""
         apps = self.cf_api_get_space_summary()[0]
@@ -99,6 +103,20 @@ class Space(object):
         apps = Application.from_cf_api_space_summary_response(response, self.guid)
         service_instances = ServiceInstance.from_cf_api_space_summary_response(response, self.guid)
         return apps, service_instances
+
+    @classmethod
+    def cf_api_get_list(cls):
+        response = cf.cf_api_get_space_list()
+        spaces = []
+        for space_data in response:
+            org_guid = space_data["entity"]["organization_guid"]
+            name = space_data["entity"]["name"]
+            guid = space_data["metadata"]["guid"]
+            spaces.append(cls(name, guid, org_guid))
+        return spaces
+
+    def cf_api_delete(self):
+        cf.cf_api_delete_space(self.guid)
 
     def cf_api_delete_routes(self):
         route_info = cf.cf_api_get_space_routes(self.guid)

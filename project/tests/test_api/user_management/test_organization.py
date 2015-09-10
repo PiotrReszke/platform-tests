@@ -15,7 +15,7 @@
 #
 
 from test_utils import ApiTestCase, get_logger
-from objects import Organization
+from objects import Organization, User
 
 
 logger = get_logger("test organization")
@@ -64,3 +64,9 @@ class TestOrganization(ApiTestCase):
         self.assertEqual(len(orgs), len(expected_orgs))
         self.assertUnorderedListEqual(orgs, expected_orgs)
 
+    def test_delete_organization_with_user(self):
+        org = Organization.api_create()
+        User.api_create_by_adding_to_organization(org.guid)
+        org.api_delete(with_spaces=True)
+        org_list = Organization.api_get_list()
+        self.assertInList(org, org_list, "Organization that contained user, was deleted.")

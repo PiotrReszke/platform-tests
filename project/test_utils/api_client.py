@@ -243,4 +243,3 @@ class CfApiClient(AppClient):
             admin_password = config.TEST_SETTINGS["TEST_PASSWORD"]
             cls._CF_API_CLIENT = cls(admin_username, admin_password)
         return cls._CF_API_CLIENT
-

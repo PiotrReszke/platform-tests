@@ -17,6 +17,7 @@
 import functools
 import subprocess
 import time
+from retry import retry
 
 from . import CfApiClient, get_logger, log_command, get_config_value, TEST_SETTINGS, JobFailedException
 
@@ -95,6 +96,12 @@ def cf_env(app_name):
 
 def cf_delete_service(service):
     command = ["cf", "delete-service", service, "-f"]
+    log_command(command)
+    return subprocess.check_call(command)
+
+
+def cf_delete_space(space_name):
+    command = ["cf", "delete-space", space_name, "-f"]
     log_command(command)
     return subprocess.check_call(command)
 
@@ -205,6 +212,12 @@ def cf_api_get_organization_spaces(org_guid):
     return __get_all_pages(endpoint="organizations/{}/spaces".format(org_guid))
 
 
+def cf_api_get_space_list():
+    """GET /v2/spaces"""
+    logger.info("------------------ CF: spaces list ------------------")
+    return __get_all_pages(endpoint="spaces")
+
+
 def cf_api_get_space_routes(space_guid):
     """GET /v2/spaces/{space_guid}/routes"""
     logger.info("------------------ CF: get routes in space {} ------------------".format(space_guid))
@@ -215,6 +228,21 @@ def cf_api_get_space_service_brokers(space_guid):
     """GET /v2/spaces/{space_guid}/service_brokers"""
     logger.info("------------------ CF: service brokers for space {} ------------------".format(space_guid))
     return __get_all_pages(endpoint="service_brokers", query_params={"space_guid": space_guid})
+
+
+def cf_api_get_organization_space_users(org_guid, space_guid=None):
+    """GET /v2/organizations/{org_guid}/users"""
+    logger.info("------------------ CF: get users in org {} space {} ------------------".format(org_guid, space_guid))
+    params = {}
+    if space_guid:
+        params = {"space_guid": space_guid}
+    return __get_all_pages(endpoint="organizations/{}/users".format(org_guid), query_params=params)
+
+
+def cf_api_get_all_users():
+    """GET /v2/users"""
+    logger.info("------------------ CF: get all users ------------------")
+    return __get_all_pages(endpoint="users")
 
 
 def cf_api_get_organization_users(org_guid):
@@ -229,6 +257,7 @@ def cf_api_get_orgs():
     return __get_all_pages(endpoint="organizations")
 
 
+@retry(JobFailedException, tries=3)
 def cf_api_delete_org(org_guid, async=True):
     """DELETE /v2/organizations/{org_guid}"""
     job_name = "delete organization"
@@ -236,8 +265,17 @@ def cf_api_delete_org(org_guid, async=True):
     __handle_delete_request(endpoint="organizations/{}".format(org_guid), job_name=job_name, async=async)
 
 
+@retry(JobFailedException, tries=3)
 def cf_api_delete_route(route_guid, async=True):
     """DELETE /v2/routes/{route_guid}"""
     job_name = "delete route"
     logger.info("------------------ CF: {} {} ------------------".format(job_name, route_guid))
     __handle_delete_request(endpoint="routes/{}".format(route_guid), job_name=job_name, async=async)
+
+
+@retry(JobFailedException, tries=3)
+def cf_api_delete_space(space_guid, async=True):
+    """DELETE /v2/spaces/{space_guid}"""
+    job_name = "delete space"
+    logger.info("------------------ CF: {} {} ------------------".format(job_name, space_guid))
+    __handle_delete_request(endpoint="spaces/{}".format(space_guid), job_name=job_name, async=async)

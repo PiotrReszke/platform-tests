@@ -30,10 +30,10 @@ class User(object):
     TEST_EMAIL_FORM = TEST_EMAIL.replace('@', '+{}@')
     __ADMIN = None
 
-    def __init__(self, guid=None, username=None, password=None):
+    def __init__(self, guid=None, username=None, password=None, org_roles=None, space_roles=None):
         self.guid, self.username, self.password = guid, username, password
-        self.org_roles = {}
-        self.space_roles = {}
+        self.org_roles = org_roles or {}
+        self.space_roles = space_roles or {}
 
     def __repr__(self):
         return "{0} (username={1}, guid={2})".format(self.__class__.__name__, self.username, self.guid)
@@ -43,6 +43,9 @@ class User(object):
 
     def __lt__(self, other):
         return self.guid < other.guid
+
+    def __hash__(self):
+        return hash((self.guid, self.username))
 
     @classmethod
     def get_default_username(cls):
@@ -78,7 +81,7 @@ class User(object):
         return new_user, new_org, client
 
     @classmethod
-    def api_create_by_adding_to_organization(cls, organization_guid, username=None, roles=None, client=None):
+    def api_create_by_adding_to_organization(cls, organization_guid, username=None, roles=(), client=None):
         username = username or cls.get_default_username()
         response = api.api_add_organization_user(organization_guid, username, roles, client=client)
         user = cls(guid=response["guid"], username=username)
@@ -101,7 +104,7 @@ class User(object):
         users = []
         for user_data in response:
             user = cls(guid=user_data["guid"], username=user_data["username"])
-            user.space_roles[space_guid] = response["roles"]
+            user.space_roles[space_guid] = user_data["roles"]
             users.append(user)
         return users
 
@@ -142,10 +145,19 @@ class User(object):
         return cls.__ADMIN
 
     @classmethod
-    def cf_api_get_list_in_organization(cls, org_guid):
-        response = cf.cf_api_get_organization_users(org_guid)
+    def _get_user_list_from_cf_api_response(cls, response):
         users = []
         for user_data in response:
-            user = cls(username=user_data["entity"]["username"], guid=user_data["metadata"]["guid"])
+            user = cls(username=user_data["entity"].get("username"), guid=user_data["metadata"].get("guid"))
             users.append(user)
         return users
+
+    @classmethod
+    def cf_api_get_all_users(cls):
+        response = cf.cf_api_get_all_users()
+        return cls._get_user_list_from_cf_api_response(response)
+
+    @classmethod
+    def cf_api_get_list_in_organization(cls, org_guid, space_guid=None):
+        response = cf.cf_api_get_organization_space_users(org_guid=org_guid, space_guid=space_guid)
+        return cls._get_user_list_from_cf_api_response(response)
