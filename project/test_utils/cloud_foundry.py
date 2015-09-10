@@ -18,7 +18,7 @@ import functools
 import subprocess
 import time
 
-from . import CfApiClient, get_logger, log_command, get_config_value, TEST_SETTINGS
+from . import CfApiClient, get_logger, log_command, get_config_value, TEST_SETTINGS, JobFailedException
 
 
 __all__ = ["cf_login", "cf_target", "cf_push", "cf_create_service", "cf_delete", "cf_env", "cf_delete_service",
@@ -126,9 +126,18 @@ def __ensure_job_finished(job_id, job_name, timeout=120):
         job_status = response["entity"]["status"]
         if job_status == "finished":
             return
+        if job_status == "failed":
+            raise JobFailedException("Job '{}' failed.".format(job_name))
         logger.info("{} - job status: {}".format(job_name, job_status))
         time.sleep(5)
     raise TimeoutError("Job {} did not finish in {}s".format(job_name, timeout))
+
+
+def __handle_delete_request(endpoint, job_name, async=True):
+    params = {"async": str(async).lower(), "recursive": "true"}
+    response = CfApiClient.get_client().request("DELETE", endpoint=endpoint, params=params)
+    if async:
+        __ensure_job_finished(job_id=response["entity"]["guid"], job_name=job_name)
 
 
 def cf_api_get_service_instances(org_guid):
@@ -220,17 +229,15 @@ def cf_api_get_orgs():
     return __get_all_pages(endpoint="organizations")
 
 
-def cf_api_delete_org(org_guid):
+def cf_api_delete_org(org_guid, async=True):
     """DELETE /v2/organizations/{org_guid}"""
-    logger.info("------------------ CF: delete organization {} ------------------".format(org_guid))
-    response = CfApiClient.get_client().request("DELETE", endpoint="organizations/{}".format(org_guid),
-                                                params={"async": "true", "recursive": "true"})
-    __ensure_job_finished(job_id=response["entity"]["guid"], job_name="delete org")
+    job_name = "delete organization"
+    logger.info("------------------ CF: {} {} ------------------".format(job_name, org_guid))
+    __handle_delete_request(endpoint="organizations/{}".format(org_guid), job_name=job_name, async=async)
 
 
-def cf_api_delete_route(route_guid):
+def cf_api_delete_route(route_guid, async=True):
     """DELETE /v2/routes/{route_guid}"""
-    logger.info("------------------ CF: delete route {} ------------------".format(route_guid))
-    response = CfApiClient.get_client().request(method="DELETE", endpoint="routes/{}".format(route_guid),
-                                                params={"async": "true"})
-    __ensure_job_finished(job_id=response["entity"]["guid"], job_name="delete route")
+    job_name = "delete route"
+    logger.info("------------------ CF: {} {} ------------------".format(job_name, route_guid))
+    __handle_delete_request(endpoint="routes/{}".format(route_guid), job_name=job_name, async=async)

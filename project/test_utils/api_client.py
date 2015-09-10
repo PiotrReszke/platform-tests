@@ -23,7 +23,8 @@ import requests
 from . import config, get_logger
 
 
-__all__ = ["UnexpectedResponseError", "PlatformApiClient", "ConsoleClient", "AppClient", "CfApiClient"]
+__all__ = ["UnexpectedResponseError", "JobFailedException", "PlatformApiClient", "ConsoleClient",
+           "AppClient", "CfApiClient"]
 
 
 logger = get_logger("api client")
@@ -35,6 +36,10 @@ class UnexpectedResponseError(AssertionError):
         super(UnexpectedResponseError, self).__init__(message)
         self.status = status
         self.error_message = error_message
+
+
+class JobFailedException(Exception):
+    pass
 
 
 class PlatformApiClient(metaclass=abc.ABCMeta):

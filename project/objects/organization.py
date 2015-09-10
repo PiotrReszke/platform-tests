@@ -16,9 +16,11 @@
 
 import functools
 from datetime import datetime
+from retry import retry
 
 from . import Space
-from test_utils import get_logger, UnexpectedResponseError, platform_api_calls as api, cloud_foundry as cf
+from test_utils import get_logger, UnexpectedResponseError, JobFailedException, platform_api_calls as api, \
+    cloud_foundry as cf
 
 __all__ = ["Organization"]
 
@@ -151,9 +153,10 @@ class Organization(object):
             org_services.extend(services)
         return org_apps, org_services
 
-    def cf_api_delete(self):
+    @retry(JobFailedException, tries=3)
+    def cf_api_delete(self, async=True):
         try:
-            cf.cf_api_delete_org(self.guid)
+            cf.cf_api_delete_org(self.guid, async=async)
         except UnexpectedResponseError as e:
             if "CF-AssociationNotEmpty" in e.error_message:  # routes are not deleted by cf api delete
                 spaces = self.cf_api_get_spaces()
@@ -164,8 +167,17 @@ class Organization(object):
                 logger.warning("Organization {} was not found".format(self.guid))
 
     @classmethod
+    def cf_api_delete_orgs_from_list(cls, org_list, async=True):
+        failed_to_delete = []
+        for org in org_list:
+            try:
+                org.cf_api_delete(async=async)
+            except JobFailedException:
+                failed_to_delete.append(org)
+                logger.exception("Could not delete {}\n".format(org))
+        return failed_to_delete
+
+    @classmethod
     def cf_api_tear_down_test_orgs(cls):
         """Use this method in tearDown and tearDownClass."""
-        while len(cls.TEST_ORGS) > 0:
-            org = cls.TEST_ORGS.pop()
-            org.cf_api_delete()
+        cls.TEST_ORGS = cls.cf_api_delete_orgs_from_list(cls.TEST_ORGS, async=False)
