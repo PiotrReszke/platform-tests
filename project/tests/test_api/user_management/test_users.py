@@ -70,7 +70,7 @@ class TestOrganizationUsers(ApiTestCase):
         self.assertEqual(roles, expected_roles)
 
     def test_create_organization_user_incorrect_role(self):
-        self.assertRaisesUnexpectedResponse(400, "", self.test_user.api_add_to_organization,
+        self.assertRaisesUnexpectedResponse(400, None, self.test_user.api_add_to_organization,
                                             org_guid=self.organization.guid, roles=["i-don't-exist"])
 
     def test_update_organization_user_add_role(self):

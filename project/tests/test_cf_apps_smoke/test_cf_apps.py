@@ -15,6 +15,7 @@
 #
 
 from urllib.parse import urlparse
+import unittest
 
 import yaml
 
@@ -25,8 +26,11 @@ from objects import Application, github_get_file_content, ServiceInstance, Servi
 logger = get_logger("trusted_analytics_app_test")
 
 
+@unittest.skip("Tests fail due to DPNG-2267")
 class TrustedAnalyticsApplicationsSmokeTest(ApiTestCase):
-    """A cloned demo-settings.yml is a prerequisite for this test"""
+    """A cloned demo-settings.yml is a prerequisite for this test
+       DPNG-2267 Smoke api test fails due to changes in platform-appstack repository
+    """
 
     @classmethod
     def setUpClass(cls):

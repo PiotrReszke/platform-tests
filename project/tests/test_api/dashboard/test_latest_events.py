@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import unittest
 
 from test_utils import ApiTestCase
 from objects import EventSummary, Organization
@@ -30,7 +31,9 @@ class LatestEventsTest(ApiTestCase):
         ten_latest_events = sorted(self.latest_events_response, reverse=True)[:10]
         self.assertUnorderedListEqual(ten_latest_events, self.dashboard_latest_events, "\nLatest events differ")
 
+    @unittest.expectedFailure
     def test_latest_events_dashboard_contains_only_current_org_events(self):
+        """DPNG-2091 There's no organisations distinction on dashboard in latest events section"""
         for event in self.dashboard_latest_events:
             self.assertEqual(event.organization_id, self.seedorg.guid,
                              "Latest events in dashboard contain events from other organizations")

@@ -25,6 +25,7 @@ logger = get_logger("iPython test")
 
 @unittest.skipIf(config.TEST_SETTINGS["TEST_ENVIRONMENT"] == "gotapaas.eu", "No iPython on gotapaas.eu")
 class iPythonConsoleTest(ApiTestCase):
+    """DPNG-2139 Expose IPython password in Console and migrate to RStudio solution"""
 
     PROXY_NAME = "ipython-proxy"
     SERVICE_NAME = "ipython"

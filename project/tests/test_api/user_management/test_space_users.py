@@ -15,12 +15,17 @@
 #
 
 import time
+import unittest
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup
 from objects import User, Organization, Space
 
 
+@unittest.skip("Tests fail due to DPNG-1943 and DPNG-1947")
 class TestSpaceUsers(ApiTestCase):
+    """ DPNG-1943 POST /rest/orgs/{org_guid}/users returns the same response code for different responses
+        DPNG-1947 Refactor user api tests (test_users.py) taking into account change in POST /rest/orgs/{org_guid}/users
+    """
 
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
@@ -67,8 +72,11 @@ class TestSpaceUsers(ApiTestCase):
         space_user_list = User.api_get_list_via_space(self.test_space.guid)
         self.assertEqual(len(space_user_list), 0, "User was not removed from space")
 
+    @unittest.expectedFailure
     def test_change_username(self):
-        """Testing PUT '/rest/spaces/{space_guid}/users/{user_guid}' API method"""
+        """ DPNG-2247 Trying to change username ends with http 500 status error
+            Testing PUT '/rest/spaces/{space_guid}/users/{user_guid}' API method
+        """
         new_name = User.get_default_username()
         test_user = User.api_create_by_adding_to_organization(self.organization.guid)
         self.assertNotEqual(test_user.username, new_name, "Names are the same - should be different")
@@ -86,8 +94,11 @@ class TestSpaceUsers(ApiTestCase):
         updated_user = User.api_get_list_via_space(self.test_space.guid)[0]
         self.assertEqual(tuple(updated_user.space_roles.get(self.test_space.guid)), new_roles, "Roles were not updated")
 
+    @unittest.expectedFailure
     def test_try_change_username_to_existing(self):
-        """Testing PUT '/rest/spaces/{space_guid}/users/{user_guid}' API method"""
+        """ DPNG-2247 Trying to change username ends with http 500 status error
+            Testing PUT '/rest/spaces/{space_guid}/users/{user_guid}' API method
+        """
         test_user_a = User.api_create_by_adding_to_organization(self.organization.guid)
         test_user_b = User.api_create_by_adding_to_organization(self.organization.guid)
         self.assertNotEqual(test_user_a.username, test_user_b.username, "User names are the same")
@@ -121,8 +132,11 @@ class TestSpaceUsers(ApiTestCase):
         org_user_list = User.api_get_list_via_organization(self.organization.guid)
         self.assertInList(test_user, org_user_list, "User was not found in organization.")
 
+    @unittest.expectedFailure
     def test_change_username_to_a_non_email(self):
-        """Testing PUT '/rest/spaces/{space_guid}/users/{user_guid}' API method"""
+        """ DPNG-2247 Trying to change username ends with http 500 status error
+            Testing PUT '/rest/spaces/{space_guid}/users/{user_guid}' API method
+        """
         new_name = "wrong_username_{}".format(time.time())
         test_user = User.api_create_by_adding_to_organization(self.organization.guid)
         test_user.api_add_to_space(self.test_space.guid, self.organization.guid)

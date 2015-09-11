@@ -15,6 +15,7 @@
 #
 
 import time
+import unittest
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api
 from objects import Organization, Transfer, DataSet, User
@@ -36,13 +37,17 @@ class TestDataTransfer(ApiTestCase):
         transfers = Transfer.api_get_list(orgs=[self.org])
         logger.info("{} transfers".format(len(transfers)))
 
+    @unittest.expectedFailure
     def test_submit_transfer(self):
+        """DPNG-2264 Problem with uploading datasets on ireland environment"""
         expected_transfer = Transfer.api_create(source=self.EXAMPLE_LINK, org_guid=self.org.guid)
         expected_transfer.ensure_finished()
         transfer = Transfer.api_get(expected_transfer.id)
         self.assertAttributesEqual(transfer, expected_transfer)
 
+    @unittest.expectedFailure
     def test_match_dataset_to_transfer(self):
+        """DPNG-2264 Problem with uploading datasets on ireland environment"""
         expected_transfer = Transfer.api_create(source=self.EXAMPLE_LINK, org_guid=self.org.guid)
         expected_transfer.ensure_finished()
         transfers = Transfer.api_get_list(orgs=[self.org])

@@ -48,7 +48,8 @@ class Space(object):
 
     @classmethod
     def api_create(cls, org=None, name=None, client=None):
-        name = name or cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        if name is None:
+            name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
         response = api.api_create_space(org.guid, name, client=client)
         if response == "":  # Until DPNG-2051 is deployed on demo
             spaces = cls.api_get_list()

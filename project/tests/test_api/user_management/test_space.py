@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+import unittest
+
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
 from objects import Organization, Space, User
 
@@ -84,7 +86,13 @@ class TestSpace(ApiTestCase):
     def test_create_space_with_empty_name(self):
         self.assertRaisesUnexpectedResponse(400, None, Space.api_create, name="", org=self.org)
 
+    @unittest.expectedFailure
     def test_delete_space_with_user(self):
+        """ DPNG-1943 POST /rest/orgs/{org_guid}/users returns the same response code for different responses
+            DPNG-1947 Refactor user api tests (test_users.py) taking into account change in
+                      POST /rest/orgs/{org_guid}/users
+            DPNG-2246 An space with user can be deleted
+        """
         test_user = User.api_create_by_adding_to_organization(self.org.guid)
         space = Space.api_create(org=self.org)
         test_user.api_add_to_space(space.guid, self.org.guid)

@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+import unittest
+
 from test_utils import ApiTestCase, get_logger
 from objects import Organization, User
 
@@ -64,7 +66,13 @@ class TestOrganization(ApiTestCase):
         self.assertEqual(len(orgs), len(expected_orgs))
         self.assertUnorderedListEqual(orgs, expected_orgs)
 
+    @unittest.expectedFailure
     def test_delete_organization_with_user(self):
+        """ DPNG-1943 POST /rest/orgs/{org_guid}/users returns the same response code for different responses
+            DPNG-1947 Refactor user api tests (test_users.py) taking into account change in
+                      POST /rest/orgs/{org_guid}/users
+            DPNG-2128 An organization with users can be deleted
+        """
         org = Organization.api_create()
         User.api_create_by_adding_to_organization(org.guid)
         org.api_delete(with_spaces=True)
