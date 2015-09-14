@@ -9,3 +9,4 @@ retry
 spur
 teamcity-messages
 websocket-client
+jinja2

@@ -15,27 +15,31 @@
 #
 
 from urllib.parse import urlparse
-import unittest
-
+from os.path import join, realpath
+import subprocess
 import yaml
 
-from test_utils import ApiTestCase, get_logger
-from objects import Application, github_get_file_content, ServiceInstance, ServiceBroker, Organization
+from test_utils import ApiTestCase, get_logger, clone_repository
+from objects import Application, ServiceInstance, ServiceBroker, Organization
 
 
 logger = get_logger("trusted_analytics_app_test")
 
 
-@unittest.skip("Tests fail due to DPNG-2267")
 class TrustedAnalyticsApplicationsSmokeTest(ApiTestCase):
-    """A cloned demo-settings.yml is a prerequisite for this test
-       DPNG-2267 Smoke api test fails due to changes in platform-appstack repository
-    """
+    APP_REPO_PATH = "../../platform-appstack"
+    REPO_NAME = "platform-appstack"
 
     @classmethod
     def setUpClass(cls):
         # Get expected apps from settings file
-        cls.settings_file = github_get_file_content(repository="platform-appstack", path="demo-settings.yml")
+        clone_repository(cls.REPO_NAME, cls.APP_REPO_PATH)
+        absdir = realpath(cls.APP_REPO_PATH)
+        scriptpath = join(absdir, "generate_template.py")
+        logger.info("Run generate_template from platform-appstack script to get generated settings.yml file")
+        subprocess.call(["python2", scriptpath, "-d", absdir])
+
+        cls.settings_file = open(join(cls.APP_REPO_PATH, "settings.yml"))
         cls.expected_app_and_service_names = []
         cls.expected_service_broker_names = []
         settings = yaml.load(cls.settings_file)
@@ -56,7 +60,7 @@ class TrustedAnalyticsApplicationsSmokeTest(ApiTestCase):
         cls.seedspace_guid = Organization.get_org_and_space_by_name("seedorg", "seedspace")[1].guid
 
     def test_cf_application_status(self):
-        """Check that all applications from demo-settings.yml are started on cf"""
+        """Check that all applications from generated settings.yml are started on cf"""
         cf_apps = Application.cf_api_get_list(self.seedspace_guid)
         cf_services = ServiceInstance.cf_api_get_list(self.seedspace_guid)
         cf_service_brokers = ServiceBroker.cf_api_get_list(self.seedspace_guid)
@@ -81,13 +85,13 @@ class TrustedAnalyticsApplicationsSmokeTest(ApiTestCase):
                         .format(missing_apps, apps_not_started))
 
     def test_trusted_analytics_apps(self):
-        """Verify applications on platform against demo-settings.yml"""
+        """Verify applications on platform against settings.yml"""
         platform_app_list = Application.api_get_list(self.seedspace_guid)
         services_app_list = ServiceInstance.api_get_list(self.seedspace_guid)
         logger.info("There are {} apps/services on the platform".format(len(platform_app_list + services_app_list)))
         platform_app_and_service_names = [app.name for app in platform_app_list + services_app_list]
         missing_apps = [name for name in self.expected_app_and_service_names
-                        if name not in platform_app_and_service_names + services_app_list]
+                        if name not in platform_app_and_service_names]
         self.assertTrue(missing_apps == [], "Apps missing in platform: {}".format(missing_apps))
 
     def test_trusted_analytics_applications_details(self):
