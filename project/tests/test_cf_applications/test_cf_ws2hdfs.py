@@ -17,6 +17,7 @@
 import time
 
 import websocket
+import unittest
 
 from test_utils import ApiTestCase, get_logger, app_source_utils, Topic, cloud_foundry as cf
 from objects import Application, Organization
@@ -24,7 +25,7 @@ from objects import Application, Organization
 
 logger = get_logger("cf_ws2kafka_kafka2hdfs")
 
-
+@unittest.skip("Cannot create hdfs instance")
 class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     MESSAGE_COUNT = 10
@@ -38,9 +39,9 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     @classmethod
     def setUp(cls):
-        cls.seedorg, cls.seedspace = Organization.get_org_and_space_by_name("seedorg", "seedspace")
         app_source_utils.clone_repository("ingestion-ws-kafka-hdfs", cls.APP_REPO_PATH)
         app_source_utils.compile_gradle(cls.KAFKA2HDFS_PATH)
+        cls.seedorg, cls.seedspace = Organization.get_org_and_space_by_name("seedorg", "seedspace")
         cf.cf_login(cls.seedorg.name, cls.seedspace.name)
         cf.cf_create_service("kafka", "shared", "kafka-inst")
         cf.cf_create_service("zookeeper", "shared", "zookeeper-inst")
