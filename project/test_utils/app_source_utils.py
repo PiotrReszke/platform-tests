@@ -37,10 +37,22 @@ def clone_repository(repository_name, target_directory, owner="intel-data"):
 
 
 def compile_mvn(directory):
-    logger.info("Compile project {}".format(directory))
+    logger.info("Compile maven project {}".format(directory))
     current_path = os.getcwd()
     os.chdir(directory)
     command = ["mvn", "clean", "package"]
     log_command(command)
     subprocess.call(command)
     os.chdir(current_path)
+    logger.info("Compiled maven project {}".format(directory))
+
+
+def compile_gradle(directory):
+     logger.info("Compile gradle project {}".format(directory))
+     current_path = os.getcwd()
+     os.chdir(directory)
+     command = ["./gradlew", "assemble"]
+     log_command(command)
+     subprocess.call(command)
+     os.chdir(current_path)
+     logger.info("Compiled gradle project {}".format(directory))

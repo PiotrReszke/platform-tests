@@ -18,7 +18,7 @@ import time
 
 import websocket
 
-from test_utils import ApiTestCase, get_logger, Topic, cloud_foundry as cf
+from test_utils import ApiTestCase, get_logger, app_source_utils, Topic, cloud_foundry as cf
 from objects import Application, Organization
 
 
@@ -28,8 +28,9 @@ logger = get_logger("cf_ws2kafka_kafka2hdfs")
 class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     MESSAGE_COUNT = 10
-    WS2KAFKA_PATH = "../../ingestion-ws-kafka-hdfs/ws2kafka"
-    KAFKA2HDFS_PATH = "../../ingestion-ws-kafka-hdfs/kafka2hdfs"
+    APP_REPO_PATH = "../../ingestion-ws-kafka-hdfs"
+    WS2KAFKA_PATH = APP_REPO_PATH + "/ws2kafka"
+    KAFKA2HDFS_PATH = APP_REPO_PATH + "/kafka2hdfs"
 
     @classmethod
     def tearDownClass(cls):
@@ -38,6 +39,8 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
     @classmethod
     def setUp(cls):
         cls.seedorg, cls.seedspace = Organization.get_org_and_space_by_name("seedorg", "seedspace")
+        app_source_utils.clone_repository("ingestion-ws-kafka-hdfs", cls.APP_REPO_PATH)
+        app_source_utils.compile_gradle(cls.KAFKA2HDFS_PATH)
         cf.cf_login(cls.seedorg.name, cls.seedspace.name)
         cf.cf_create_service("kafka", "shared", "kafka-inst")
         cf.cf_create_service("zookeeper", "shared", "zookeeper-inst")
