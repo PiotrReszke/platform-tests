@@ -15,9 +15,10 @@
 #
 
 from datetime import datetime
+import unittest
 
-from objects import ServiceType, Organization, ServiceInstance
 from test_utils import ApiTestCase, get_logger
+from objects import ServiceInstance, ServiceType, Organization
 
 
 logger = get_logger("test marketplace")
@@ -28,41 +29,63 @@ class TestMarketplaceServices(ApiTestCase):
     def setUp(self):
         self.test_organization = Organization.api_create(space_names=("test-space",))
         self.test_space = self.test_organization.spaces[0]
+        self.platform_marketplace_services = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
 
     def tearDown(self):
         Organization.cf_api_tear_down_test_orgs()
 
+    def _test_service_instance_creation_and_deletion(self, service_type):
+        service_instance_name = service_type.label + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        instance = ServiceInstance.api_create(name=service_instance_name,
+                                              service_plan_guid=service_type.service_plan_guids[0],
+                                              space_guid=service_type.space_guid,
+                                              org_guid=self.test_organization.guid)
+        self.assertIsNotNone(instance, "{} instance was not created".format(service_type))
+        instance.api_delete()
+        instances = ServiceInstance.api_get_list(space_guid=service_type.space_guid,
+                                                 service_type_guid=service_type.guid)
+        self.assertNotInList(instance, instances, "{} instance was not deleted".format(service_type))
+
     def test_marketplace_services(self):
-        api_marketplace = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
         cf_marketplace = ServiceType.cf_api_get_list_from_marketplace(self.test_space.guid)
-        self.assertUnorderedListEqual(api_marketplace, cf_marketplace)
+        self.assertUnorderedListEqual(self.platform_marketplace_services, cf_marketplace)
 
-    def test_create_instance_of_every_service(self):
-        excluded_services = ("atk",  # service which is tested elsewhere
-                             "ipython-proxy",  # service which is tested elsewhere
-                             "ipython",  # service which is tested elsewhere
-                             "rstudio-proxy",  # status 502 Bad Gateway
-                             "piotr-hdfs",  # getresponse() got an unexpected keyword argument 'buffering'
-                             "zookeeper",  # status 502 Bad Gateway
-                             "hbase",  # getresponse() got an unexpected keyword argument 'buffering'
-                             "h2oUC",  # status 502 Bad Gateway
-                             "h2oUC-docker",  # status 502 Bad Gateway
-                             "hdfs")  # getresponse() got an unexpected keyword argument 'buffering'
-        marketplace_services = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
-        for service_type in marketplace_services:
-            if service_type.label not in excluded_services:
-                with self.subTest(service=service_type):
-                    service_instance_name = service_type.label + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-                    instance = ServiceInstance.api_create(
-                        name=service_instance_name,
-                        service_plan_guid=service_type.service_plan_guids[0],
-                        space_guid=service_type.space_guid,
-                        org_guid=self.test_organization.guid
-                    )
-                    self.assertIsNotNone(instance,
-                                         "Instance of {} was not found on service instance list".format(service_type))
+    @unittest.expectedFailure
+    def test_create_gateway_instance(self):
+        """DPNG-1307 While creating gateway from marketplace, platform throws an error"""
+        service_type = next(st for st in self.platform_marketplace_services if st.label == "gateway")
+        self._test_service_instance_creation_and_deletion(service_type)
 
-                    instance.api_delete()
-                    instances = ServiceInstance.api_get_list(space_guid=service_type.space_guid,
-                                                             service_type_guid=service_type.guid)
-                    self.assertNotInList(instance, instances)
+    @unittest.expectedFailure
+    def test_create_rstudio_proxy_instance(self):
+        """DPNG-2297 Cannot create instance of rstudio-proxy from Marketplace"""
+        service_type = next(st for st in self.platform_marketplace_services if st.label == "rstudio-proxy")
+        self._test_service_instance_creation_and_deletion(service_type)
+
+    @unittest.expectedFailure
+    def test_create_zookeeper_instance(self):
+        """DPNG-2130 Cannot create zookeeper instance on Ireland - Bad Gateway"""
+        service_type = next(st for st in self.platform_marketplace_services if st.label == "zookeeper")
+        self._test_service_instance_creation_and_deletion(service_type)
+
+    @unittest.expectedFailure
+    def test_create_hbase_instance(self):
+        """DPNG-2299 Error when creating hbase service instance in Marketplace"""
+        service_type = next(st for st in self.platform_marketplace_services if st.label == "hbase")
+        self._test_service_instance_creation_and_deletion(service_type)
+
+    @unittest.expectedFailure
+    def test_create_hdfs_instance(self):
+        """DPNG-2300 Error when creating hdfs instance in marketplace"""
+        service_type = next(st for st in self.platform_marketplace_services if st.label == "hdfs")
+        self._test_service_instance_creation_and_deletion(service_type)
+
+    def test_create_instance_of_other_services(self):
+        # excluded services are tested elsewhere or are not to be tested
+        excluded_services = ("atk", "gateway", "h2oUC", "h2oUC-docker", "hbase", "hdfs", "ipython", "ipython-proxy",
+                             "piotr-hdfs", "rstudio-proxy", "zookeeper")
+        tested_service_types = [st for st in self.platform_marketplace_services if st.label not in excluded_services]
+        for service_type in tested_service_types:
+            with self.subTest(service=service_type):
+                self._test_service_instance_creation_and_deletion(service_type)
+

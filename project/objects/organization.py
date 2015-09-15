@@ -163,6 +163,8 @@ class Organization(object):
                 cf.cf_api_delete_org(self.guid)
             elif "CF-OrganizationNotFound" in e.error_message:
                 logger.warning("Organization {} was not found".format(self.guid))
+            else:
+                raise
 
     @classmethod
     def cf_api_delete_orgs_from_list(cls, org_list, async=True):
