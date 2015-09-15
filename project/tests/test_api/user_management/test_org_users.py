@@ -53,14 +53,12 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
         cls.test_user, cls.test_org = User.api_onboard()
         cls.test_client = cls.test_user.login()
 
-    @unittest.expectedFailure
     def test_cannot_add_existing_user_with_no_roles(self):
-        """DPNG-2182 It is possible to add user to organization/space with empty role array"""
         invited_user = self.test_user
+        expected_roles = []
         org = Organization.api_create()
-        self.assertRaisesUnexpectedResponse(403, "???", invited_user.api_add_to_organization, org_guid=org.guid,
-                                            roles=[])
-        self._assert_user_not_in_org(invited_user, org.guid)
+        invited_user.api_add_to_organization(org_guid=org.guid, roles=expected_roles)
+        self._assert_user_in_org_and_roles(invited_user, org.guid, expected_roles)
 
     def test_admin_adds_existing_user_one_role(self):
         for expected_roles in User.ORG_ROLES.values():
@@ -158,14 +156,11 @@ class AddNewUserToOrganization(BaseOrgUserClass):
 
     @unittest.expectedFailure
     def test_cannot_add_new_user_with_no_roles(self):
-        """DPNG-2182 It is possible to add user to organization/space with empty role array"""
+        """DPNG-2181 Cannot add new organization user with role other than manager"""
         org = self.test_org
-        admin_org_users = User.api_get_list_via_organization(org.guid)
         expected_roles = []
-        self.assertRaisesUnexpectedResponse(400, "???", User.api_create_by_adding_to_organization, org_guidd=org.guid,
-                                            roles=expected_roles)
-        # assert user list did not change
-        self.assertListEqual(User.api_get_list_via_organization(org.guid), admin_org_users)
+        invited_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=expected_roles)
+        self._assert_user_in_org_and_roles(invited_user, org.guid, expected_roles)
 
     @unittest.expectedFailure
     def test_admin_adds_new_user_one_role(self):
