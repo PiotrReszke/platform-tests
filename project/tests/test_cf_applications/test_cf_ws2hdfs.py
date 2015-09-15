@@ -25,7 +25,7 @@ from objects import Application, Organization
 
 logger = get_logger("cf_ws2kafka_kafka2hdfs")
 
-@unittest.skip("Cannot create hdfs instance")
+@unittest.skip("Problem with kafka2hdfs - DPNG-2160")
 class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     MESSAGE_COUNT = 10
