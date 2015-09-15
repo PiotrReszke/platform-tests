@@ -19,6 +19,7 @@ import signal
 import ssl
 import subprocess
 import time
+import unittest
 
 import paho.mqtt.client as mqtt
 
@@ -28,7 +29,7 @@ from objects import Application, Organization
 
 logger = get_logger("test_mqtt")
 
-
+@unittest.skip("SSL certificate error - bug DPNG-2273")
 class TestMqtt(ApiTestCase):
 
     DB_SERVICE_NAME = "influxdb088"
