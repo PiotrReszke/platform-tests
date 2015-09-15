@@ -97,15 +97,6 @@ class ApiTestCase(unittest.TestCase):
             time.sleep(5)
         self.fail("{} and {} are not equal - within {}s".format(result, expected_result, timeout))
 
-    def assertLenEqualWithinTimeout(self, timeout, expected_len, callable_obj, *args, **kwargs):
-        now = time.time()
-        while time.time() - now < timeout:
-            result = callable_obj(*args, **kwargs)
-            if len(result) == expected_len:
-                return
-            time.sleep(5)
-        self.fail("{} != {} are not equal - within {}s".format(len(result), expected_len, timeout))
-
     def exec_within_timeout(self, timeout, callable_obj, *args, **kwargs):
         """Execute a callable until it does not raise an exception or until timeout"""
         now = time.time()

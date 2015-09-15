@@ -16,6 +16,8 @@
 
 import unittest
 
+from retry import retry
+
 from test_utils import ApiTestCase, UnexpectedResponseError, get_logger, config
 from objects import Application, Organization, ServiceInstance, ServiceType
 
@@ -32,6 +34,16 @@ class iPythonConsoleTest(ApiTestCase):
     def setUp(self):
         self.test_org = Organization.api_create(space_names=("test-space",))
         self.test_space = self.test_org.spaces[0]
+
+    @retry(AssertionError, tries=10, delay=15)
+    def _assert_ipython_app_is_started(self):
+        """Return the app object"""
+        apps = Application.api_get_list(space_guid=self.test_space.guid)
+        self.assertEqual(len(apps), 1)
+        ipython_app = apps[0]
+        self.assertTrue("iPython" in ipython_app.name)
+        self.assertTrue(ipython_app.is_started, "iPython is not started")
+        return ipython_app
 
     @unittest.expectedFailure
     def test_deploy_iPython_console_instance(self):
@@ -54,23 +66,14 @@ class iPythonConsoleTest(ApiTestCase):
             else:
                 raise
 
-        # check that there is 1 iPython application - within timeout
-        self.assertLenEqualWithinTimeout(
-            timeout=120,
-            expected_len=1,
-            callable_obj=Application.api_get_list,
-            space_guid=self.test_space.guid
-        )
-
-        ipython_app = Application.api_get_list(space_guid=self.test_space.guid)[0]
-        self.assertTrue(ipython_app.is_started, "The {} app is not started".format(ipython_app.name))
+        # check that there is 1 iPython application and it is started
+        ipython_app = self._assert_ipython_app_is_started()
 
         # iPython Jupyter login
         password = ipython_app.cf_api_env()["VCAP_SERVICES"][self.SERVICE_NAME][0]["credentials"]["password"]
         url = "{}:{}".format(ipython_app.urls[0], self.IPYTHON_PORT)
         # although the application is created, actual iPython takes longer to start - hence timeout
-        response = self.exec_within_timeout(120, ipython_app.application_api_request, method="POST", scheme="https",
-                                            url=url, endpoint="login", params={"next": "/tree"},
-                                            data={"password": password})
+        response = ipython_app.application_api_request(method="POST", scheme="https", url=url, endpoint="login",
+                                                       params={"next": "/tree"}, data={"password": password})
         self.assertTrue("Logout" in response, "Could not log into Jupyter. Response:\n{}".format(response))
 
