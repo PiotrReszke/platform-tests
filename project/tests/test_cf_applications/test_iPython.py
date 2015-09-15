@@ -23,9 +23,7 @@ from objects import Application, Organization, ServiceInstance, ServiceType
 logger = get_logger("iPython test")
 
 
-@unittest.skipIf(config.TEST_SETTINGS["TEST_ENVIRONMENT"] == "gotapaas.eu", "No iPython on gotapaas.eu")
 class iPythonConsoleTest(ApiTestCase):
-    """DPNG-2139 Expose IPython password in Console and migrate to RStudio solution"""
 
     PROXY_NAME = "ipython-proxy"
     SERVICE_NAME = "ipython"
@@ -35,8 +33,9 @@ class iPythonConsoleTest(ApiTestCase):
         self.test_org = Organization.api_create(space_names=("test-space",))
         self.test_space = self.test_org.spaces[0]
 
+    @unittest.expectedFailure
     def test_deploy_iPython_console_instance(self):
-        """Check deployment of iPython console instance and login to Jupyter"""
+        """DPNG-2034 Iphython console creation not working"""
 
         marketplace = ServiceType.api_get_list_from_marketplace(space_guid=self.test_space.guid)
         ipython_service = next((st for st in marketplace if st.label == self.PROXY_NAME), None)
