@@ -22,4 +22,5 @@ from .api_test_case import *
 from .hdfs import *
 from .hdfs_topic import Topic
 from .atk_tools import ATKtools
+from .app_source_utils import *
 from .platform_api_calls import *
