@@ -27,7 +27,7 @@ from objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, A
 logger = get_logger("test ATK")
 
 
-@unittest.skip("Skipped due to problems caused by creating atk instances")
+@unittest.skip("Problem with publishing in hive - DPNG-2010")
 class TestCreateAtkInstance(ApiTestCase):
 
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
