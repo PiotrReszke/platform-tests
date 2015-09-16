@@ -52,6 +52,15 @@ CONFIG = {
         "cdh_host": "cdh.callisto.gotapaas.com",
         "uaa": "login.callisto.gotapaas.com"
     },
+    "daily.gotapaas.com": {
+        "api_endpoint": "daily.gotapaas.com",
+        "login.do_scheme": "http",
+        "login_endpoint": "login.daily.gotapaas.com",
+        "cf_endpoint": "api.daily.gotapaas.com",
+        "admin_username": "trusted.analytics.tester@gmail.com",
+        "cdh_host": "cdh.daily.gotapaas.com",
+        "uaa": "login.daily.gotapaas.com"
+    },
     "10.91.120.35.xip.io": {
         "api_endpoint": "10.91.120.35.xip.io",
         "login.do_scheme": "http",
