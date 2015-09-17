@@ -61,6 +61,15 @@ CONFIG = {
         "cdh_host": "cdh.daily.gotapaas.com",
         "uaa": "login.daily.gotapaas.com"
     },
+    "sprint.gotapaas.com": {
+        "api_endpoint": "sprint.gotapaas.com",
+        "login.do_scheme": "http",
+        "login_endpoint": "login.sprint.gotapaas.com",
+        "cf_endpoint": "api.sprint.gotapaas.com",
+        "admin_username": "trusted.analytics.tester@gmail.com",
+        "cdh_host": "cdh.sprint.gotapaas.com",
+        "uaa": "login.sprint.gotapaas.com"
+    },
     "10.91.120.35.xip.io": {
         "api_endpoint": "10.91.120.35.xip.io",
         "login.do_scheme": "http",
