@@ -24,12 +24,36 @@ from . import get_logger, UnexpectedResponseError
 
 logger = get_logger("api_test_case")
 
-
 __all__ = ["ApiTestCase", "cleanup_after_failed_setup"]
+FUNCTIONS_TO_LOG = ('setUp', 'tearDown', 'setUpClass', 'tearDownClass')
+SEPARATOR = "================================== {} {} {} =================================="
 
 
-class ApiTestCase(unittest.TestCase):
+def log_fixture_separator(func):
+    if type(func) is classmethod:
+        func = func.__func__
 
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        func_name = func.__name__
+        module_name = ''
+        if 'Class' in func_name:
+            module_name = "in " + func.__module__
+        logger.info(SEPARATOR.format("BEGIN", func_name, module_name))
+        func(*args, **kwargs)
+        logger.info(SEPARATOR.format("END", func_name, module_name))
+    return classmethod(wrapper)
+
+
+class SeparatorMeta(type):
+    def __new__(mcs, name, bases, namespace):
+        for attr, obj in namespace.items():
+            if attr in FUNCTIONS_TO_LOG:
+                namespace[attr] = log_fixture_separator(obj)
+        return super(SeparatorMeta, mcs).__new__(mcs, name, bases, namespace)
+
+
+class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
     @classmethod
     def tearDownClass(cls):
         org.Organization.cf_api_tear_down_test_orgs()
