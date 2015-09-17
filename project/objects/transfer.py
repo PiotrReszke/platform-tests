@@ -32,7 +32,7 @@ class Transfer(object):
 
     TITLE_PREFIX = "transfer"
     COMPARABLE_ATTRIBUTES = ["category", "id", "is_public", "organization_guid", "source",
-                             "state", "timestamps", "title", "user_id"]
+                             "state", "title", "user_id"]
     new_status = "NEW"
     finished_status = "FINISHED"
 
@@ -57,7 +57,7 @@ class Transfer(object):
         return cls(category=api_response["category"], id=api_response["id"],
                    id_in_object_store=api_response["idInObjectStore"], is_public=api_response["publicRequest"],
                    org_guid=api_response["orgUUID"], source=api_response["source"], state=api_response["state"],
-                   timestamps=["timestamps"], title=api_response["title"], user_id=api_response["userId"])
+                   timestamps=api_response["timestamps"], title=api_response["title"], user_id=api_response["userId"])
 
     @classmethod
     def api_create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=0,
@@ -67,7 +67,7 @@ class Transfer(object):
                                            source=source, title=title, client=client)
         return cls(category=category, id=response["id"], id_in_object_store=response["idInObjectStore"],
                    is_public=is_public, org_guid=org_guid, source=source, state=response["state"],
-                   timestamps=["timestamps"], title=title, user_id=user_id)
+                   timestamps=response["timestamps"], title=title, user_id=user_id)
 
     @classmethod
     def api_get_list(cls, orgs, client=None):
@@ -84,7 +84,7 @@ class Transfer(object):
         start = time.time()
         while time.time() - start < timeout:
             transfer = cls.api_get(transfer_id)
-            if transfer.state == cls.finished_status:
+            if transfer.is_finished():
                 break
             time.sleep(20)
         return transfer
@@ -97,3 +97,6 @@ class Transfer(object):
         self.state = transfer.state
         if self.state != self.finished_status:
             raise AssertionError("Transfer did not finish in {}s".format(timeout))
+
+    def is_finished(self):
+        return self.finished_status in self.timestamps.keys()
