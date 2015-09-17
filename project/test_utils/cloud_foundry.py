@@ -41,7 +41,7 @@ def log_output_on_error(func):
         try:
             return func(*args, **kwargs)
         except subprocess.SubprocessError as e:
-            logger.error(e.output)
+            logger.error(e.output.decode("utf-8"))
             raise
     return wrapper
 
