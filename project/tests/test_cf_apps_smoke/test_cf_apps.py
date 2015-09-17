@@ -37,9 +37,9 @@ class TrustedAnalyticsApplicationsSmokeTest(ApiTestCase):
         absdir = realpath(cls.APP_REPO_PATH)
         scriptpath = join(absdir, "generate_template.py")
         logger.info("Run generate_template from platform-appstack script to get generated settings.yml file")
-        subprocess.call(["python2", scriptpath, "-d", absdir])
+        subprocess.call(["python3", scriptpath, "-d", absdir])
 
-        cls.settings_file = open(join(cls.APP_REPO_PATH, "settings.yml"))
+        cls.settings_file = open(join(absdir, "settings.yml"))
         cls.expected_app_and_service_names = []
         cls.expected_service_broker_names = []
         settings = yaml.load(cls.settings_file)
