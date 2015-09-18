@@ -112,21 +112,12 @@ class Application(object):
 
     @staticmethod
     def _get_details_from_response(response):
-        def prim_environment_json(env_json):
-            # this unification of responses is necessary because of unimplemented pattern parameters (^) in pyswagger
-            if isinstance(env_json, str):
-                if env_json.startswith("{"):
-                    env_json = env_json.replace("'{", "{").replace("}'", "}").replace("'", "\"").replace("\\n", "")
-                    env_json = json.loads(env_json)
-                    env_json = {k: v for k, v in env_json.items()}
-                return env_json
-            return {k: prim_environment_json(v) for k, v in env_json.items()}
         return {
             "command": response["command"],
             "detected_buildpack": response["detected_buildpack"],
             "disk_quota": response["disk_quota"],
             "domains": sorted(["{}.{}".format(item["host"], item["domain"]["name"]) for item in response["routes"]]),
-            "environment_json": prim_environment_json(response["environment_json"]),
+            "environment_json": response["environment_json"],
             "instances": response["instances"],
             "memory": response["memory"],
             "package_updated_at": response["package_updated_at"],
