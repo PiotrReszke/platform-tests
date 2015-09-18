@@ -189,6 +189,21 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         obj_list = get_list_method(*args, **kwargs)
         self.assertNotInList(something, obj_list)
 
+    @classmethod
+    def skip_if_previous_test_failed(cls):
+        """For wrapping test methods which should be skipped based on previous failures"""
+        def wrapper(func):
+            @functools.wraps(func)
+            def wrapped(self, *args, **kwargs):
+                if not isinstance(self, cls):
+                    raise TypeError("This decorator can only be used for unittest.TestCase methods")
+                if (len(self._outcome.result.failures) or len(self._outcome.result.errors)) > 0:
+                    raise unittest.SkipTest("Skipped due to failed prerequisite")
+                else:
+                    func(self, *args, **kwargs)
+            return wrapped
+        return wrapper
+
 
 def cleanup_after_failed_setup(*cleanup_methods):
     def wrapper(func):

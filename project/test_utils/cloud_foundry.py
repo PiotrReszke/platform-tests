@@ -233,12 +233,10 @@ def cf_api_app_summary(app_guid):
     """GET /v2/apps/{app_guid}/summary"""
     return CfApiClient.get_client().request("GET", "apps/{}/summary".format(app_guid), log_msg="CF: get app summary")
 
-
 @retry(JobFailedException, tries=3)
 def cf_api_delete_app(app_guid, async=True):
     """DELETE /v2/apps/{app_guid}"""
     __handle_delete_request(endpoint="apps/{}".format(app_guid), log_msg="CF: delete app", async=async)
-
 
 # ------------------------------------------------- service brokers -------------------------------------------------- #
 
@@ -249,7 +247,6 @@ def cf_api_get_service_brokers(space_guid=None):
         query_params["space_guid"] = space_guid
     return __get_all_pages(endpoint="service_brokers", query_params=query_params,
                            log_msg="CF: get service brokers (in space)")
-
 
 # ----------------------------------------------------- routes ------------------------------------------------------- #
 

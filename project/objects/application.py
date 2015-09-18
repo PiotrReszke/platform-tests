@@ -50,7 +50,6 @@ class Application(object):
     STATUS = {"restage": "RESTAGING", "start": "STARTED", "stop": "STOPPED"}
 
     MANIFEST_NAME = "manifest.yml"
-    TEST_APPS = []
 
     def __init__(self, name, space_guid=None, guid=None, local_path=None, state=None, instances=None,
                  memory=None, service_names=(), disk=None, urls=(), topic=None):
@@ -99,6 +98,12 @@ class Application(object):
 
     def change_consumer_group_in_manifest(self, new_consumer_group):
         self.manifest["applications"][0]["env"]["CONSUMER_GROUP"] = new_consumer_group
+        self.__save_manifest()
+
+    def add_env_in_manifest(self, variable_name, value):
+        envs = self.manifest["applications"][0]["env"]
+        envs.update({variable_name: value})
+        self.manifest["applications"][0]["env"] = envs
         self.__save_manifest()
 
     def application_api_request(self, endpoint, method="GET", scheme="http", url=None, data=None, params=None):
@@ -235,37 +240,25 @@ class Application(object):
 
     def cf_api_delete(self):
         try:
-            cf.cf_api_delete_app(self.guid, async=True)
+            cf.cf_api_delete_app(self.guid)
         except UnexpectedResponseError as e:
             if "CF-AppNotFound" in e.error_message:
                 logger.warning("Application {} was not found".format(self.guid))
             else:
                 raise
 
-    @classmethod
-    def delete_test_apps(cls):
-        while len(cls.TEST_APPS) > 0:
-            app = cls.TEST_APPS.pop()
-            app.cf_api_delete()
-
     # -------------------------------- cf cli -------------------------------- #
 
     def cf_push(self):
-        self.TEST_APPS.append(self)
         output = cf.cf_push(self._local_path, self._local_jar)
-        for line in output.split("\n"):
-            if line[0:5] == "urls:":
-                self.urls = (re.split(r'urls: ', line)[1],)
-        self.guid = next(app.guid for app in self.api_get_list(self.space_guid) if app.name == self.name)
-
-    def cf_delete(self):
-        if self in self.TEST_APPS:
-            self.TEST_APPS.remove(self)
-        return cf.cf_delete(self.name)
+        self.guid, self.urls, self._state = next((app.guid, app.urls, app._state)
+                                                 for app in Application.api_get_list(self.space_guid)
+                                                 if app.name == self.name)
 
     def cf_env(self):
         output = cf.cf_env(self.name)
         start = re.search("^\{$", output, re.MULTILINE).start()
         end = re.search("^\}$", output, re.MULTILINE).end()
         return json.loads(output[start:end])
+
 

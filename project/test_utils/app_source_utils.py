@@ -15,6 +15,7 @@
 #
 
 import os
+import re
 import shutil
 import subprocess
 
@@ -25,6 +26,8 @@ from . import config, log_command, get_logger
 
 logger = get_logger("source utils")
 
+# Build gradle has problem with dependency and artifact
+url = "\"http://nexus.sclab.intel.com:8080/content/groups/public\""
 
 def clone_repository(repository_name, target_directory, owner="intel-data"):
     API_URL = "https://{2}:{3}@github.com/{0}/{1}.git".format(owner, repository_name, *config.CONFIG["github_auth"])
@@ -55,3 +58,16 @@ def compile_gradle(directory):
      subprocess.call(command)
      os.chdir(current_path)
      logger.info("Compiled gradle project {}".format(directory))
+
+def set_dependency_url(application_path, filename):
+    """Set url with dependency to can build deplayable jar"""
+    file_path = os.path.join(application_path, filename)
+    with open(file_path, "r") as f:
+        file_content = f.read()
+    str = "maven {url " + url + "}"
+    nodes = re.findall(r'repositories \{([^}]+)\}', file_content)
+    repositories_node = file_content.find(nodes[1])
+    ins_str = repositories_node + len(nodes[1])
+    file_content = file_content[:ins_str] + str + file_content[ins_str:]
+    with open(file_path, "w") as f:
+        f.write(file_content)
