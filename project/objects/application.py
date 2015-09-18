@@ -33,7 +33,8 @@ logger = get_logger("application")
 __all__ = ["Application", "github_get_file_content"]
 
 
-def github_get_file_content(repository, path, owner="trustedanalytics"):
+def github_get_file_content(repository, path, owner="intel-data"):
+    """intel-data repository chosen as it contains data to be tested which then will go to trustedanalytics repo"""
     endpoint = "https://api.github.com/repos/{}/{}/contents/{}".format(owner, repository, path)
     logger.info("Retrieving content of {}/{}/{}".format(owner, repository, path))
     auth = TEST_SETTINGS["GITHUB_AUTH"]

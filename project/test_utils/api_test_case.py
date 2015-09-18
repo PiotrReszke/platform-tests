@@ -147,7 +147,6 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
                 time.sleep(5)
         raise exception
 
-
 def cleanup_after_failed_setup(*cleanup_methods):
     def wrapper(func):
         @functools.wraps(func)

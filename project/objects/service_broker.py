@@ -27,9 +27,8 @@ class ServiceBroker(object):
 
     COMPARABLE_ATTRIBUTES = ["guid", "name", "space_guid"]
 
-    def __init__(self, guid, name, space_guid=None, url=None, created_at=None, updated_at=None, broker_url=None,
-                 auth_username=None, org_guid=None):
-        self.guid, self.name, self.space_guid, self.org_guid, self.url = guid, name, space_guid, org_guid, url
+    def __init__(self, guid, name, url=None, created_at=None, updated_at=None, broker_url=None, auth_username=None):
+        self.guid, self.name, self.url = guid, name, url
         self.created_at, self.updated_at, self.broker_url = created_at, updated_at, broker_url
         self.auth_username = auth_username
 
@@ -43,20 +42,17 @@ class ServiceBroker(object):
         return self.guid < other.guid
 
     @classmethod
-    def _from_cf_api_response(cls, org_guid, response):
-        metadata = response["metadata"]
-        entity = response["entity"]
-        space_guid = None
-        if "space_guid" in entity:
-            space_guid = entity["space_guid"]
-        return cls(guid=metadata["guid"], name=entity["name"], space_guid=space_guid, url=metadata["url"],
+    def _from_cf_api_response(cls, broker_data):
+        metadata = broker_data["metadata"]
+        entity = broker_data["entity"]
+        return cls(guid=metadata["guid"], name=entity["name"], url=metadata["url"],
                    created_at=metadata["created_at"], updated_at=metadata["updated_at"],
-                   broker_url=entity["broker_url"], auth_username=entity["auth_username"], org_guid=org_guid)
+                   broker_url=entity["broker_url"], auth_username=entity["auth_username"])
 
     @classmethod
     def cf_api_get_list(cls, space_guid):
-        service_broker_data = cf.cf_api_get_space_service_brokers(space_guid)
+        service_broker_data = cf.cf_api_get_service_brokers(space_guid)
         service_brokers = []
         for data in service_broker_data:
-            service_brokers.append(cls._from_cf_api_response(space_guid, data))
+            service_brokers.append(cls._from_cf_api_response(data))
         return service_brokers

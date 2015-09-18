@@ -26,7 +26,7 @@ __all__ = ["cf_login", "cf_target", "cf_push", "cf_create_service", "cf_delete",
            "cf_api_get_service_instances", "cf_api_create_service_instance", "cf_api_env", "cf_api_services",
            "cf_api_app_summary", "cf_api_space_summary", "cf_api_get_org_managers", "cf_api_get_org_billing_managers",
            "cf_api_get_org_auditors", "cf_api_get_organization_spaces", "cf_api_get_space_routes",
-           "cf_api_get_space_service_brokers", "cf_api_get_organization_users", "cf_api_delete_org",
+           "cf_api_get_service_brokers", "cf_api_get_organization_users", "cf_api_delete_org",
            "cf_api_delete_route"]
 
 
@@ -224,10 +224,13 @@ def cf_api_get_space_routes(space_guid):
     return CfApiClient.get_client().request(method="GET", endpoint="spaces/{}/routes".format(space_guid))
 
 
-def cf_api_get_space_service_brokers(space_guid):
-    """GET /v2/spaces/{space_guid}/service_brokers"""
-    logger.info("------------------ CF: service brokers for space {} ------------------".format(space_guid))
-    return __get_all_pages(endpoint="service_brokers", query_params={"space_guid": space_guid})
+def cf_api_get_service_brokers(space_guid=None):
+    """GET /v2/service_brokers"""
+    logger.info("------------------ CF: service brokers ------------------")
+    query_params = {}
+    if space_guid is not None:
+        query_params["space_guid"] = space_guid
+    return __get_all_pages(endpoint="service_brokers", query_params=query_params)
 
 
 def cf_api_get_organization_space_users(org_guid, space_guid=None):
