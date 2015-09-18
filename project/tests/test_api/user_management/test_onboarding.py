@@ -1,5 +1,5 @@
-import datetime
 import time
+import unittest
 
 from test_utils import config, gmail_api, get_logger, ApiTestCase
 from objects import User, Organization
@@ -11,6 +11,10 @@ logger = get_logger("test onboarding")
 class Onboarding(ApiTestCase):
     EXPECTED_EMAIL_SUBJECT = "Invitation to join Trusted Analytics platform"
     CLIENT_ID = "intel.data.tests@gmail.com"
+
+    @classmethod
+    def tearDownClass(cls):
+        Organization.cf_api_tear_down_test_orgs()
 
     def _assert_message_correct(self, message_subject, message_content):
         expected_link = "https://console.{}/new-account".format(config.TEST_SETTINGS["TEST_ENVIRONMENT"])
@@ -26,20 +30,82 @@ class Onboarding(ApiTestCase):
                          if not condition]
         self.assertTrue(all((correct_link[0], correct_inviting_user[0], correct_subject[0])), error_message)
 
-    def test_simple_onboarding(self):
-        username = User.get_default_username()
-        org_name = "test_org_{}".format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
-        User.api_invite(username)
-        time.sleep(30)  # sleeping instead of timeout, to catch also when > 1 message is sent
+    def _assert_user_received_messages(self, username, number_of_messages):
+        time.sleep(30)
         messages = gmail_api.get_messages(recipient=username)
-        self.assertEqual(len(messages), 1,
-                         "There are {} messages for {}. Expected: 1".format(len(messages), username))
-        self._assert_message_correct(messages[0]["subject"], messages[0]["content"])
+        self.assertEqual(len(messages), number_of_messages, "There are {} messages for {}. Expected: {}"
+                         .format(len(messages), username, number_of_messages))
+        for message in messages:
+            self._assert_message_correct(message["subject"], message["content"])
 
-        code = gmail_api.extract_code_from_message(messages[0]["content"])
-        user, organization = User.api_register_after_onboarding(code, username, org_name)
+    def test_simple_onboarding(self):
+        username = User.api_invite()
+        self._assert_user_received_messages(username, 1)
+        code = gmail_api.get_invitation_code(username)
+        user, organization = User.api_register_after_onboarding(code, username)
         organizations = Organization.api_get_list()
         self.assertInList(organization, organizations, "New organization was not found")
         users = User.api_get_list_via_organization(org_guid=organization.guid)
         self.assertInList(user, users, "Invited user was not found in new organization")
 
+    def test_invite_existing_user(self):
+        user, organization = User.api_onboard()
+        self.assertRaisesUnexpectedResponse(409, "", User.api_invite, user.username)
+        # checking for one message, because there should be one already after user creation
+        self._assert_user_received_messages(user.username, 1)
+
+    def test_non_admin_user_invites_another_user(self):
+        non_admin_user, _ = User.api_onboard()
+        non_admin_user_client = non_admin_user.login()
+        username = User.get_default_username()
+        self.assertRaisesUnexpectedResponse(403, "", User.api_invite, username, inviting_client=non_admin_user_client)
+        self._assert_user_received_messages(username, 0)
+
+    def test_create_account_with_invalid_code(self):
+        username = User.get_default_username()
+        self.assertRaisesUnexpectedResponse(403, "", User.api_register_after_onboarding,
+                                            "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", username)
+
+    def test_use_same_activation_code_twice(self):
+        username = User.api_invite()
+        code = gmail_api.get_invitation_code(username)
+        User.api_register_after_onboarding(code, username)
+        self.assertRaisesUnexpectedResponse(403, "", User.api_register_after_onboarding, code, username)
+
+    def test_invite_user_with_non_email_username(self):
+        username = "non_mail_username"
+        self.assertRaisesUnexpectedResponse(400, "", User.api_invite, username)
+
+    def test_register_user_without_password(self):
+        username = User.api_invite()
+        code = gmail_api.get_invitation_code(username)
+        self.assertRaisesUnexpectedResponse(400, "", User.api_register_after_onboarding, code, username, "")
+
+    @unittest.skip("Getting all users list takes too long")
+    def test_user_registers_already_existing_organization(self):
+        existing_org = Organization.api_create()
+        username = User.api_invite()
+        code = gmail_api.get_invitation_code(username)
+        self.assertRaisesUnexpectedResponse(400, "", User.api_register_after_onboarding, code, username,
+                                            org_name=existing_org.name)
+        username_list = [user.username for user in User.cf_api_get_all_users()]
+        self.assertNotInList(username, username_list, "User was created")
+
+    def test_user_registers_with_empty_organization_name(self):
+        username = User.api_invite()
+        code = gmail_api.get_invitation_code(username)
+        self.assertRaisesUnexpectedResponse(400, "", User.api_register_after_onboarding, code, username, org_name="")
+
+    def test_invite_user_twice_and_try_to_register_with_latest_message(self):
+        username = User.api_invite()
+        User.api_invite(username)
+        code = gmail_api.get_code_from_latest_message(username)
+        user, org = User.api_register_after_onboarding(code, username)
+        org_users = User.api_get_list_via_organization(org.guid)
+        self.assertInList(user, org_users, "User has not been created.")
+
+    @unittest.skip
+    def test_check_invited_user_in_cf(self):
+        user, _ = User.api_onboard()
+        user_list = User.cf_api_get_all_users()
+        self.assertInList(user, user_list, "User was not found in cf")

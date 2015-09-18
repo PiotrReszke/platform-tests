@@ -18,6 +18,7 @@ import base64
 import os
 import re
 import time
+from operator import itemgetter
 
 from apiclient import discovery
 import httplib2
@@ -83,10 +84,11 @@ def get_messages(recipient, user_id=TEST_EMAIL, subject=None):
     messages = []
     for message_id in message_ids:
         message = service.users().messages().get(userId=user_id, id=message_id, format='full').execute()
+        timestamp = message['internalDate']
         message_subject = message['payload']['headers'][12]['value']
         msg_str = base64.urlsafe_b64decode(message['payload']['body']['data'].encode('ASCII'))
         message_content = msg_str.decode("utf-8")
-        messages.append({"subject": message_subject, "content": message_content})
+        messages.append({"subject": message_subject, "content": message_content, "timestamp": timestamp})
     return messages
 
 
@@ -114,3 +116,8 @@ def get_link_from_message(email_content):
         raise AssertionError("Invitation link was not found in email content")
     return match.group()
 
+
+def get_code_from_latest_message(username):
+    time.sleep(30)
+    messages = sorted(get_messages(recipient=username), key=itemgetter('timestamp'), reverse=True)
+    return extract_code_from_message(messages[0]["content"])

@@ -60,21 +60,23 @@ class User(object):
     @classmethod
     def api_onboard(cls, username=None, password="testPassw0rd", org_name=None, inviting_client=None):
         """Onboarding of a new user. Return new User and Organization objects."""
-        username = username or User.get_default_username()
-        cls.api_invite(username, inviting_client)
+        username = cls.api_invite(username, inviting_client)
         code = gmail_api.get_invitation_code(username)
         return cls.api_register_after_onboarding(code, username, password, org_name)
 
     @classmethod
     def api_invite(cls, username=None, inviting_client=None):
         """Send invitation to a new user using inviting_client."""
-        username = username or User.get_default_username()
+        if username is None:
+            username = User.get_default_username()
         api.api_invite_user(username, client=inviting_client)
+        return username
 
     @classmethod
     def api_register_after_onboarding(cls, code, username, password="testPassw0rd", org_name=None):
         """Set password for new user and select name for their organization. Return objects for new user and org"""
-        org_name = org_name or Organization.get_default_name()
+        if org_name is None:
+            org_name = Organization.get_default_name()
         client = PlatformApiClient.get_client(username)
         api.api_register_new_user(code, password, org_name, client=client)
         # need to obtain org guid (DPNG-2149)
