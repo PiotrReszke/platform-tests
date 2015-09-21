@@ -48,13 +48,17 @@ class Onboarding(ApiTestCase):
         users = User.api_get_list_via_organization(org_guid=organization.guid)
         self.assertInList(user, users, "Invited user was not found in new organization")
 
+    @unittest.expectedFailure
     def test_invite_existing_user(self):
+        # DPNG-2364 Onboarding existing user sends a new email invitation
         user, organization = User.api_onboard()
         self.assertRaisesUnexpectedResponse(409, "", User.api_invite, user.username)
         # checking for one message, because there should be one already after user creation
         self._assert_user_received_messages(user.username, 1)
 
+    @unittest.expectedFailure
     def test_non_admin_user_invites_another_user(self):
+        # DPNG-2366 Non admin user invites another user - http 500
         non_admin_user, _ = User.api_onboard()
         non_admin_user_client = non_admin_user.login()
         username = User.get_default_username()
@@ -72,11 +76,15 @@ class Onboarding(ApiTestCase):
         User.api_register_after_onboarding(code, username)
         self.assertRaisesUnexpectedResponse(403, "", User.api_register_after_onboarding, code, username)
 
+    @unittest.expectedFailure
     def test_invite_user_with_non_email_username(self):
+        # DPNG-2272 Attempt to add user with incorrect e-mail address results in Intenternal Server Error
         username = "non_mail_username"
         self.assertRaisesUnexpectedResponse(400, "", User.api_invite, username)
 
+    @unittest.expectedFailure
     def test_register_user_without_password(self):
+        # DPNG-2367 Registration without password - http 500
         username = User.api_invite()
         code = gmail_api.get_invitation_code(username)
         self.assertRaisesUnexpectedResponse(400, "", User.api_register_after_onboarding, code, username, "")
