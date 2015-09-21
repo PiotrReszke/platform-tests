@@ -50,9 +50,7 @@ class TestMarketplaceServices(ApiTestCase):
         cf_marketplace = ServiceType.cf_api_get_list_from_marketplace(self.test_space.guid)
         self.assertUnorderedListEqual(self.platform_marketplace_services, cf_marketplace)
 
-    @unittest.expectedFailure
     def test_create_gateway_instance(self):
-        """DPNG-1307 While creating gateway from marketplace, platform throws an error"""
         service_type = next(st for st in self.platform_marketplace_services if st.label == "gateway")
         self._test_service_instance_creation_and_deletion(service_type)
 
@@ -74,9 +72,7 @@ class TestMarketplaceServices(ApiTestCase):
         service_type = next(st for st in self.platform_marketplace_services if st.label == "hbase")
         self._test_service_instance_creation_and_deletion(service_type)
 
-    @unittest.expectedFailure
     def test_create_hdfs_instance(self):
-        """DPNG-2300 Error when creating hdfs instance in marketplace"""
         service_type = next(st for st in self.platform_marketplace_services if st.label == "hdfs")
         self._test_service_instance_creation_and_deletion(service_type)
 
