@@ -53,8 +53,8 @@ class EventSummary(object):
         return events_list
 
     @classmethod
-    def api_get_latest_events(cls, client=None):
-        response = api.api_get_latest_events(client)
+    def api_get_latest_events(cls, org_guid=None, client=None):
+        response = api.api_get_latest_events(org_guid, client)
         return cls._get_events_from_response(response)
 
     @classmethod

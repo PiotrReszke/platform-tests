@@ -15,48 +15,48 @@
 #
 
 import time
-import unittest
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api
 from objects import Organization, Transfer, DataSet, User
 
+
 logger = get_logger("test data transfer")
 
 
-class TestDataTransfer(ApiTestCase):
+class DataTransfer(ApiTestCase):
 
     EXAMPLE_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
 
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
+        """Regression by DPNG-2125"""
+        cls.step("Create test organization")
         cls.org = Organization.api_create()
+        cls.step("Add admin to the organization")
         User.get_admin().api_add_to_organization(org_guid=cls.org.guid)
+        cls.step("Create new transfer")
+        cls.expected_transfer = Transfer.api_create(source=cls.EXAMPLE_LINK, org_guid=cls.org.guid)
+        cls.expected_transfer.ensure_finished()
 
-    def test_get_transfers(self):
+    def test_admin_can_get_transfer_list(self):
+        self.step("Check list of transfers can be retrieved")
         transfers = Transfer.api_get_list(orgs=[self.org])
         logger.info("{} transfers".format(len(transfers)))
 
-    @unittest.expectedFailure
     def test_submit_transfer(self):
-        """Regression by DPNG-2125"""
-        expected_transfer = Transfer.api_create(source=self.EXAMPLE_LINK, org_guid=self.org.guid)
-        expected_transfer.ensure_finished()
-        transfer = Transfer.api_get(expected_transfer.id)
-        self.assertAttributesEqual(transfer, expected_transfer)
+        self.step("Get the new transfer and check it is the same as the uploaded one")
+        transfer = Transfer.api_get(self.expected_transfer.id)
+        self.assertEqual(transfer, self.expected_transfer, "The transfer is not the same")
 
-    @unittest.expectedFailure
     def test_match_dataset_to_transfer(self):
-        """Regression by DPNG-2125"""
-        expected_transfer = Transfer.api_create(source=self.EXAMPLE_LINK, org_guid=self.org.guid)
-        expected_transfer.ensure_finished()
-        transfers = Transfer.api_get_list(orgs=[self.org])
-        self.assertInList(expected_transfer, transfers)
-        dataset = DataSet.api_get_matching_to_transfer(org_list=[self.org], transfer_title=expected_transfer.title)
-        self.assertIsNotNone(dataset, "Dataset matching transfer {} was not found".format(expected_transfer))
+        self.step("Check a data set was created for the new transfer")
+        dataset = DataSet.api_get_matching_to_transfer(org_list=[self.org], transfer_title=self.expected_transfer.title)
+        self.assertIsNotNone(dataset, "Dataset matching transfer {} was not found".format(self.expected_transfer))
 
     def test_no_token_in_create_transfer_response(self):
         """Verify that the request to create a transfer does not leak 'token' field"""
+        self.step("Create new transfer and check that 'token' field was not returned in response")
         response = api.api_create_transfer(
             source=self.EXAMPLE_LINK,
             title="test-transfer-{}".format(time.time()),

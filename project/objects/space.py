@@ -51,11 +51,7 @@ class Space(object):
         if name is None:
             name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
         response = api.api_create_space(org.guid, name, client=client)
-        if response == "":  # Until DPNG-2051 is deployed on demo
-            spaces = cls.api_get_list()
-            space = next(space for space in spaces if space.org_guid == org.guid and space.name == name)
-        else:
-            space = cls(name=name, guid=response, org_guid=org.guid)
+        space = cls(name=name, guid=response, org_guid=org.guid)
         org.spaces.append(space)
         return space
 
@@ -107,7 +103,7 @@ class Space(object):
 
     @classmethod
     def cf_api_get_list(cls):
-        response = cf.cf_api_get_space_list()
+        response = cf.cf_api_get_spaces()
         spaces = []
         for space_data in response:
             org_guid = space_data["entity"]["organization_guid"]

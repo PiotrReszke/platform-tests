@@ -29,7 +29,7 @@ from objects import Application, Organization
 
 logger = get_logger("test_mqtt")
 
-@unittest.skip("SSL certificate error - bug DPNG-2273")
+
 class TestMqtt(ApiTestCase):
 
     DB_SERVICE_NAME = "influxdb088"
@@ -44,8 +44,11 @@ class TestMqtt(ApiTestCase):
     MQTT_TOPIC_NAME = "space-shuttle/test-data"
 
     def setUp(self):
+        self.step("Clone repository mqtt-demo")
         app_source_utils.clone_repository("mqtt-demo", self.APP_REPO_PATH)
+        self.step("Compile the sources")
         app_source_utils.compile_mvn(self.APP_REPO_PATH)
+        self.step("Login to cf, targeting seedorg and seedspace")
         self.seedorg, self.seedspace = Organization.get_org_and_space_by_name("seedorg", "seedspace")
         cf.cf_login(self.seedorg.name, self.seedspace.name)
 
@@ -55,38 +58,43 @@ class TestMqtt(ApiTestCase):
         cf.cf_delete_service(self.MQTT_SERVICE_INSTANCE_NAME)
 
     def test_connection(self):
+        """DPNG-2273 Error connection MQTT client"""
+        self.step("Create service instances of {} and {}".format(self.DB_SERVICE_NAME, self.MQTT_SERVICE_NAME))
         cf.cf_create_service(self.DB_SERVICE_NAME, "free", self.DB_SERVICE_INSTANCE_NAME)
         cf.cf_create_service(self.MQTT_SERVICE_NAME, "free", self.MQTT_SERVICE_INSTANCE_NAME)
-        application = Application(local_path=self.APP_REPO_PATH, name=self.APP_NAME)
-        application.cf_push(self.seedorg, self.seedspace)
 
+        self.step("Push {} application to cf".format(self.APP_NAME))
+        application = Application(local_path=self.APP_REPO_PATH, name=self.APP_NAME)
+        application.cf_push()
+        self.step("Retrieve credentials for {} service instance".format(self.MQTT_SERVICE_NAME))
         credentials = application.cf_api_env()["VCAP_SERVICES"][self.MQTT_SERVICE_NAME][0]["credentials"]
         port_mosquitto = credentials["port"]
 
-        # start reading logs
+        self.step("Start reading logs")
         logs = subprocess.Popen(["cf", "logs", "mqtt-demo"], stdout=subprocess.PIPE)
         time.sleep(5)
 
+        self.step("Connect to {} with an mqtt client".format(self.MQTT_SERVER))
         mqtt_client = mqtt.Client()
         mqtt_client.username_pw_set(credentials["username"], credentials["password"])
         mqtt_client.tls_set(self.SERVER_CERTIFICATE, tls_version=ssl.PROTOCOL_TLSv1_2)
         mqtt_client.connect(self.MQTT_SERVER, int(port_mosquitto), 20)
         with open(self.TEST_DATA_FILE) as f:
             expected_data = f.read().split("\n")
-        logger.info("Sending {0} data vectors to {1}:{2} on topic {3}...".format(len(expected_data), self.MQTT_SERVER,
-                                                                                 port_mosquitto, self.MQTT_TOPIC_NAME))
+
+        self.step("Send {0} data vectors to {1}:{2} on topic {3}".format(len(expected_data), self.MQTT_SERVER,
+                                                                         port_mosquitto, self.MQTT_TOPIC_NAME))
         for line in expected_data:
             mqtt_client.publish(self.MQTT_TOPIC_NAME, line)
-        logger.info("Done")
-        connection_code = mqtt_client.disconnect()
-        logger.info("Disconnected with code {}".format(connection_code))
 
+        self.step("Stop reading logs. Retrieve vectors from log content.")
         grep = subprocess.Popen(["grep", "message:"], stdin=logs.stdout, stdout=subprocess.PIPE)
         logs.stdout.close()
         time.sleep(50)
         os.kill(logs.pid, signal.SIGTERM)
         cut = subprocess.Popen("cut -d ':' -f7 ", stdin=grep.stdout, stdout=subprocess.PIPE, shell=True)
         grep.stdout.close()
+        self.step("Check that logs display all the vectors sent")
         log_result = cut.communicate()[0].decode().split("\n")
         log_result = [item.strip() for item in log_result if item not in (" ", "")]
         self.maxDiff = None  # allows for full diff to be displayed

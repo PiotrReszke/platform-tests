@@ -74,7 +74,7 @@ class ServiceType(object):
 
     @classmethod
     def cf_api_get_list_from_marketplace(cls, space_guid):
-        cf_response = cf.cf_api_services(space_guid)
+        cf_response = cf.cf_api_get_app_services(space_guid)
         return [cls._from_details(space_guid, data) for data in cf_response["resources"]]
 
     def api_get_service_plans(self, client=None):

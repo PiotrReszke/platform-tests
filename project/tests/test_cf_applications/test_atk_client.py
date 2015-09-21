@@ -50,41 +50,44 @@ class TestCreateAtkInstance(ApiTestCase):
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
-        admin_user = User.get_admin()
+        cls.step("Create test organization and test space")
         cls.test_org = Organization.api_create(space_names=("test_space",))
-        admin_user.api_add_to_organization(org_guid=cls.test_org.guid)
         cls.test_space = cls.test_org.spaces[0]
+        cls.step("Add admin to the test space")
+        admin_user = User.get_admin()
         admin_user.api_add_to_space(space_guid=cls.test_space.guid, org_guid=cls.test_org.guid, roles=("managers",
                                                                                                        "developers"))
+        cls.step("Login to cf")
         cf.cf_login(cls.test_org.name, cls.test_space.name)
 
+        cls.step("Create transfer and check it's finished")
         cls.transfer = Transfer.api_create(source=cls.DATA_SOURCE, org_guid=cls.test_org.guid)
         cls.transfer.ensure_finished()
-        transfers = Transfer.api_get_list(orgs=[cls.test_org])
-        if cls.transfer not in transfers:
-            raise AtkTestException("Transfer {} not submitted properly".format(cls.transfer))
+        cls.step("Publish in hive the data set created based on the submitted transfer")
         cls.dataset = DataSet.api_get_matching_to_transfer(org_list=[cls.test_org], transfer_title=cls.transfer.title)
         cls.dataset.publish_in_hive()
 
+        cls.step("Create atk service instance")
         marketplace_services = ServiceType.api_get_list_from_marketplace(cls.test_space.guid)
         atk_service = next((s for s in marketplace_services if s.label == cls.ATK_SERVICE_LABEL), None)
         if atk_service is None:
             raise AtkTestException("No atk service found in marketplace in {}".format(cls.test_space))
-
         atk_service_instance = AtkInstance.cf_create(cls.test_space.guid, atk_service.guid)
         if atk_service_instance is None:
             raise AtkTestException("Atk instance is not found in {}".format(cls.test_space))
-        time.sleep(20)  # ATK application needs time before it appears on application list
+
+        cls.step("With huge timeout, check that atk application is created")
         cls.atk_app = Application.ensure_started(space_guid=cls.test_space.guid, application_name_prefix="atk-")
         if cls.atk_app is None:
             raise AtkTestException("ATK application is not on application list")
 
+        cls.step("Download atk client package from the Platform")
         atk_client_file_name = ATKtools.api_get_atk_client_file()
         cls.atk_client_tar_file_path = os.path.join(atk_client_file_name)
         with tarfile.open(atk_client_file_name) as tar:
             tar.extractall(path=cls.TEST_DATA_DIRECTORY)
         cls.atk_client_directory = os.path.join(cls.TEST_DATA_DIRECTORY, atk_client_file_name.split(".tar")[0])
-
+        cls.step("Create virtualenv and install the atk client package there")
         cls.atk_virtualenv = ATKtools("atk_virtualenv")
         cls.atk_virtualenv.create()
         cls.atk_virtualenv.pip_install_local_package(cls.atk_client_directory)
@@ -105,46 +108,54 @@ class TestCreateAtkInstance(ApiTestCase):
         Organization.cf_api_tear_down_test_orgs()
 
     def test_atk_client_connection(self):
+        self.step("Run atk connection test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "atk_client_connection_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
                                                       arguments={
                                                           "--organization": self.test_org.name,
                                                           "--transfer": self.transfer.title,
-                                                          "--uaa_file_name": self.UAA_FILENAME})
+                                                          "--uaa_file_name": self.UAA_FILENAME
+                                                      })
         self.assertNotIn("Traceback", response, msg=response.split("Traceback", 1)[1])
         self._assert_uaa_file_is_not_empty()
 
     @unittest.expectedFailure
     def test_csv_file(self):
-        """DPNG-2108 Dataset targetUri shows wrong hdfs path and DPNG-2106 Datasets published in Hue are empty"""
+        """DPNG-2108 Dataset targetUri shows wrong hdfs path; DPNG-2106 Datasets published in Hue are empty"""
+        self.step("Run atk test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "csv_file_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
                                                       arguments={
                                                           "--organization": self.test_org.name,
                                                           "--transfer": self.transfer.title,
                                                           "--uaa_file_name": self.UAA_FILENAME,
-                                                          "--target_uri": self.dataset.target_uri})
+                                                          "--target_uri": self.dataset.target_uri
+                                                      })
         self.assertNotIn("Traceback", response, msg=response.split("Traceback", 1)[1])
         self._assert_uaa_file_is_not_empty()
 
     def test_export_to_hive(self):
+        self.step("Run atk test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "export_to_hive_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
                                                       arguments={
                                                           "--organization": self.test_org.name,
                                                           "--transfer": self.transfer.title,
-                                                          "--uaa_file_name": self.UAA_FILENAME})
+                                                          "--uaa_file_name": self.UAA_FILENAME
+                                                      })
         self.assertNotIn("Traceback", response, msg=response.split("Traceback", 1)[1])
         self._assert_uaa_file_is_not_empty()
 
     @unittest.expectedFailure
     def test_table_manipulation(self):
-        """DPNG-2199 ATK client cannot add column to frame and DPNG-2324 ATK client cannot drop frames in one request"""
+        """DPNG-2199 ATK client cannot add column to frame; DPNG-2324 ATK client cannot drop frames in one request"""
+        self.step("Run atk test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "table_manipulation_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
                                                       arguments={
                                                           "--organization": self.test_org.name,
                                                           "--transfer": self.transfer.title,
-                                                          "--uaa_file_name": self.UAA_FILENAME})
+                                                          "--uaa_file_name": self.UAA_FILENAME
+                                                      })
         self.assertNotIn("Traceback", response, msg=response.split("Traceback", 1)[1])
         self._assert_uaa_file_is_not_empty()

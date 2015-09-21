@@ -228,7 +228,7 @@ class Application(object):
         return False
 
     def cf_api_env(self):
-        response = cf.cf_api_env(self.guid)
+        response = cf.cf_api_get_app_env(self.guid)
         return {
             "VCAP_SERVICES": response["system_env_json"]["VCAP_SERVICES"],
             "VCAP_APPLICATION": response["application_env_json"]["VCAP_APPLICATION"]
@@ -251,14 +251,13 @@ class Application(object):
 
     # -------------------------------- cf cli -------------------------------- #
 
-    def cf_push(self, organization, space):
+    def cf_push(self):
         self.TEST_APPS.append(self)
-        cf.cf_target(organization.name, space.name)
         output = cf.cf_push(self._local_path, self._local_jar)
         for line in output.split("\n"):
             if line[0:5] == "urls:":
                 self.urls = (re.split(r'urls: ', line)[1],)
-        self.guid = next(app.guid for app in self.api_get_list(space.guid) if app.name == self.name)
+        self.guid = next(app.guid for app in self.api_get_list(self.space_guid) if app.name == self.name)
 
     def cf_delete(self):
         if self in self.TEST_APPS:

@@ -19,14 +19,17 @@ import functools
 import time
 import unittest
 
-from objects import organization as org
+from objects import organization as org, user as usr
 from . import get_logger, UnexpectedResponseError
+
 
 logger = get_logger("api_test_case")
 
+
 __all__ = ["ApiTestCase", "cleanup_after_failed_setup"]
+
 FUNCTIONS_TO_LOG = ('setUp', 'tearDown', 'setUpClass', 'tearDownClass')
-SEPARATOR = "================================== {} {} {} =================================="
+SEPARATOR = "****************************** {} {} {} ******************************"
 
 
 def log_fixture_separator(func):
@@ -34,12 +37,10 @@ def log_fixture_separator(func):
     if func_is_classmethod:
         func = func.__func__
     func_name = func.__name__
-    class_name = ""
-    if func_is_classmethod:
-        class_name = "in {}".format(func.__class__.__name__)
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        class_name = "in {}".format(args[0].__name__) if func_is_classmethod else ""
         logger.info(SEPARATOR.format("BEGIN", func_name, class_name))
         func(*args, **kwargs)
         logger.info(SEPARATOR.format("END", func_name, class_name))
@@ -59,16 +60,37 @@ class SeparatorMeta(type):
 
 
 class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
+
+    STEP_NO = 0
+    SUB_TEST_NO = 0
+
     @classmethod
     def tearDownClass(cls):
         org.Organization.cf_api_tear_down_test_orgs()
+        usr.User.cf_api_tear_down_test_users()
+
+    @classmethod
+    def step(cls, message):
+        """Log message as nth test step"""
+        separator = "=" * 20
+        step_logger = get_logger("STEP")
+        step_logger.info("{0} Step {1} {2} {0}".format(separator, cls.STEP_NO, message))
+        cls.STEP_NO += 1
+
+    def subTest(self, msg=None, **params):
+        separator = "*" * 20
+        logged_params = ",".join(["{}={}".format(k, v) for k, v in params.items()])
+        logger.info("{0} Sub test {1} ({2})".format(separator, self.SUB_TEST_NO, logged_params))
+        sub_test_returns = super().subTest(msg, **params)
+        self.__class__.STEP_NO = 0
+        self.__class__.SUB_TEST_NO += 1
+        return sub_test_returns
 
     def run(self, result=None):
-        logger.info('\n******************************************************************\n'
-                    '*\n'
-                    '*\t\t %s\n'
-                    '*\n'
-                    '******************************************************************\n', self._testMethodName)
+        test_name = "{}.{}".format(self.__class__.__name__, self._testMethodName)
+        separator = "*" * len(test_name)
+        self.__class__.STEP_NO = self.__class__.SUB_TEST_NO = 0
+        logger.info("\n{0}\n\n{1}\n\n{0}\n".format(separator, test_name))
         return super().run(result=result)
 
     @staticmethod
@@ -98,13 +120,16 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         with self.assertRaises(UnexpectedResponseError) as e:
             callableObj(*args, **kwargs)
         status_correct = e.exception.status == status
-        error_message_contains_string = error_message_phrase in e.exception.error_message
+        if error_message_phrase == "":
+            error_message_contains_string = error_message_phrase == ""
+        else:
+            error_message_contains_string = error_message_phrase in e.exception.error_message
         self.assertTrue(status_correct and error_message_contains_string,
                         "Error is {0} \"{1}\", expected {2} \"{3}\"".format(e.exception.status,
                                                                             e.exception.error_message,
                                                                             status, error_message_phrase))
 
-    def assertRerturnsError(self, callableObj, *args, **kwargs):
+    def assertReturnsError(self, callableObj, *args, **kwargs):
         """Assert that response error code is 4XX or 5XX"""
         with self.assertRaises(UnexpectedResponseError) as e:
             callableObj(*args, **kwargs)

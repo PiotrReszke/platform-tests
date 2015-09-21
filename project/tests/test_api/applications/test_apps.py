@@ -24,72 +24,69 @@ from objects import Organization, Application
 logger = get_logger("test_api_apps")
 
 
-class BaseTestApps(ApiTestCase):
+class Apps(ApiTestCase):
 
     APP_REPO_PATH = "../../cf-env-demo"
     APP_NAME_PREFIX = "cf_env"
 
     @classmethod
-    def tearDownClass(cls):
-        Application.delete_test_apps()
-        Organization.cf_api_tear_down_test_orgs()
-
-    @classmethod
-    def _push_app(cls, org, space):
-        name = cls.APP_NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-        application = Application(local_path=cls.APP_REPO_PATH, name=name)
-        application.change_name_in_manifest(name)
-        application.cf_push(org, space)
-        return application
-
-
-class TestApps(BaseTestApps):
-
-    @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
+        cls.step("Clone example application repository from github")
         app_source_utils.clone_repository("cf-env", cls.APP_REPO_PATH, owner="cloudfoundry-community")
-        cls.organization = Organization.api_create(space_names=["test-space"])
-        cls.space = cls.organization.spaces[0]
-        cf.cf_login(cls.organization.name, cls.space.name)
+
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
+    def setUp(self):
+        self.step("Create test organization and space")
+        self.test_org = Organization.api_create(space_names=["test-space"])
+        self.test_space = self.test_org.spaces[0]
+        self.step("Login to cf targeting test org and test space")
+        cf.cf_login(self.test_org.name, self.test_space.name)
+        self.test_app = self._push_app(self.test_org, self.test_space)
+        self.step("Check the application is running")
+        self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
+
+    def _push_app(self, org, space):
+        self.step("Push the example application to cf")
+        name = self.APP_NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        application = Application(local_path=self.APP_REPO_PATH, name=name, space_guid=self.test_space.guid)
+        application.change_name_in_manifest(name)
+        application.cf_push()
+        return application
 
     def test_api_push_stop_start_delete(self):
-        application = self._push_app(self.organization, self.space)
-        self.assertEqualWithinTimeout(120, True, application.cf_api_app_is_running)
-        application.api_stop_app()
-        self.assertEqualWithinTimeout(120, False, application.cf_api_app_is_running)
-        application.api_start_app()
-        self.assertEqualWithinTimeout(120, True, application.cf_api_app_is_running)
-        application.api_delete()
-        self.assertNotInList(application, Application.cf_api_get_list(self.space.guid))
+        self.step("Stop the application and check that it is stopped")
+        self.test_app.api_stop_app()
+        self.assertEqualWithinTimeout(120, False, self.test_app.cf_api_app_is_running)
+        self.step("Start the application and check that it has started")
+        self.test_app.api_start_app()
+        self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
+        self.step("Delete the application and check that it doesn't exist")
+        self.test_app.api_delete()
+        self.assertNotInList(self.test_app, Application.cf_api_get_list(self.test_space.guid))
 
     def test_api_push_restage_delete(self):
-        application = self._push_app(self.organization, self.space)
-        self.assertEqualWithinTimeout(120, True, application.cf_api_app_is_running)
-        application.api_restage_app()
-        self.assertEqualWithinTimeout(120, True, application.cf_api_app_is_running)
-        application.api_delete()
-        self.assertNotInList(application, Application.cf_api_get_list(self.space.guid))
+        self.step("Restage the application and check that it is running")
+        self.test_app.api_restage_app()
+        self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
+        self.step("Delete the application and check that it doesn't exist")
+        self.test_app.api_delete()
+        self.assertNotInList(self.test_app, Application.cf_api_get_list(self.test_space.guid))
 
-
-@unittest.skip("These tests are waiting for corrections")
-class TestDeleteOrganizationsAfterAppCreation(BaseTestApps):
-
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, Application.delete_test_apps)
-    def setUp(self):
-        self.test_org = Organization.api_create(space_names=["test-space"])
-        test_space = self.test_org.spaces[0]
-        self.application = self._push_app(self.test_org, test_space)
-
+    @unittest.skip("This test is waiting for corrections")
     def test_delete_org_after_app_creation_and_deletion(self):
-        self.assertEqualWithinTimeout(120, True, self.application.cf_api_app_is_running)
-        self.application.api_delete()
+        self.step("Delete the test application")
+        self.test_app.api_delete()
+        self.step("Delete the organization using platform api")
         self.test_org.api_delete(with_spaces=True)
+        self.step("Check that the organization is gone")
         org_list = Organization.api_get_list()
         self.assertNotInList(self.test_org, org_list, "Organization {} has not been deleted".format(self.test_org.name))
 
+    @unittest.skip("This test is waiting for corrections")
     def test_delete_org_without_deleting_an_app(self):
-        self.assertEqualWithinTimeout(120, True, self.application.cf_api_app_is_running)
+        self.step("Delete the test organization")
         self.test_org.api_delete(with_spaces=True)
+        self.step("Check that the organization is gone")
         org_list = Organization.api_get_list()
         self.assertNotInList(self.test_org, org_list, "Organization {} has not been deleted".format(self.test_org.name))

@@ -16,18 +16,16 @@
 
 import abc
 import json
+import os
 import time
 
 import requests
 
-from . import config, get_logger
+from . import config, log_http_request, log_http_response
 
 
-__all__ = ["UnexpectedResponseError", "JobFailedException", "PlatformApiClient", "ConsoleClient",
+__all__ = ["UnexpectedResponseError", "PlatformApiClient", "ConsoleClient",
            "AppClient", "CfApiClient"]
-
-
-logger = get_logger("api client")
 
 
 class UnexpectedResponseError(AssertionError):
@@ -38,13 +36,10 @@ class UnexpectedResponseError(AssertionError):
         self.error_message = error_message
 
 
-class JobFailedException(Exception):
-    pass
-
-
 class PlatformApiClient(metaclass=abc.ABCMeta):
     """Base class for HTTP clients"""
 
+    LOGGED_RESPONSE_BODY_LENGTH = 1024  # set to 0 to log full response body
     _CLIENTS = {}
 
     @abc.abstractmethod
@@ -79,7 +74,7 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
                 cls._CLIENTS[username] = AppClient(username, password)
         return cls._CLIENTS[username]
 
-    def request(self, method, endpoint, headers=None, params=None, data=None, body=None):
+    def request(self, method, endpoint, headers=None, params=None, data=None, body=None, log_msg=""):
         request = requests.Request(
             method=method.upper(),
             url=self.url + endpoint,
@@ -89,9 +84,9 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
             json=body
         )
         request = self._session.prepare_request(request)
-        self._log_request(request)
+        log_http_request(request, self._username, self._password, description=log_msg)
         response = self._session.send(request)
-        self._log_response(response)
+        log_http_response(response, self.LOGGED_RESPONSE_BODY_LENGTH)
         if not response.ok:
             raise UnexpectedResponseError(response.status_code, response.text)
         if response.text == "":
@@ -102,40 +97,14 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
         """Download (large) file in chunks and save it to target_file_path."""
         request = requests.Request("GET", url=self.url + endpoint)
         request = self._session.prepare_request(request)
-        self._log_request(request)
+        log_http_request(request, self._username, description="Download file")
         response = self._session.send(request, stream=True)
-        self._log_response(response, log_body=False)  # the body is a long stream of binary data
+        log_http_response(response, logged_body_length=-1)  # the body is a long stream of binary data
         with open(target_file_path, 'w+b') as f:
             for chunk in response.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
                     f.flush()
-
-    def _log_request(self, prepared_request):
-        body = prepared_request.body
-        if self._password and body:
-            body = body.replace(self._password, "[SECRET]")
-        msg = [
-            "\n----------------Request------------------",
-            "Client name: {}".format(self._username),
-            "URL: {} {}".format(prepared_request.method, prepared_request.url),
-            "Headers: {}".format(prepared_request.headers),
-            "Body: {}".format(body),
-            "-----------------------------------------\n"
-        ]
-        logger.debug("\n".join(msg))
-
-    @staticmethod
-    def _log_response(response, log_body=True):
-        body = response.text if log_body else ""
-        msg = [
-            "\n----------------Response------------------",
-            "Status code: {}".format(response.status_code),
-            "Headers: {}".format(response.headers),
-            "Content: {}".format(body),
-            "-----------------------------------------\n"
-        ]
-        logger.debug("\n".join(msg))
 
 
 class ConsoleClient(PlatformApiClient):
@@ -151,7 +120,6 @@ class ConsoleClient(PlatformApiClient):
         return "https://console.{}/".format(self._domain)
 
     def authenticate(self, password):
-        logger.info("-------------------- Authenticate user {} --------------------".format(self._username))
         request = requests.Request(
             method="POST",
             url="{}://{}/login.do".format(config.get_config_value("login.do_scheme"), self._login_endpoint),
@@ -159,9 +127,9 @@ class ConsoleClient(PlatformApiClient):
             headers={"Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded"}
         )
         request = self._session.prepare_request(request)
-        self._log_request(request)
+        log_http_request(request, self._username, self._password, description="Authenticate user")
         response = self._session.send(request)
-        self._log_response(response)
+        log_http_response(response, self.LOGGED_RESPONSE_BODY_LENGTH)
         if not response.ok or "forgotPasswordLink" in response.text:
             raise UnexpectedResponseError(response.status_code, response.text)
 
@@ -197,7 +165,6 @@ class AppClient(PlatformApiClient):
         return "http://{}.{}/".format(self._application_name, self._domain)
 
     def _get_token(self):
-        logger.info("-------------------- Retrieve token for user {} --------------------".format(self._username))
         path = "https://{}/oauth/token".format(self._login_endpoint)
         headers = {
             "Authorization": config.TEST_SETTINGS["TEST_LOGIN_TOKEN"],
@@ -207,21 +174,21 @@ class AppClient(PlatformApiClient):
         request = requests.Request("POST", path, data=data, headers=headers)
         request = self._session.prepare_request(request)
         self._token_retrieval_time = time.time()
-        self._log_request(request)
+        log_http_request(request, self._username, self._password, "Retrieve cf token")
         response = self._session.send(request)
-        self._log_response(response)
+        log_http_response(response, self.LOGGED_RESPONSE_BODY_LENGTH)
         if not response.ok:
             raise UnexpectedResponseError(response.status_code, response.text)
         self._token = "Bearer {}".format(json.loads(response.text)["access_token"])
 
-    def request(self, method, endpoint, headers=None, params=None, data=None, body=None):
+    def request(self, method, endpoint, headers=None, params=None, data=None, body=None, log_msg=""):
         # check that token has not expired
         if (self._token is not None) and (time.time() - self._token_retrieval_time > self._TOKEN_EXPIRY_TIME):
             self._get_token()
         headers = {} if headers is None else headers
         headers["Authorization"] = self._token
         self._application_name = next((k for k, v in self.APP_ENDPOINT_MAP.items() if v(endpoint)), "")
-        return super().request(method, endpoint, headers, params, data, body)
+        return super().request(method, endpoint, headers, params, data, body, log_msg)
 
 
 class CfApiClient(AppClient):

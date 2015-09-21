@@ -18,8 +18,7 @@ import functools
 from datetime import datetime
 
 from . import Space
-from test_utils import get_logger, UnexpectedResponseError, JobFailedException, platform_api_calls as api, \
-    cloud_foundry as cf
+from test_utils import get_logger, UnexpectedResponseError, platform_api_calls as api, cloud_foundry as cf
 
 __all__ = ["Organization"]
 
@@ -103,17 +102,7 @@ class Organization(object):
         api.api_delete_organization(self.guid, client=client)
 
     def api_get_metrics(self, client=None):
-        response = api.api_get_org_metrics(self.guid, client=client)
-        self.metrics = {}
-        for response_key in ["appsDown", "appsRunning", "datasetCount", "domainsUsage", "memoryUsageAbsolute",
-                             "privateDatasets", "publicDatasets", "serviceUsage", "totalUsers"]:
-            self.metrics[response_key] = response.get(response_key)
-            if self.metrics[response_key] is None:
-                logger.warning("Missing metrics in response: {}".format(response_key))
-        for response_key in ["domainsUsagePercent", "memoryUsage", "serviceUsagePercent"]:
-            if response.get(response_key) is None:
-                logger.warning("Missing metrics in response: {}".format(response_key))
-            self.metrics[response_key] = response[response_key]["numerator"] / response[response_key]["denominator"]
+        self.metrics = api.api_get_org_metrics(self.guid, client=client)
 
     def api_get_spaces(self, client=None):
         response = api.api_get_spaces_in_org(org_guid=self.guid, client=client)
@@ -134,7 +123,7 @@ class Organization(object):
         return org_list
 
     def cf_api_get_spaces(self):
-        response = cf.cf_api_get_organization_spaces(self.guid)
+        response = cf.cf_api_get_org_spaces(self.guid)
         spaces = []
         for space_data in response:
             space = Space(space_data["entity"]["name"], space_data["metadata"]["guid"], self.guid)
@@ -172,7 +161,7 @@ class Organization(object):
         for org in org_list:
             try:
                 org.cf_api_delete(async=async)
-            except JobFailedException:
+            except cf.JobFailedException:
                 failed_to_delete.append(org)
                 logger.exception("Could not delete {}\n".format(org))
         return failed_to_delete

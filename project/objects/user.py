@@ -18,7 +18,7 @@ import functools
 import time
 
 from test_utils import config, PlatformApiClient, platform_api_calls as api, cloud_foundry as cf, gmail_api, \
-    JobFailedException, get_logger, UnexpectedResponseError
+    get_logger, UnexpectedResponseError
 from . import Organization
 
 
@@ -195,12 +195,12 @@ class User(object):
 
     @classmethod
     def cf_api_get_all_users(cls):
-        response = cf.cf_api_get_all_users()
+        response = cf.cf_api_get_users()
         return cls._get_user_list_from_cf_api_response(response)
 
     @classmethod
     def cf_api_get_list_in_organization(cls, org_guid, space_guid=None):
-        response = cf.cf_api_get_organization_space_users(org_guid=org_guid, space_guid=space_guid)
+        response = cf.cf_api_get_org_users(org_guid=org_guid, space_guid=space_guid)
         return cls._get_user_list_from_cf_api_response(response)
 
     def cf_api_delete(self, async=True):

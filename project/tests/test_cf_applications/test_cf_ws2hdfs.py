@@ -85,17 +85,17 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         self.assertUnorderedListEqual(topic_messages, expected_messages)
 
     def _push_ws2kafka(self, app_name, topic_name):
-        self.app_ws2kafka = Application(local_path=self.WS2KAFKA_PATH, name=app_name, topic=topic_name)
-
+        self.app_ws2kafka = Application(local_path=self.WS2KAFKA_PATH, name=app_name, topic=topic_name,
+                                        space_guid=self.seedorg.guid)
         self.app_ws2kafka.change_name_in_manifest(self.app_ws2kafka.name)
-        self.app_ws2kafka.cf_push(self.seedorg, self.seedspace)
+        self.app_ws2kafka.cf_push()
 
     def _push_kafka2hdfs(self, app_name, topic_name, consumer_group_name):
-        self.app_kafka2hdfs = Application(local_path=self.KAFKA2HDFS_PATH, name=app_name)
+        self.app_kafka2hdfs = Application(local_path=self.KAFKA2HDFS_PATH, name=app_name, space_guid=self.seedorg.guid)
         self.app_kafka2hdfs.change_name_in_manifest(self.app_kafka2hdfs.name)
         self.app_kafka2hdfs.change_topic_in_manifest(topic_name)
         self.app_kafka2hdfs.change_consumer_group_in_manifest(consumer_group_name)
-        self.app_kafka2hdfs.cf_push(self.seedorg, self.seedspace)
+        self.app_kafka2hdfs.cf_push()
 
     def _send_ws_messages(self, connection_string):
         ws = websocket.create_connection(connection_string)
@@ -104,7 +104,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
             message = "Test-{}".format(n)
             ws.send(message)
             messages.append(message)
-        logger.info("Send mesages to {}".format(connection_string))
+        logger.info("Send messages to {}".format(connection_string))
         return messages
 
     def _get_message_count_from_app_api(self, endpoint):

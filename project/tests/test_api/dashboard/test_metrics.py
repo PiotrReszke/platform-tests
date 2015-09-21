@@ -18,51 +18,58 @@ from test_utils import ApiTestCase
 from objects import Organization, DataSet, User
 
 
-expected_metrics_keys = ["privateDatasets", "serviceUsagePercent", "datasetCount", "memoryUsageAbsolute", "memoryUsage",
-                         "totalUsers", "serviceUsage", "appsRunning", "domainsUsagePercent", "domainsUsage", "appsDown",
-                         "publicDatasets"]
+expected_metrics_keys = ["appsDown", "appsRunning", "datasetCount", "domainsUsage", "domainsUsagePercent",
+                         "latestEvents", "memoryUsage", "memoryUsageAbsolute", "privateDatasets", "publicDatasets",
+                         "serviceUsage", "serviceUsagePercent", "totalUsers"]
 
 
-class MetricsTest(ApiTestCase):
+class Metrics(ApiTestCase):
     @classmethod
     def setUpClass(cls):
+        cls.step("Retrieve metrics for seedorg")
         cls.seedorg = Organization.get_org_and_space_by_name(org_name="seedorg")[0]
         cls.seedorg.api_get_metrics()
 
     def test_metrics_contains_all_keys(self):
+        self.step("Check that metrics response contains all expected fields")
         keys = list(self.seedorg.metrics.keys())
         self.assertUnorderedListEqual(keys, expected_metrics_keys)
 
     def test_service_count(self):
+        self.step("Get apps and services from cf and check that servivceUsage metrics is correct")
         apps, services = self.seedorg.cf_api_get_apps_and_services()
         self.assertEqual(self.seedorg.metrics["serviceUsage"], len(services))
 
     def test_application_metrics(self):
-        cl_apps_running = []
-        cl_apps_down = []
+        self.step("Get apps from cf and check that appsRunning and appsDown metrics are correct")
+        cf_apps_up = []
+        cf_apps_down = []
         org_spaces = self.seedorg.cf_api_get_spaces()
         for space in org_spaces:
             apps, _ = space.cf_api_get_space_summary()
             for app in apps:
                 if app.is_started:
-                    cl_apps_running.append(app)
+                    cf_apps_up.append(app)
                 else:
-                    cl_apps_down.append(app)
+                    cf_apps_down.append(app)
         dashboard_apps_running = self.seedorg.metrics["appsRunning"]
         dashboard_apps_down = self.seedorg.metrics["appsDown"]
-        metrics_are_equal = (len(cl_apps_running) == dashboard_apps_running and
-                             len(cl_apps_down) == dashboard_apps_down)
+        metrics_are_equal = (len(cf_apps_up) == dashboard_apps_running and len(cf_apps_down) == dashboard_apps_down)
         self.assertTrue(metrics_are_equal,
-                        "\nApps running: {} - expected: {}\nApps down: {} - expected: {}".format(
-                            dashboard_apps_running, len(cl_apps_running), dashboard_apps_down, len(cl_apps_down)))
+                        "\nApps running: {} - expected: {}\nApps down: {} - expected: {}".format(dashboard_apps_running,
+                                                                                                 len(cf_apps_up),
+                                                                                                 dashboard_apps_down,
+                                                                                                 len(cf_apps_down)))
 
     def test_user_count(self):
-        cl_user_list = User.cf_api_get_list_in_organization(org_guid=self.seedorg.guid)
+        self.step("Get org users from cf and check that totalUsers metrics is correct")
+        cf_user_list = User.cf_api_get_list_in_organization(org_guid=self.seedorg.guid)
         dashboard_total_users = self.seedorg.metrics["totalUsers"]
-        self.assertTrue(dashboard_total_users == len(cl_user_list),
-                        "\nUsers: {} - expected: {}".format(dashboard_total_users, len(cl_user_list)))
+        self.assertEqual(len(cf_user_list), dashboard_total_users,
+                         "\nUsers: {} - expected: {}".format(dashboard_total_users, len(cf_user_list)))
 
     def test_data_metrics(self):
+        self.step("Get seedorg datasets and check datasetCount, privateDatasets, publicDatasets metrics are correct")
         public_datasets = []
         private_datasets = []
         datasets = DataSet.api_get_list([self.seedorg])

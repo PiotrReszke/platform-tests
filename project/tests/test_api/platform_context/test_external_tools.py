@@ -28,12 +28,15 @@ class TestExternalTools(ApiTestCase):
     @unittest.expectedFailure
     def test_check_status_code_of_external_tools(self):
         """DPNG-2306 Availability of Arcadia and Hue should be discovered automatically"""
+        self.step("Get list of external tools")
         tools_list = ExternalTools.api_get_external_tools()
         self.assertGreater(len(tools_list), 0)
         for tool in tools_list:
             with self.subTest(tool=tool.name):
                 if tool.available:
+                    self.step("Check that request to {} returns OK status".format(tool.name))
                     tool.send_request()
                 else:
+                    self.step("Check that request to {} returns fails with 4XX or 5XX".format(tool.name))
                     self.assertRerturnsError(tool.send_request)
 
