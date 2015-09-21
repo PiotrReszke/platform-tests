@@ -20,13 +20,15 @@ import tarfile
 import time
 import unittest
 
-from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, cloud_foundry as cf, ATKtools, \
-    AtkTestException
+from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, cloud_foundry as cf, ATKtools
 from objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, Application, User
 
 
 logger = get_logger("test ATK")
 
+
+class AtkTestException(AssertionError):
+    pass
 
 @unittest.skip("Problem with publishing in hive - DPNG-2010")
 class TestCreateAtkInstance(ApiTestCase):
