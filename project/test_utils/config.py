@@ -78,6 +78,24 @@ CONFIG = {
         "admin_username": "jacek.skowron@intel.com",
         "cdh_host": "cdh.10.91.120.35.xip.io",
         "uaa": "login.10.91.120.35.xip.io"
+    },
+    "52.8.59.255.xip.io": {
+        "api_endpoint": "52.8.59.255.xip.io",
+        "login.do_scheme": "http",
+        "login_endpoint": "login.52.8.59.255.xip.io",
+        "cf_endpoint": "api.52.8.59.255.xip.io",
+        "admin_username": "trusted.analytics.tester@gmail.com",
+        "cdh_host": "cdh.52.8.59.255.xip.io",
+        "uaa": "login.52.8.59.255.xip.io"
+    },
+    "demotrustedanalytics.com": {
+        "api_endpoint": "demotrustedanalytics.com",
+        "login.do_scheme": "http",
+        "login_endpoint": "login.demotrustedanalytics.com",
+        "cf_endpoint": "api.demotrustedanalytics.com",
+        "admin_username": "trusted.analytics.tester@gmail.com",
+        "cdh_host": "cdh.demotrustedanalytics.com",
+        "uaa": "login.demotrustedanalytics.com"
     }
 }
 
