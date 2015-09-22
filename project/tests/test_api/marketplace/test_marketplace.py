@@ -26,12 +26,14 @@ logger = get_logger("test marketplace")
 
 class TestMarketplaceServices(ApiTestCase):
 
-    def setUp(self):
-        self.test_organization = Organization.api_create(space_names=("test-space",))
-        self.test_space = self.test_organization.spaces[0]
-        self.platform_marketplace_services = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
+    @classmethod
+    def setUpClass(cls):
+        cls.test_organization = Organization.api_create(space_names=("test-space",))
+        cls.test_space = cls.test_organization.spaces[0]
+        cls.platform_marketplace_services = ServiceType.api_get_list_from_marketplace(cls.test_space.guid)
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         Organization.cf_api_tear_down_test_orgs()
 
     def _test_service_instance_creation_and_deletion(self, service_type):
@@ -46,34 +48,44 @@ class TestMarketplaceServices(ApiTestCase):
                                                  service_type_guid=service_type.guid)
         self.assertNotInList(instance, instances, "{} instance was not deleted".format(service_type))
 
-    def test_marketplace_services(self):
+    def test_check_marketplace_services_list_vs_cloudfoundry(self):
         cf_marketplace = ServiceType.cf_api_get_list_from_marketplace(self.test_space.guid)
         self.assertUnorderedListEqual(self.platform_marketplace_services, cf_marketplace)
 
     def test_create_gateway_instance(self):
-        service_type = next(st for st in self.platform_marketplace_services if st.label == "gateway")
+        label = "gateway"
+        service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
+        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
         self._test_service_instance_creation_and_deletion(service_type)
 
     @unittest.expectedFailure
     def test_create_rstudio_proxy_instance(self):
         """DPNG-2297 Cannot create instance of rstudio-proxy from Marketplace"""
-        service_type = next(st for st in self.platform_marketplace_services if st.label == "rstudio-proxy")
+        label = "rstudio-proxy"
+        service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
+        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
         self._test_service_instance_creation_and_deletion(service_type)
 
     @unittest.expectedFailure
     def test_create_zookeeper_instance(self):
         """DPNG-2130 Cannot create zookeeper instance on Ireland - Bad Gateway"""
-        service_type = next(st for st in self.platform_marketplace_services if st.label == "zookeeper")
+        label = "zookeeper"
+        service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
+        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
         self._test_service_instance_creation_and_deletion(service_type)
 
     @unittest.expectedFailure
     def test_create_hbase_instance(self):
         """DPNG-2299 Error when creating hbase service instance in Marketplace"""
-        service_type = next(st for st in self.platform_marketplace_services if st.label == "hbase")
+        label = "hbase"
+        service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
+        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
         self._test_service_instance_creation_and_deletion(service_type)
 
     def test_create_hdfs_instance(self):
-        service_type = next(st for st in self.platform_marketplace_services if st.label == "hdfs")
+        label = "hdfs"
+        service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
+        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
         self._test_service_instance_creation_and_deletion(service_type)
 
     def test_create_instance_of_other_services(self):
