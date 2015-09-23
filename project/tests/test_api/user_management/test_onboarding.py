@@ -50,7 +50,7 @@ class Onboarding(ApiTestCase):
 
     @unittest.expectedFailure
     def test_invite_existing_user(self):
-        # DPNG-2364 Onboarding existing user sends a new email invitation
+        """DPNG-2364 Onboarding existing user sends a new email invitation"""
         user, organization = User.api_onboard()
         self.assertRaisesUnexpectedResponse(409, "", User.api_invite, user.username)
         # checking for one message, because there should be one already after user creation
@@ -58,7 +58,7 @@ class Onboarding(ApiTestCase):
 
     @unittest.expectedFailure
     def test_non_admin_user_invites_another_user(self):
-        # DPNG-2366 Non admin user invites another user - http 500
+        """DPNG-2366 Non admin user invites another user - http 500"""
         non_admin_user, _ = User.api_onboard()
         non_admin_user_client = non_admin_user.login()
         username = User.get_default_username()
@@ -78,13 +78,13 @@ class Onboarding(ApiTestCase):
 
     @unittest.expectedFailure
     def test_invite_user_with_non_email_username(self):
-        # DPNG-2272 Attempt to add user with incorrect e-mail address results in Intenternal Server Error
+        """DPNG-2272 Attempt to add user with incorrect e-mail address results in Intenternal Server Error"""
         username = "non_mail_username"
         self.assertRaisesUnexpectedResponse(400, "", User.api_invite, username)
 
     @unittest.expectedFailure
     def test_register_user_without_password(self):
-        # DPNG-2367 Registration without password - http 500
+        """DPNG-2367 Registration without password - http 500"""
         username = User.api_invite()
         code = gmail_api.get_invitation_code(username)
         self.assertRaisesUnexpectedResponse(400, "", User.api_register_after_onboarding, code, username, "")
