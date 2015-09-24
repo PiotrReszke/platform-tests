@@ -467,8 +467,10 @@ def api_register_new_user(code, password, org_name=None, client=None):
     """POST /rest/registrations"""
     logger.debug("--------------- Register organization {} with password {} ---------------".format(org_name, password))
     client = client or PlatformApiClient.get_admin_client()
-    response = client.request("POST", "rest/registrations", params={"code": code},
-                              body={"org": org_name, "password": password})
+    body = {"password": password}
+    if org_name is not None:
+        body["org"] = org_name
+    response = client.request("POST", "rest/registrations", params={"code": code}, body=body)
     return response
 
 

@@ -85,7 +85,6 @@ class AddSpaceUser(BaseTestSpaceUsersClass):
         test_user.api_add_to_space(self.test_space.guid, self.test_org.guid, roles=self.SPACE_ROLES)
         self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
 
-    @unittest.expectedFailure
     def test_add_non_existing_user_to_space(self):
         """DPNG-2287 Cannot register as a new user added to space"""
         new_user = User.api_create_by_adding_to_space(self.test_org.guid, self.test_space.guid)

@@ -1,7 +1,7 @@
 import time
 import unittest
 
-from test_utils import config, gmail_api, get_logger, ApiTestCase
+from test_utils import config, gmail_api, get_logger, ApiTestCase, platform_api_calls as api
 from objects import User, Organization
 
 
@@ -99,10 +99,13 @@ class Onboarding(ApiTestCase):
         username_list = [user.username for user in User.cf_api_get_all_users()]
         self.assertNotInList(username, username_list, "User was created")
 
-    def test_user_registers_with_empty_organization_name(self):
+    @unittest.expectedFailure
+    def test_user_registers_with_no_organization_name(self):
+        """DPNG-2458 It's possible to create user without organization after onboarding"""
         username = User.api_invite()
         code = gmail_api.get_invitation_code(username)
-        self.assertRaisesUnexpectedResponse(400, "", User.api_register_after_onboarding, code, username, org_name="")
+        self.assertRaisesUnexpectedResponse(400, "Bad Request", api.api_register_new_user, code=code,
+                                            password="testPassw0rd")
 
     def test_invite_user_twice_and_try_to_register_with_latest_message(self):
         username = User.api_invite()

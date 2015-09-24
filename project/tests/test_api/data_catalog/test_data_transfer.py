@@ -37,7 +37,6 @@ class TestDataTransfer(ApiTestCase):
         transfers = Transfer.api_get_list(orgs=[self.org])
         logger.info("{} transfers".format(len(transfers)))
 
-    @unittest.expectedFailure
     def test_submit_transfer(self):
         """DPNG-2264 Problem with uploading datasets on ireland environment"""
         expected_transfer = Transfer.api_create(source=self.EXAMPLE_LINK, org_guid=self.org.guid)

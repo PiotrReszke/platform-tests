@@ -162,7 +162,6 @@ class AddNewUserToOrganization(BaseOrgUserClass):
         invited_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=expected_roles)
         self._assert_user_in_org_and_roles(invited_user, org.guid, expected_roles)
 
-    @unittest.expectedFailure
     def test_admin_adds_new_user_one_role(self):
         """DPNG-2181 Cannot add new organization user with role other than manager"""
         org = self.test_org
@@ -179,7 +178,6 @@ class AddNewUserToOrganization(BaseOrgUserClass):
         new_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=expected_roles)
         self._assert_user_in_org_and_roles(new_user, org.guid, expected_roles)
 
-    @unittest.expectedFailure
     def test_org_manager_adds_new_user(self):
         """DPNG-2181 Cannot add new organization user with role other than manager"""
         for expected_roles in User.ORG_ROLES.values():
@@ -316,7 +314,6 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                                                     new_roles=new_roles, client=updating_client)
                 self._assert_user_in_org_and_roles(updated_user, org.guid, initial_roles)
 
-    @unittest.expectedFailure
     def test_user_cannot_update_user_in_org_where_they_are_not_added(self):
         """DPNG-2181 Cannot add new organization user with role other than manager"""
         org = self.admin_org
@@ -463,7 +460,9 @@ class DeleteOrganizationUser(BaseOrgUserClass):
         org = Organization.api_create()
         self.assertRaisesUnexpectedResponse(404, "???", deleted_user.api_delete_from_organization, org_guid=org.guid)
 
+    @unittest.expectedFailure
     def test_org_manager_can_delete_another_user(self):
+        """DPNG-2459 Cannot delete user - 404"""
         for roles in User.ORG_ROLES.values():
             with self.subTest(deleted_user_roles=roles):
                 org = self.test_org
@@ -472,7 +471,6 @@ class DeleteOrganizationUser(BaseOrgUserClass):
                 deleted_user.api_delete_from_organization(org_guid=org.guid, client=user_client)
                 self._assert_user_not_in_org(deleted_user, org.guid)
 
-    @unittest.expectedFailure
     def test_non_manager_cannot_delete_user(self):
         """DPNG-2181 Cannot add new organization user with role other than manager"""
         for non_manager_roles in self.NON_MANAGER_ROLES:
@@ -488,7 +486,6 @@ class DeleteOrganizationUser(BaseOrgUserClass):
                                                     client=non_manager_client)
                 self._assert_user_in_org_and_roles(deleted_user, org.guid, deleted_user_roles)
 
-    @unittest.expectedFailure
     def test_user_cannot_delete_user_from_org_they_are_not_added(self):
         """DPNG-2181 Cannot add new organization user with role other than manager"""
         org = Organization.api_create()
@@ -512,7 +509,9 @@ class GetOrganizationUsers(BaseOrgUserClass):
                           for roles in User.ORG_ROLES.values()}
         cls.test_clients = {roles: user.login() for roles, user in cls.test_users.items()}
 
+    @unittest.expectedFailure
     def test_user_in_org_can_get_org_users(self):
+        """DPNG-2460 Non-manager, non-admin user cannot access User Management"""
         expected_org_users = User.api_get_list_via_organization(org_guid=self.test_org.guid)
         for role, client in self.test_clients.items():
             with self.subTest(user_role=role):
