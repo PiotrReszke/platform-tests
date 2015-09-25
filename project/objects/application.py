@@ -18,13 +18,14 @@ import base64
 import json
 import os
 import re
-import time
 
 import requests
+from retry import retry
 import yaml
 
 from test_utils import cloud_foundry as cf, platform_api_calls as api, TEST_SETTINGS, get_logger, \
     UnexpectedResponseError
+
 
 logger = get_logger("application")
 
@@ -181,16 +182,13 @@ class Application(object):
         api.api_delete_service_binding(binding_guid, client=client)
 
     @classmethod
-    def ensure_started(cls, space_guid, application_name_prefix, timeout=120):
-        start = time.time()
-        while time.time() - start < timeout:
-            applications = cls.api_get_list(space_guid)
-            application = next((app for app in applications if app.name.startswith(application_name_prefix)), None)
-            if application is not None:
-                if application._state == cls.STATUS["start"]:
-                    return application
-            time.sleep(40)
-        raise TimeoutError("No application with prefix {} found in space {}".format(application_name_prefix, space_guid))
+    @retry(AssertionError, tries=180, delay=5)
+    def ensure_started(cls, space_guid, application_name_prefix):
+        applications = cls.api_get_list(space_guid)
+        application = next((app for app in applications if app.name.startswith(application_name_prefix)), None)
+        if application is None or application._state != cls.STATUS["start"]:
+            raise AssertionError("{} app does not exist or is not started".format(application_name_prefix))
+        return application
 
     # -------------------------------- cf api -------------------------------- #
 

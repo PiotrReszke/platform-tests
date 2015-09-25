@@ -75,8 +75,7 @@ class TestCreateAtkInstance(ApiTestCase):
         if atk_service_instance is None:
             raise AtkTestException("Atk instance is not found in {}".format(cls.test_space))
         time.sleep(20)  # ATK application needs time before it appears on application list
-        cls.atk_app = Application.ensure_started(space_guid=cls.test_space.guid, application_name_prefix="atk-",
-                                                 timeout=840)
+        cls.atk_app = Application.ensure_started(space_guid=cls.test_space.guid, application_name_prefix="atk-")
         if cls.atk_app is None:
             raise AtkTestException("ATK application is not on application list")
 

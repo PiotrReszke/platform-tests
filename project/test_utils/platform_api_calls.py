@@ -231,14 +231,16 @@ def api_get_service(service_guid, client=None):
     return response
 
 
-def api_get_service_instances(space_guid, service_guid=None, client=None):
+def api_get_service_instances(space_guid=None, org_guid=None, service_label=None, service_guid=None, client=None):
     """GET /rest/service_instances"""
-    logger.debug("--------------- Get service instances for service {} in space {} ---------------".format(service_guid,
-                                                                                                           space_guid))
+    logger.debug("--------------- Get service instances ---------------".format(service_guid, space_guid))
     client = client or PlatformApiClient.get_admin_client()
-    query_params = {"space": space_guid}
-    if service_guid is not None:
-        query_params["broker"] = service_guid
+    query_params = {}
+    params = [space_guid, org_guid, service_label, service_guid]
+    request_keys = ["space", "org", "service", "boker"]
+    for param, request_key in zip(params, request_keys):
+        if param is not None:
+            query_params[request_key] = param
     response = client.request("GET", "rest/service_instances", params=query_params)
     return response
 
@@ -263,6 +265,14 @@ def api_delete_service_instance(service_instance_guid, client):
     logger.debug("------------------ Delete service instance {} ------------------".format(service_instance_guid))
     client = client or PlatformApiClient.get_admin_client()
     response = client.request("DELETE", "rest/service_instances/{}".format(service_instance_guid))
+    return response
+
+
+def api_get_service_plans(service_type_label, client):
+    """GET /rest/services/{service_type_label}/service_plans"""
+    logger.debug("------------------ Get service plans for {} ------------------".format(service_type_label))
+    client = client or PlatformApiClient.get_admin_client()
+    response = client.request("GET", "rest/services/{}/service_plans".format(service_type_label))
     return response
 
 
@@ -339,6 +349,22 @@ def api_create_scoring_engine(atk_name, instance_name, space_guid, service_plan_
     logger.debug("------------------ Create scoring engine for atk {} ------------------".format(atk_name))
     client = client or PlatformApiClient.get_admin_client()
     raise NotImplementedError("Please implement this method if you need it")
+
+
+# ================================================= service-exposer ================================================== #
+
+
+def api_tools_service_instances(org_guid, service_label, space_guid, client=None):
+    """GET /rest/tools/service_instances"""
+    logger.debug("------------------ Get tools for service instance ------------------")
+    client = client or PlatformApiClient.get_admin_client()
+    params = {
+        "org": org_guid,
+        "service": service_label,
+        "space": space_guid
+    }
+    response = client.request("GET", "rest/tools/service_instances", params=params)
+    return response
 
 
 # ================================================= user-management ================================================== #

@@ -14,66 +14,98 @@
 # limitations under the License.
 #
 
+import re
 import unittest
 
 from retry import retry
 
-from test_utils import ApiTestCase, UnexpectedResponseError, get_logger, config
-from objects import Application, Organization, ServiceInstance, ServiceType
+from test_utils import ApiTestCase, get_logger, iPython, cleanup_after_failed_setup, TEST_SETTINGS
+from objects import Organization, ServiceInstance, ServiceType, Application
 
 
 logger = get_logger("iPython test")
 
 
-class iPythonConsoleTest(ApiTestCase):
+class iPythonConsole(ApiTestCase):
 
-    PROXY_NAME = "ipython-proxy"
-    SERVICE_NAME = "ipython"
-    IPYTHON_PORT = 4443
+    IPYTHON_SERVICE_LABEL = "ipython"
+    TERMINAL_NO = 0
+    ATK_CLIENT_INDEX = "https://pypi.analyticstoolkit.intel.com/latest/simple/"
 
-    def setUp(self):
-        self.test_org = Organization.api_create(space_names=("test-space",))
-        self.test_space = self.test_org.spaces[0]
+    @property
+    def terminal_no(self):
+        """each test will be done in a separate terminal"""
+        current_terminal = self.TERMINAL_NO
+        self.TERMINAL_NO += 1
+        return current_terminal
 
-    @retry(AssertionError, tries=10, delay=15)
-    def _assert_ipython_app_is_started(self):
-        """Return the app object"""
-        apps = Application.api_get_list(space_guid=self.test_space.guid)
-        self.assertEqual(len(apps), 1)
-        ipython_app = apps[0]
-        self.assertTrue("iPython" in ipython_app.name)
-        self.assertTrue(ipython_app.is_started, "iPython is not started")
-        return ipython_app
+    @classmethod
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
+    def setUpClass(cls):
+        cls.test_org = Organization.api_create(space_names=("test-space",))
+        cls.test_space = cls.test_org.spaces[0]
+        cls.ipython = iPython(org_guid=cls.test_org.guid, space_guid=cls.test_space.guid)
+        ipython_instance = cls.ipython.create_instance()
+        cls._assert_ipython_instance_created(ipython_instance)
+        cls.ipython.login()
 
-    @unittest.expectedFailure
-    def test_deploy_iPython_console_instance(self):
-        """DPNG-2034 Iphython console creation not working"""
+    @classmethod
+    @retry(AssertionError, tries=5, delay=5)
+    def _assert_ipython_instance_created(cls, instance):
+        instances = ServiceInstance.api_get_list(space_guid=cls.test_space.guid)
+        instance = next((i for i in instances if i.name == instance.name), None)
+        if instance is None:
+            raise AssertionError("ipython instance is not on list")
+        cls.ipython.get_credentials()
 
-        marketplace = ServiceType.api_get_list_from_marketplace(space_guid=self.test_space.guid)
-        ipython_service = next((st for st in marketplace if st.label == self.PROXY_NAME), None)
-        self.assertIsNotNone(ipython_service, "{} service was not found in marketplace".format(self.PROXY_NAME))
+    @retry(AssertionError, tries=5, delay=5)
+    def _assert_atk_client_is_installed(self, ipython_terminal):
+        success_pattern = "Successfully installed .* trustedanalytics"
+        output = ipython_terminal.get_output()
+        self.assertIsNotNone(re.search(success_pattern, output[-2]))
+        self.assertIn("#", output[-1])
 
-        try:
-            ServiceInstance.api_create(
-                name="iPython-test-{}".format(self.get_timestamp()),
-                service_plan_guid=ipython_service.service_plans[0]['guid'],
-                org_guid=self.test_org.guid,
-                space_guid=self.test_space.guid
-            )
-        except UnexpectedResponseError as e:
-            if e.status == 500 and "Read timed out" in e.error_message:
-                logger.info("This is an expected read timeout")
-            else:
-                raise
+    def _create_atk_instance(self):
+        marketplace = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
+        atk_service = next(s for s in marketplace if s.label == "atk")
+        ServiceInstance.cf_api_create(space_guid=self.test_space.guid,
+                                      service_plan_guid=atk_service.service_plan_guids[0],
+                                      name_prefix="atk")
+        atk_app = Application.ensure_started(space_guid=self.test_space.guid, application_name_prefix="atk")
+        self.atk_url = atk_app.urls[0]
 
-        # check that there is 1 iPython application and it is started
-        ipython_app = self._assert_ipython_app_is_started()
+    def test_iPython_terminal(self):
+        terminal = self.ipython.connect_to_terminal(terminal_no=self.terminal_no)
+        initial_output = terminal.get_output()
+        self.assertTrue(any("#" in item for item in initial_output), "Terminal prompt missing")
+        terminal.send_input("python\r")  # Run Python in the terminal
+        output = terminal.get_output()
+        self.assertIn("Python", output[-2])
+        self.assertIn(">>>", output[-1])
 
-        # iPython Jupyter login
-        password = ipython_app.cf_api_env()["VCAP_SERVICES"][self.SERVICE_NAME][0]["credentials"]["password"]
-        url = "{}:{}".format(ipython_app.urls[0], self.IPYTHON_PORT)
-        # although the application is created, actual iPython takes longer to start - hence timeout
-        response = ipython_app.application_api_request(method="POST", scheme="https", url=url, endpoint="login",
-                                                       params={"next": "/tree"}, data={"password": password})
-        self.assertTrue("Logout" in response, "Could not log into Jupyter. Response:\n{}".format(response))
+    def test_iPython_interactive_mode_hello_world(self):
+        notebook = self.ipython.create_notebook()
+        notebook.send_input("print('Hello, world!')")
+        output = notebook.get_stream_result()
+        self.assertEqual(output, "Hello, world!\n")
+
+    @unittest.skip
+    def test_iPython_connect_to_atk_client(self):
+        """On hold until atk instance creation is possible"""
+        self._create_atk_instance()
+        terminal = self.ipython.connect_to_terminal(terminal_no=self.terminal_no)
+        terminal.send_input("pip2 install --extra-index-url {} trustedanalytics\r".format(self.ATK_CLIENT_INDEX))
+        self._assert_atk_client_is_installed(terminal)
+        notebook = self.ipython.create_notebook()
+        notebook.send_input("import trustedanalytics as ta")
+        self.assertEqual(notebook.check_command_status(), "ok")
+        notebook.send_input("ta.create_credentials_file('./cred_file')")
+        self.assertIn("URI of the ATK server", notebook.get_prompt_text())
+        notebook.send_input(self.atk_url, reply=True)
+        self.assertIn("User name", notebook.get_prompt_text())
+        notebook.send_input(TEST_SETTINGS["TEST_USERNAME"], reply=True)
+        self.assertIn("", notebook.get_prompt_text())
+        notebook.send_input(TEST_SETTINGS["TEST_PASSWORD"], reply=True, obscure_from_log=True)
+        self.assertEqual(notebook.check_command_status(), "ok")
+
 

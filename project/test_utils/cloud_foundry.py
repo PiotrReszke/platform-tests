@@ -158,7 +158,7 @@ def cf_api_create_service_instance(instance_name, space_guid, service_plan_guid)
     logger.info("------------------ CF: create service instance {} ------------------".format(instance_name))
     return CfApiClient.get_client().request(
         method="POST",
-        path="service_instances",
+        endpoint="service_instances",
         params={"accepts_incomplete": "true"},
         body={"name": instance_name, "space_guid": space_guid, "service_plan_guid": service_plan_guid}
     )

@@ -30,19 +30,24 @@ SEPARATOR = "================================== {} {} {} =======================
 
 
 def log_fixture_separator(func):
-    if type(func) is classmethod:
+    func_is_classmethod = type(func) is classmethod
+    if func_is_classmethod:
         func = func.__func__
+    func_name = func.__name__
+    class_name = ""
+    if func_is_classmethod:
+        class_name = "in {}".format(func.__class__.__name__)
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        func_name = func.__name__
-        module_name = ''
-        if 'Class' in func_name:
-            module_name = "in " + func.__module__
-        logger.info(SEPARATOR.format("BEGIN", func_name, module_name))
+        logger.info(SEPARATOR.format("BEGIN", func_name, class_name))
         func(*args, **kwargs)
-        logger.info(SEPARATOR.format("END", func_name, module_name))
-    return classmethod(wrapper)
+        logger.info(SEPARATOR.format("END", func_name, class_name))
+
+    if func_is_classmethod:
+        return classmethod(wrapper)
+    else:
+        return wrapper
 
 
 class SeparatorMeta(type):
@@ -66,7 +71,8 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
                     '******************************************************************\n', self._testMethodName)
         return super().run(result=result)
 
-    def get_timestamp(self):
+    @staticmethod
+    def get_timestamp():
         return datetime.now().strftime("%Y%m%d-%H%M%S%f")
 
     def assertInList(self, member, container, msg=None):

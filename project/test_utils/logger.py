@@ -18,7 +18,7 @@ import logging
 import sys
 
 
-__all__ = ["get_logger", "log_command"]
+__all__ = ["get_logger", "log_command", "log_http_request", "log_http_response"]
 
 
 format = "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
@@ -39,3 +39,34 @@ def log_command(command, replace=None):
     if replace is not None:
         msg = msg.replace(*replace)
     logger.info(msg)
+
+
+def log_http_request(prepared_request, username, password=None):
+    body = prepared_request.body
+    if password and body:
+        body = body.replace(password, "[SECRET]")
+    msg = [
+        "\n----------------Request------------------",
+        "Client name: {}".format(username),
+        "URL: {} {}".format(prepared_request.method, prepared_request.url),
+        "Headers: {}".format(prepared_request.headers),
+        "Body: {}".format(body),
+        "-----------------------------------------\n"
+    ]
+    get_logger("http request").debug("\n".join(msg))
+
+
+def log_http_response(response, logged_body_length=1024):
+    """If logged_body_length set to 0, full response body is logged"""
+    body = response.text
+    if len(body) > logged_body_length > 0:
+        half = logged_body_length // 2
+        body = "{} [...] {}".format(body[:half], body[-half:])
+    msg = [
+        "\n----------------Response------------------",
+        "Status code: {}".format(response.status_code),
+        "Headers: {}".format(response.headers),
+        "Content: {}".format(body),
+        "-----------------------------------------\n"
+    ]
+    get_logger("http response").debug("\n".join(msg))

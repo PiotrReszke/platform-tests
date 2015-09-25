@@ -29,11 +29,12 @@ class ServiceInstance(object):
     COMPARABLE_ATTRIBUTES = ["guid", "name", "space_guid"]
 
     def __init__(self, guid, name, space_guid=None, service_type_guid=None, type=None, url=None, org_guid=None,
-                 service_plan_guid=None, credentials=None, bindings=None):
+                 service_plan_guid=None, credentials=None, bindings=None, login=None, password=None):
         self.guid, self.name, self.type, self.url = guid, name, type, url
         self.space_guid, self.org_guid = space_guid, org_guid
         self.service_type_guid, self.service_plan_guid = service_type_guid, service_plan_guid
         self.credentials, self.bindings = credentials, bindings
+        self.login, self.password = login, password
 
     def __repr__(self):
         return "{0} (name={1}, guid={2})".format(self.__class__.__name__, self.name, self.guid)
@@ -88,9 +89,10 @@ class ServiceInstance(object):
         return cls.from_cf_api_space_summary_response(response, space_guid)
 
     @classmethod
-    def api_get_list(cls, space_guid, service_type_guid=None, client=None):
+    def api_get_list(cls, space_guid=None, org_guid=None, service_label=None, service_type_guid=None, client=None):
         instances = []
-        response = api.api_get_service_instances(space_guid=space_guid, service_guid=service_type_guid, client=client)
+        response = api.api_get_service_instances(space_guid=space_guid, org_guid=org_guid, service_label=service_label,
+                                                 service_guid=service_type_guid, client=client)
         for data in response:
             bindings = []
             for binding_data in data["bound_apps"]:
@@ -104,20 +106,32 @@ class ServiceInstance(object):
         return instances
 
     @classmethod
-    def api_create(cls, name, service_plan_guid, org_guid, space_guid, client=None):
-        api.api_create_service_instance(name, service_plan_guid, org_guid, space_guid, client=client)
-        # the response does not return service instance guid, it has to be retrieved with get list
-        instances = cls.api_get_list(space_guid, client)
-        return next((i for i in instances if i.name == name), None)
+    def api_get_list_from_tools(cls, org_guid, space_guid, service_label, client=None):
+        response = api.api_tools_service_instances(org_guid, service_label, space_guid, client)
+        instances = []
+        for name, data in response.items():
+            instances.append(cls(guid=data["guid"], name=name, space_guid=space_guid, url=data["hostname"],
+                             org_guid=org_guid, login=data["login"], password=data["password"]))
+        return instances
 
     @classmethod
-    def cf_api_create(cls, space_guid, service_plan_guid, name):
+    def api_create(cls, name, service_plan_guid, org_guid, space_guid, client=None):
+        response = api.api_create_service_instance(name, service_plan_guid, org_guid, space_guid, client=client)
+        entity = response["entity"]
+        return cls(guid=response["metadata"]["guid"], name=entity["name"], space_guid=space_guid, type=entity["type"],
+                   service_plan_guid=service_plan_guid)
+
+    @classmethod
+    def cf_api_create(cls, space_guid, service_plan_guid, name_prefix):
+        name = "{}_{}".format(name_prefix, datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
         response = cf.cf_api_create_service_instance(name, space_guid, service_plan_guid)
         return cls(guid=response["metadata"]["guid"], name=name, space_guid=space_guid,
                    service_plan_guid=service_plan_guid)
 
     def api_delete(self, client=None):
         api.api_delete_service_instance(self.guid, client=client)
+
+
 
 
 class AtkInstance(ServiceInstance):
