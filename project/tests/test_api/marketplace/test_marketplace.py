@@ -52,18 +52,9 @@ class TestMarketplaceServices(ApiTestCase):
         cf_marketplace = ServiceType.cf_api_get_list_from_marketplace(self.test_space.guid)
         self.assertUnorderedListEqual(self.platform_marketplace_services, cf_marketplace)
 
-    @unittest.expectedFailure
     def test_create_gateway_instance(self):
         """DPNG-2457 Gateway-broker (0.4.3) doesn't work on sprint.gotapaas.com environment"""
         label = "gateway"
-        service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
-        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
-        self._test_service_instance_creation_and_deletion(service_type)
-
-    @unittest.expectedFailure
-    def test_create_rstudio_proxy_instance(self):
-        """DPNG-2297 Cannot create instance of rstudio-proxy from Marketplace"""
-        label = "rstudio-proxy"
         service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
         self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
         self._test_service_instance_creation_and_deletion(service_type)
@@ -92,8 +83,8 @@ class TestMarketplaceServices(ApiTestCase):
 
     def test_create_instance_of_other_services(self):
         # excluded services are tested elsewhere or are not to be tested
-        excluded_services = ("atk", "gateway", "h2oUC", "h2oUC-docker", "hbase", "hdfs", "ipython", "ipython-proxy",
-                             "piotr-hdfs", "rstudio-proxy", "zookeeper")
+        excluded_services = ("atk", "gateway", "h2oUC", "h2oUC-docker", "hbase", "hdfs", "hello", "ipython",
+                             "simple-hello-env", "zookeeper")
         tested_service_types = [st for st in self.platform_marketplace_services if st.label not in excluded_services]
         for service_type in tested_service_types:
             with self.subTest(service=service_type):

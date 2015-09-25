@@ -44,7 +44,6 @@ class TestDataTransfer(ApiTestCase):
         transfer = Transfer.api_get(expected_transfer.id)
         self.assertAttributesEqual(transfer, expected_transfer)
 
-    @unittest.expectedFailure
     def test_match_dataset_to_transfer(self):
         """DPNG-2264 Problem with uploading datasets on ireland environment"""
         expected_transfer = Transfer.api_create(source=self.EXAMPLE_LINK, org_guid=self.org.guid)

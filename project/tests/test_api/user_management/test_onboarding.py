@@ -87,17 +87,16 @@ class Onboarding(ApiTestCase):
         """DPNG-2367 Registration without password - http 500"""
         username = User.api_invite()
         code = gmail_api.get_invitation_code(username)
-        self.assertRaisesUnexpectedResponse(400, "", User.api_register_after_onboarding, code, username, "")
+        self.assertRaisesUnexpectedResponse(400, "???", User.api_register_after_onboarding, code, username, "")
 
-    @unittest.skip("Getting all users list takes too long")
     def test_user_registers_already_existing_organization(self):
         existing_org = Organization.api_create()
         username = User.api_invite()
         code = gmail_api.get_invitation_code(username)
-        self.assertRaisesUnexpectedResponse(400, "", User.api_register_after_onboarding, code, username,
-                                            org_name=existing_org.name)
-        username_list = [user.username for user in User.cf_api_get_all_users()]
-        self.assertNotInList(username, username_list, "User was created")
+        self.assertRaisesUnexpectedResponse(400, "The organization name is taken", User.api_register_after_onboarding,
+                                            code, username, org_name=existing_org.name)
+        # username_list = [user.username for user in User.cf_api_get_all_users()]
+        # self.assertNotInList(username, username_list, "User was created")
 
     @unittest.expectedFailure
     def test_user_registers_with_no_organization_name(self):

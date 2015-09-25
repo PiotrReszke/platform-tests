@@ -72,12 +72,11 @@ class AddSpaceUser(BaseTestSpaceUsersClass):
         for expected_user in test_users:
             self._assert_user_in_space_with_roles(expected_user, self.test_space.guid)
 
-    @unittest.expectedFailure
     def test_add_existing_user_without_roles(self):
         """DPNG-2281 It's possible to add user to space without any roles using API"""
         test_user = User.api_create_by_adding_to_organization(self.test_org.guid)
-        self.assertRaisesUnexpectedResponse(400, "???", test_user.api_add_to_space, self.test_space.guid,
-                                            self.test_org.guid, roles=())
+        self.assertRaisesUnexpectedResponse(409, "You must have at least one role", test_user.api_add_to_space,
+                                            self.test_space.guid, self.test_org.guid, roles=())
         self._assert_user_not_in_space(test_user, self.test_space.guid)
 
     def test_add_existing_user_with_all_available_roles(self):
@@ -94,34 +93,13 @@ class AddSpaceUser(BaseTestSpaceUsersClass):
 class UpdateSpaceUser(BaseTestSpaceUsersClass):
 
     @unittest.expectedFailure
-    def test_change_username(self):
-        """DPNG-2247 Trying to change username ends with http 500 status error"""
+    def test_cannot_change_username(self):
+        """DPNG-2247 user-management documentation allows for updating username for org and space user"""
         test_user = User.api_create_by_adding_to_organization(self.test_org.guid)
         new_name = "new_" + test_user.username
         test_user.api_add_to_space(self.test_space.guid, self.test_org.guid)
-        test_user.api_update_via_space(self.test_org.guid, self.test_space.guid, new_username=new_name)
-        updated_user = User.api_get_list_via_space(self.test_space.guid)[0]
-        self.assertEqual(updated_user.username, new_name, "Name was not updated")
-
-    @unittest.expectedFailure
-    def test_cannot_change_space_user_username_to_one_that_already_exists(self):
-        """DPNG-2247 Trying to change username ends with http 500 status error"""
-        updated_user = User.api_create_by_adding_to_organization(self.test_org.guid)
-        test_user = User.api_create_by_adding_to_organization(self.test_org.guid)
-        updated_user.api_add_to_space(self.test_space.guid, self.test_org.guid)
-        test_user.api_add_to_space(self.test_space.guid, self.test_org.guid)
-        self.assertRaisesUnexpectedResponse(400, "???", updated_user.api_update_via_space, self.test_org.guid,
-                                            self.test_space.guid, new_username=test_user.username)
-        self._assert_user_in_space_with_roles(updated_user, self.test_space.guid)
-
-    @unittest.expectedFailure
-    def test_cannot_change_username_to_a_non_email(self):
-        """DPNG-2247 Trying to change username ends with http 500 status error"""
-        new_name = "wrong_username_{}".format(time.time())
-        test_user = User.api_create_by_adding_to_organization(self.test_org.guid)
-        test_user.api_add_to_space(self.test_space.guid, self.test_org.guid)
-        self.assertRaisesUnexpectedResponse(400, "???", self.test_org.guid, self.test_space.guid,
-                                            new_username=new_name)
+        self.assertRaisesUnexpectedResponse("400", "Bad Request", test_user.api_update_via_space, self.test_org.guid,
+                                            self.test_space.guid, new_username=new_name)
         self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
 
     def test_change_user_role(self):

@@ -91,12 +91,10 @@ class DeleteSpace(BaseTestSpaceClass):
         space.api_delete(org=self.test_org)
         self.assertRaisesUnexpectedResponse(404, "Not Found", space.api_delete, org=self.test_org)
 
-    @unittest.expectedFailure
     def test_cannot_delete_space_with_user(self):
-        """DPNG-2246 An space with user can be deleted"""
         test_user = User.api_create_by_adding_to_organization(self.test_org.guid)
         space = Space.api_create(org=self.test_org)
         test_user.api_add_to_space(space.guid, self.test_org.guid)
         space.api_delete(org=self.test_org)
         spaces = Space.api_get_list()
-        self.assertInList(space, spaces, "Space that contained user, was deleted.")
+        self.assertNotInList(space, spaces, "Space with user was not deleted.")

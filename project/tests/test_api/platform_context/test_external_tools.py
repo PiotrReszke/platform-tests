@@ -32,7 +32,6 @@ class TestExternalTools(ApiTestCase):
         request = requests.get(url)
         return request.status_code
 
-    @unittest.expectedFailure
     def test_check_status_code_of_external_tools(self):
         tools_list = ExternalTools.api_get_external_tools()
         self.assertGreater(len(tools_list), 0)

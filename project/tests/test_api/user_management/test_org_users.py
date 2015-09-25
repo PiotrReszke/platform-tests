@@ -37,8 +37,9 @@ class BaseOrgUserClass(ApiTestCase):
         org_users = User.api_get_list_via_organization(org_guid)
         self.assertInList(invited_user, org_users, "Invited user is not on org users list")
         invited_user_roles = list(invited_user.org_roles.get(org_guid, []))
-        self.assertEqual(invited_user_roles, list(expected_roles),
-                         "User's roles in org: {}, expected {}".format(invited_user_roles, list(expected_roles)))
+        self.assertUnorderedListEqual(invited_user_roles, list(expected_roles),
+                                      "User's roles in org: {}, expected {}".format(invited_user_roles,
+                                                                                    list(expected_roles)))
 
     def _assert_user_not_in_org(self, user, org_guid):
         org_users = User.api_get_list_via_organization(org_guid)
@@ -53,7 +54,7 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
         cls.test_user, cls.test_org = User.api_onboard()
         cls.test_client = cls.test_user.login()
 
-    def test_cannot_add_existing_user_with_no_roles(self):
+    def test_add_existing_user_with_no_roles(self):
         invited_user = self.test_user
         expected_roles = []
         org = Organization.api_create()
@@ -155,8 +156,8 @@ class AddNewUserToOrganization(BaseOrgUserClass):
         cls.test_client = cls.test_user.login()
 
     @unittest.expectedFailure
-    def test_cannot_add_new_user_with_no_roles(self):
-        """DPNG-2181 Cannot add new organization user with role other than manager"""
+    def test_add_new_user_with_no_roles(self):
+        """DPNG-2540 Cannot add new user to organization without roles"""
         org = self.test_org
         expected_roles = []
         invited_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=expected_roles)
@@ -170,7 +171,6 @@ class AddNewUserToOrganization(BaseOrgUserClass):
                 new_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=expected_roles)
                 self._assert_user_in_org_and_roles(new_user, org.guid, expected_roles)
 
-    @unittest.expectedFailure
     def test_admin_adds_new_user_all_roles(self):
         """DPNG-2181 Cannot add new organization user with role other than manager"""
         org = self.test_org
@@ -204,14 +204,13 @@ class AddNewUserToOrganization(BaseOrgUserClass):
                 # assert user list did not change
                 self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
-    @unittest.expectedFailure
     def test_cannot_add_user_with_non_email_username(self):
         """DPNG-2272 Attempt to add user with incorrect e-mail address results in Internal Server Error"""
         org = self.test_org
         org_users = User.api_get_list_via_organization(org.guid)
         username = "non-valid-username{}".format(time.time())
         roles = self.ALL_ROLES
-        self.assertRaisesUnexpectedResponse(400, "That email address is not valid",
+        self.assertRaisesUnexpectedResponse(409, "That email address is not valid",
                                             User.api_create_by_adding_to_organization, org_guid=org.guid,
                                             username=username, roles=roles)
         # assert user list did not change
@@ -285,17 +284,17 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         expected_roles = User.ORG_ROLES["manager"]
         new_roles = User.ORG_ROLES["auditor"]
         updated_user.api_add_to_organization(org_guid=org.guid, roles=expected_roles)
-        self.assertRaisesUnexpectedResponse(400, "", updated_user.api_update_via_organization, org_guid=org.guid,
-                                            new_roles=new_roles)
+        self.assertRaisesUnexpectedResponse(400, "Bad Request", updated_user.api_update_via_organization,
+                                            org_guid=org.guid, new_roles=new_roles)
         self._assert_user_in_org_and_roles(updated_user, org.guid, expected_roles)
 
     @unittest.expectedFailure
     def test_cannot_update_user_which_is_not_in_org(self):
         """DPNG-2196 It's possible to update user which was deleted from organization"""
-        user_not_in_org = User.api_create_by_adding_to_organization(self.test_org)
+        user_not_in_org = User.api_create_by_adding_to_organization(self.test_org.guid)
         org = Organization.api_create()
         org_users = User.api_get_list_via_organization(org.guid)
-        self.assertRaisesUnexpectedResponse(400, "", user_not_in_org.api_update_via_organization, org_guid=org.guid,
+        self.assertRaisesUnexpectedResponse(400, "???", user_not_in_org.api_update_via_organization, org_guid=org.guid,
                                             new_roles=User.ORG_ROLES["auditor"])
         self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
@@ -364,7 +363,9 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                                             new_roles=invalid_roles)
         self._assert_user_in_org_and_roles(updated_user, org.guid, initial_roles)
 
+    @unittest.expectedFailure
     def test_update_role_of_one_org_manager_cannot_update_second(self):
+        """DPNG-2546 It's possible to update org role to non-manager for the last manager in an organization"""
         manager_role = User.ORG_ROLES["manager"]
         manager_user = self.test_user
         updated_user = User.api_create_by_adding_to_organization(org_guid=self.test_org.guid)
@@ -372,7 +373,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         manager_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
         updated_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
         updated_user.api_update_via_organization(org_guid=org.guid, new_roles=self.NON_MANAGER_ROLES)
-        self.assertRaisesUnexpectedResponse(400, "", manager_user.api_update_via_organization,
+        self.assertRaisesUnexpectedResponse(400, "???", manager_user.api_update_via_organization,
                                             org_guid=org.guid, new_roles=self.NON_MANAGER_ROLES)
         self._assert_user_in_org_and_roles(updated_user, org.guid, self.NON_MANAGER_ROLES)
         self._assert_user_in_org_and_roles(manager_user, org.guid, manager_role)

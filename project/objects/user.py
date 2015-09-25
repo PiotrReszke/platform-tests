@@ -99,6 +99,8 @@ class User(object):
         api.api_register_new_user(code, password, client=client)
         org_users = cls.api_get_list_via_organization(org_guid=org_guid)
         new_user = next((user for user in org_users if user.username == username), None)
+        if new_user is None:
+            raise AssertionError("New user was not found in the organization")
         new_user.password = password
         return new_user
 
