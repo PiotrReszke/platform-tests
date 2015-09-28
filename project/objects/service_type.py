@@ -29,10 +29,10 @@ class ServiceType(object):
     COMPARABLE_ATTRIBUTES = ["guid", "label", "description", "url", "tags", "space_guid", "is_active", "display_name"]
 
     def __init__(self, guid, label, description, url, tags, space_guid, is_active, display_name,
-                 service_plan_guids=None):
+                 service_plans=None):
         self.guid, self.label, self.description, self.display_name = guid, label, description, display_name
         self.url, self.tags, self.space_guid, self.is_active = url, tags, space_guid, is_active
-        self.service_plan_guids = service_plan_guids
+        self.service_plans = service_plans
 
     def __repr__(self):
         return "{0} (guid={1}, label={2})".format(self.__class__.__name__, self.guid, self.label)
@@ -60,12 +60,13 @@ class ServiceType(object):
         display_name = None if entity["extra"] is None else json.loads(entity["extra"]).get("displayName")
         if display_name is None:
             display_name = entity["label"]
-        service_plan_guids = None
+        service_plans = None
         if entity.get("service_plans") is not None:  # in cf response there are no service plans, but an url
-            service_plan_guids = [sp["metadata"]["guid"] for sp in entity["service_plans"]]
+            service_plans = [{"guid": sp["metadata"]["guid"], "name": sp["entity"]["name"]}
+                             for sp in entity["service_plans"]]
         return cls(guid=metadata["guid"], label=entity["label"], description=entity["description"],
                    url=metadata["url"], tags=entity["tags"], space_guid=space_guid, is_active=entity["active"],
-                   display_name=display_name, service_plan_guids=service_plan_guids)
+                   display_name=display_name, service_plans=service_plans)
 
     @classmethod
     def cf_api_get_list_from_marketplace(cls, space_guid):

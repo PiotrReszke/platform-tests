@@ -56,7 +56,7 @@ class iPythonConsoleTest(ApiTestCase):
         try:
             ServiceInstance.api_create(
                 name="iPython-test-{}".format(self.get_timestamp()),
-                service_plan_guid=ipython_service.service_plan_guids[0],
+                service_plan_guid=ipython_service.service_plans[0]['guid'],
                 org_guid=self.test_org.guid,
                 space_guid=self.test_space.guid
             )
