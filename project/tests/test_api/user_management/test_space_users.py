@@ -35,6 +35,7 @@ class BaseTestSpaceUsersClass(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
+        User.cf_api_tear_down_test_users()
         Organization.cf_api_tear_down_test_orgs()
 
     def _assert_user_in_space_with_roles(self, expected_user, space_guid):

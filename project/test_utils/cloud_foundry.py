@@ -279,3 +279,11 @@ def cf_api_delete_space(space_guid, async=True):
     job_name = "delete space"
     logger.info("------------------ CF: {} {} ------------------".format(job_name, space_guid))
     __handle_delete_request(endpoint="spaces/{}".format(space_guid), job_name=job_name, async=async)
+
+
+@retry(JobFailedException, tries=3)
+def cf_api_delete_user(user_guid, async=True):
+    """DELETE /v2/users/{user_guid}"""
+    job_name = "delete user"
+    logger.info("------------------ CF: {} {} ------------------".format(job_name, user_guid))
+    __handle_delete_request(endpoint="users/{}".format(user_guid), job_name=job_name, async=async)

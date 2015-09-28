@@ -14,6 +14,7 @@ class Onboarding(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
+        User.cf_api_tear_down_test_users()
         Organization.cf_api_tear_down_test_orgs()
 
     def _assert_message_correct(self, message_subject, message_content):

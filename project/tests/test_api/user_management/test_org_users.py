@@ -31,6 +31,7 @@ class BaseOrgUserClass(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
+        User.cf_api_tear_down_test_users()
         Organization.cf_api_tear_down_test_orgs()
 
     def _assert_user_in_org_and_roles(self, invited_user, org_guid, expected_roles):
@@ -49,7 +50,7 @@ class BaseOrgUserClass(ApiTestCase):
 class AddExistingUserToOrganization(BaseOrgUserClass):
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, User.cf_api_tear_down_test_users)
     def setUpClass(cls):
         cls.test_user, cls.test_org = User.api_onboard()
         cls.test_client = cls.test_user.login()
@@ -149,7 +150,7 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
 class AddNewUserToOrganization(BaseOrgUserClass):
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, User.cf_api_tear_down_test_users)
     def setUpClass(cls):
         cls.test_user, cls.test_org = User.api_onboard()
         cls.test_client = cls.test_user.login()
@@ -235,7 +236,7 @@ class AddNewUserToOrganization(BaseOrgUserClass):
 class UpdateOrganizationUser(BaseOrgUserClass):
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, User.cf_api_tear_down_test_users)
     def setUpClass(cls):
         cls.admin_org = Organization.api_create()
         cls.test_user, cls.test_org = User.api_onboard()
@@ -379,7 +380,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
 class DeleteOrganizationUser(BaseOrgUserClass):
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, User.cf_api_tear_down_test_users)
     def setUpClass(cls):
         cls.test_user, cls.test_org = User.api_onboard()
         cls.test_client = cls.test_user.login()
@@ -499,7 +500,7 @@ class DeleteOrganizationUser(BaseOrgUserClass):
 class GetOrganizationUsers(BaseOrgUserClass):
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, User.cf_api_tear_down_test_users)
     def setUpClass(cls):
         cls.test_org = Organization.api_create()
         cls.test_users = {tuple(roles): User.api_create_by_adding_to_organization(org_guid=cls.test_org.guid,

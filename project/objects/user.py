@@ -17,11 +17,14 @@
 import functools
 import time
 
-from test_utils import config, PlatformApiClient, platform_api_calls as api, cloud_foundry as cf, gmail_api
+from test_utils import config, PlatformApiClient, platform_api_calls as api, cloud_foundry as cf, gmail_api, \
+    JobFailedException, get_logger, UnexpectedResponseError
 from . import Organization
 
 
 __all__ = ["User"]
+
+logger = get_logger("user")
 
 
 @functools.total_ordering
@@ -35,6 +38,7 @@ class User(object):
         "auditor": {"auditors"},
         "billing_manager": {"billing_managers"}
     }
+    TEST_USERS = []
 
     def __init__(self, guid=None, username=None, password=None, org_roles=None, space_roles=None):
         self.guid, self.username, self.password = guid, username, password
@@ -87,6 +91,7 @@ class User(object):
         new_user = next(u for u in org_users if u.username == username)
         new_user.password = password
         new_user.org_roles[new_org.guid] = ["managers"]  # user is an org manager in the organization they create
+        cls.TEST_USERS.append(new_user)
         return new_user, new_org
 
     @classmethod
@@ -102,6 +107,7 @@ class User(object):
         if new_user is None:
             raise AssertionError("New user was not found in the organization")
         new_user.password = password
+        cls.TEST_USERS.append(new_user)
         return new_user
 
     @classmethod
@@ -115,6 +121,7 @@ class User(object):
         space_users = cls.api_get_list_via_space(space_guid)
         new_user = next((user for user in space_users if user.username == username), None)
         new_user.password = password
+        cls.TEST_USERS.append(new_user)
         return new_user
 
     @classmethod
@@ -196,3 +203,28 @@ class User(object):
     def cf_api_get_list_in_organization(cls, org_guid, space_guid=None):
         response = cf.cf_api_get_organization_space_users(org_guid=org_guid, space_guid=space_guid)
         return cls._get_user_list_from_cf_api_response(response)
+
+    def cf_api_delete(self, async=True):
+        try:
+            cf.cf_api_delete_user(self.guid, async=async)
+        except UnexpectedResponseError as e:
+            if "CF-UserNotFound" in e.error_message:
+                logger.warning("User {} was not found".format(self.guid))
+            else:
+                raise
+
+    @classmethod
+    def cf_api_delete_users_from_list(cls, user_list, async=True):
+        failed_to_delete = []
+        for user in user_list:
+            try:
+                user.cf_api_delete(async=async)
+            except JobFailedException:
+                failed_to_delete.append(user)
+                logger.exception("Could not delete {}\n".format(user))
+        return failed_to_delete
+
+    @classmethod
+    def cf_api_tear_down_test_users(cls):
+        """Use this method in tearDown and tearDownClass."""
+        cls.TEST_USERS = cls.cf_api_delete_users_from_list(cls.TEST_USERS, async=False)
