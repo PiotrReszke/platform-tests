@@ -104,7 +104,6 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
                 invited_user.api_add_to_organization(org.guid, roles=expected_roles, client=inviting_client)
                 self._assert_user_in_org_and_roles(invited_user, org.guid, expected_roles)
 
-    @unittest.expectedFailure
     def test_non_manager_cannot_add_existing_user_to_org(self):
         """DPNG-2271 /org/:org_guid/users returns different error messages for similar invalid requests"""
         invited_user = User.api_create_by_adding_to_organization(self.test_org.guid)
@@ -115,7 +114,7 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
                 org = Organization.api_create()
                 inviting_user.api_add_to_organization(org.guid, roles=non_manager_roles)
                 expected_roles = User.ORG_ROLES["auditor"]
-                self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                     invited_user.api_add_to_organization, org_guid=org.guid,
                                                     roles=expected_roles, client=inviting_client)
                 self._assert_user_not_in_org(invited_user, org.guid)
@@ -188,7 +187,6 @@ class AddNewUserToOrganization(BaseOrgUserClass):
                                                                      inviting_client=inviting_client)
                 self._assert_user_in_org_and_roles(new_user, org.guid, expected_roles)
 
-    @unittest.expectedFailure
     def test_non_manager_cannot_add_new_user_to_org(self):
         """DPNG-2271 /org/:org_guid/users returns different error messages for similar invalid requests"""
         for non_manager_roles in self.NON_MANAGER_ROLES:
@@ -198,7 +196,7 @@ class AddNewUserToOrganization(BaseOrgUserClass):
                 org = Organization.api_create()
                 inviting_user.api_add_to_organization(org_guid=org.guid, roles=non_manager_roles)
                 org_users = User.api_get_list_via_organization(org.guid)
-                self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                     User.api_create_by_adding_to_organization, org_guid=org.guid,
                                                     roles=User.ORG_ROLES["auditor"], inviting_client=inviting_client)
                 # assert user list did not change
@@ -298,7 +296,6 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                                             new_roles=User.ORG_ROLES["auditor"])
         self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
-    @unittest.expectedFailure
     def test_user_cannot_update_themselves_in_org_where_they_are_not_added(self):
         """DPNG-2271 /org/:org_guid/users returns different error messages for similar invalid requests"""
         for roles in User.ORG_ROLES.values():
@@ -308,7 +305,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                 initial_roles = self.ALL_ROLES
                 new_roles = roles
                 updated_user.api_add_to_organization(org_guid=org.guid, roles=initial_roles)
-                self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                     updated_user.api_update_via_organization, org_guid=org.guid,
                                                     new_roles=new_roles, client=updating_client)
                 self._assert_user_in_org_and_roles(updated_user, org.guid, initial_roles)
@@ -510,14 +507,11 @@ class GetOrganizationUsers(BaseOrgUserClass):
                           for roles in User.ORG_ROLES.values()}
         cls.test_clients = {roles: user.login() for roles, user in cls.test_users.items()}
 
-    @unittest.expectedFailure
-    def test_user_in_org_can_get_org_users(self):
-        """DPNG-2460 Non-manager, non-admin user cannot access User Management"""
-        expected_org_users = User.api_get_list_via_organization(org_guid=self.test_org.guid)
+    def test_user_in_org_cannot_get_org_users(self):
         for role, client in self.test_clients.items():
             with self.subTest(user_role=role):
-                org_users = User.api_get_list_via_organization(org_guid=self.test_org.guid, client=client)
-                self.assertListEqual(org_users, expected_org_users)
+                self.assertRaisesUnexpectedResponse("403", "Forbidden", User.api_get_list_via_organization,
+                                                    org_guid=self.test_org.guid, client=client)
 
     def test_user_not_in_org_cannot_get_org_users(self):
         user_not_in_org, _ = User.api_onboard()
