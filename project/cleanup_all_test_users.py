@@ -30,8 +30,11 @@ if __name__ == "__main__":
                         "--environment",
                         default=None,
                         help="Environment on which cleanup shall be performed, e.g. gotapaas.eu")
+    parser.add_argument("--disable-ssl-validation",
+                        action="store_true",
+                        help="Disable SSL validation")
     args = parser.parse_args()
-    config.update_test_settings(test_environment=args.environment)
+    config.update_test_settings(test_environment=args.environment, disable_ssl_validation=args.disable_ssl_validation)
 
     all_users = User.cf_api_get_all_users()
     test_users = [u for u in all_users if re.match(TEST_USER_PATTERN, u.username or "")]
