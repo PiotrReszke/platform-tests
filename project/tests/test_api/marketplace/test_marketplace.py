@@ -54,6 +54,7 @@ class TestMarketplaceServices(ApiTestCase):
         cf_marketplace = ServiceType.cf_api_get_list_from_marketplace(self.test_space.guid)
         self.assertUnorderedListEqual(self.platform_marketplace_services, cf_marketplace)
 
+    @unittest.expectedFailure
     def test_create_gateway_instance(self):
         """DPNG-2457 Gateway-broker (0.4.3) doesn't work on sprint.gotapaas.com environment"""
         label = "gateway"
