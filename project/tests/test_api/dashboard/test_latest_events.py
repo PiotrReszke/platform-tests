@@ -13,21 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import unittest
 
-from test_utils import ApiTestCase
-from objects import EventSummary, Organization
+from test_utils import ApiTestCase, cleanup_after_failed_setup
+from objects import EventSummary, Organization, Transfer
 
 
 class DashboardLatestEvents(ApiTestCase):
 
+    TEST_TRANSFER_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
+
     @classmethod
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
-        cls.seedorg, _ = Organization.get_org_and_space_by_name(org_name="seedorg")
-        cls.dashboard_latest_events = EventSummary.api_get_latest_events_from_org_metrics(cls.seedorg.guid)
+        # produce an event for tested organization
+        cls.tested_org = Organization.api_create()
+        transfer = Transfer.api_create(org_guid=cls.tested_org.guid, source=cls.TEST_TRANSFER_LINK)
+        transfer.ensure_finished()
+        # produce an event for another organization
+        other_org = Organization.api_create()
+        transfer = Transfer.api_create(org_guid=other_org.guid, source=cls.TEST_TRANSFER_LINK)
+        transfer.ensure_finished()
+        # get latest events from both sources
+        cls.dashboard_latest_events = EventSummary.api_get_latest_events_from_org_metrics(cls.tested_org.guid)
         cls.latest_events_response = EventSummary.api_get_latest_events()
 
-    def test_latest_events_dashboard(self):
+    def test_10_latest_events_on_dashboard_the_same_as_in_LES(self):
         ten_latest_events = sorted(self.latest_events_response, reverse=True)[:10]
         self.assertUnorderedListEqual(ten_latest_events, self.dashboard_latest_events, "\nLatest events differ")
 
@@ -35,5 +47,5 @@ class DashboardLatestEvents(ApiTestCase):
     def test_latest_events_dashboard_contains_only_current_org_events(self):
         """DPNG-2091 There's no organisations distinction on dashboard in latest events section"""
         for event in self.dashboard_latest_events:
-            self.assertEqual(event.organization_id, self.seedorg.guid,
-                             "Latest events in dashboard contain events from other organizations")
+            self.assertEqual(event.organization_id, self.tested_org.guid,
+                             "Latest events on dashboard contain events from another organization")
