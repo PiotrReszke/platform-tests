@@ -287,3 +287,11 @@ def cf_api_delete_user(user_guid, async=True):
     job_name = "delete user"
     logger.info("------------------ CF: {} {} ------------------".format(job_name, user_guid))
     __handle_delete_request(endpoint="users/{}".format(user_guid), job_name=job_name, async=async)
+
+
+@retry(JobFailedException, tries=3)
+def cf_api_delete_app(app_guid, async=True):
+    """DELETE /v2/apps/{app_guid}"""
+    job_name = "delete app"
+    logger.info("------------------ CF: {} {} ------------------".format(job_name, app_guid))
+    __handle_delete_request(endpoint="apps/{}".format(app_guid), job_name=job_name, async=async)

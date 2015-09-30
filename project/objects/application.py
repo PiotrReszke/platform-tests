@@ -23,7 +23,8 @@ import time
 import requests
 import yaml
 
-from test_utils import cloud_foundry as cf, platform_api_calls as api, TEST_SETTINGS, get_logger
+from test_utils import cloud_foundry as cf, platform_api_calls as api, TEST_SETTINGS, get_logger, \
+    UnexpectedResponseError
 
 logger = get_logger("application")
 
@@ -228,13 +229,22 @@ class Application(object):
             "VCAP_APPLICATION": response["application_env_json"]["VCAP_APPLICATION"]
         }
 
-    # -------------------------------- cf cli -------------------------------- #
+    def cf_api_delete(self):
+        try:
+            cf.cf_api_delete_app(self.guid, async=True)
+        except UnexpectedResponseError as e:
+            if "CF-AppNotFound" in e.error_message:
+                logger.warning("Application {} was not found".format(self.guid))
+            else:
+                raise
 
     @classmethod
     def delete_test_apps(cls):
         while len(cls.TEST_APPS) > 0:
             app = cls.TEST_APPS.pop()
-            app.cf_delete()
+            app.cf_api_delete()
+
+    # -------------------------------- cf cli -------------------------------- #
 
     def cf_push(self, organization, space):
         self.TEST_APPS.append(self)
