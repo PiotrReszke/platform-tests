@@ -15,15 +15,20 @@
 #
 
 import functools
+from urllib.parse import urlparse
 
-from test_utils import platform_api_calls as api, get_logger
+import requests
+
+from test_utils import platform_api_calls as api, get_logger, UnexpectedResponseError
+
 
 logger = get_logger("external_tools")
 
 
 @functools.total_ordering
 class ExternalTools(object):
-    def __init__(self, name=None, url=None, available=None):
+
+    def __init__(self, name, url, available):
         self.name = name
         self.url = url
         self.available = available
@@ -37,16 +42,28 @@ class ExternalTools(object):
     def __hash__(self):
         return hash((self.name, self.url, self.available))
 
+    def __repr__(self):
+        return "{} {}".format(self.__class__.__name__, self.name)
+
     @classmethod
     def api_get_external_tools(cls, client=None):
         response = api.api_get_external_tools(client)
-        return cls._api_get_external_tools_from_response(response)
-
-    @classmethod
-    def _api_get_external_tools_from_response(cls, response):
         tools_list = []
-        response = response.get('externalTools').get('list')
+        response = response["externalTools"]["list"]
         if response is not None:
-            for tool in response:
-                tools_list.append(cls(name=tool.get('name'), url=tool.get('url'), available=tool.get('available')))
+            for tool_data in response:
+                tool = cls(name=tool_data["name"], url=tool_data["url"], available=tool_data["available"])
+                tools_list.append(tool)
         return tools_list
+
+    def send_request(self, method="GET"):
+        parsed_url = urlparse(self.url)
+        if not (parsed_url.scheme and parsed_url.hostname):
+            raise AssertionError("{} url is invalid: {}".format(self, self.url))
+        url = "{}://{}".format(parsed_url.scheme, parsed_url.hostname)
+        request = getattr(requests, method.lower())
+        response = request(url=url)
+        if not response.ok:
+            raise UnexpectedResponseError(response.status_code, response.text)
+        return response.text
+

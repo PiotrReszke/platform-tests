@@ -98,6 +98,13 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
                                                                             e.exception.error_message,
                                                                             status, error_message_phrase))
 
+    def assertRerturnsError(self, callableObj, *args, **kwargs):
+        """Assert that response error code is 4XX or 5XX"""
+        with self.assertRaises(UnexpectedResponseError) as e:
+            callableObj(*args, **kwargs)
+        status_first_digit = e.exception.status // 100
+        self.assertIn(status_first_digit, (4, 5), "Status code: {}. Expected: 4XX or 5XX".format(e.exception.status))
+
     def assertAttributesEqual(self, obj, expected_obj):
         if getattr(obj, "COMPARABLE_ATTRIBUTES", None) is None:
             raise ValueError("Object of type {} does not have attribute COMPARABLE_ATTRIBUTES".format(type(obj)))
