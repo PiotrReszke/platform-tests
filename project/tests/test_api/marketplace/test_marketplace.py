@@ -62,7 +62,6 @@ class TestMarketplaceServices(ApiTestCase):
         self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
         self._test_service_instance_creation_and_deletion(service_type)
 
-    @unittest.expectedFailure
     def test_create_zookeeper_instance(self):
         """DPNG-2130 Cannot create zookeeper instance on Ireland - Bad Gateway"""
         label = "zookeeper"
@@ -70,7 +69,6 @@ class TestMarketplaceServices(ApiTestCase):
         self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
         self._test_service_instance_creation_and_deletion(service_type)
 
-    @unittest.expectedFailure
     def test_create_hbase_instance(self):
         """DPNG-2299 Error when creating hbase service instance in Marketplace"""
         label = "hbase"
