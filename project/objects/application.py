@@ -79,6 +79,12 @@ class Application(object):
             return True
         return False
 
+    @property
+    def is_running(self):
+        if self.instances is None:
+            return None
+        return self.instances[0] > 0
+
     def __save_manifest(self):
         with open(self.manifest_path, "w") as f:
             f.write(yaml.dump(self.manifest))
@@ -136,7 +142,8 @@ class Application(object):
         applications = []
         for app in response:
             application = cls(name=app["name"], space_guid=space_guid, guid=app["guid"], state=app["state"],
-                              urls=app["urls"], service_names=app["service_names"])
+                              urls=app["urls"], service_names=app["service_names"],
+                              instances=(app["running_instances"],))
             applications.append(application)
         return applications
 
@@ -197,8 +204,7 @@ class Application(object):
         applications = []
         for app_data in response["apps"]:
             app = cls(name=app_data["name"], space_guid=space_guid, state=app_data["state"], memory=app_data["memory"],
-                      disk=app_data["disk_quota"], instances="{}/{}".format(app_data["running_instances"],
-                                                                            app_data["instances"]),
+                      disk=app_data["disk_quota"], instances=(app_data["running_instances"], app_data["instances"]),
                       urls=tuple(app_data["urls"]), guid=app_data["guid"])
             applications.append(app)
         return applications

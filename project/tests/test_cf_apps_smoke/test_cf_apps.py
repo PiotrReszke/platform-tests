@@ -70,19 +70,20 @@ class TrustedAnalyticsApplicationsSmokeTest(ApiTestCase):
         missing_apps = [name for name in self.expected_app_and_service_names if name not in app_names]
         missing_apps = missing_apps + [name for name, hostname in self.expected_service_broker_names
                                        if not (name in app_names or hostname in app_names)]
+        # expected apps that are in cf apps list, but have zero instances
+        not_running_apps = [app.name for app in cf_apps
+                            if app.name in self.expected_app_and_service_names and not app.is_running]
         # create list of apps/services/brokers that are running
-        running_apps = [name for name in app_names
-                        if name not in missing_apps and name in self.expected_app_and_service_names]
+        running_apps = [name for name in self.expected_app_and_service_names
+                        if name not in missing_apps + not_running_apps]
         running_apps = running_apps + [name for name, hostname in self.expected_service_broker_names
-                                       if not (name in missing_apps and hostname in missing_apps)]
-        logger.info("\nRunning apps/services/brokers: %s\n", running_apps)
-        # check that all expected apps are running
-        apps_not_started = [app.name for app in cf_apps
-                            if app.name in self.expected_app_and_service_names and not app.is_started]
+                                       if not (name in missing_apps + not_running_apps or
+                                               hostname in missing_apps + not_running_apps)]
+        logger.info("\nRunning apps/services/brokers: %s\n", set(running_apps))
         # assert that both conditions are satisfied
-        self.assertTrue((missing_apps == [] and apps_not_started == []),
+        self.assertTrue(missing_apps + not_running_apps == [],
                         "\nMissing applications: {}\nApplications not started: {}"
-                        .format(missing_apps, apps_not_started))
+                        .format(missing_apps, not_running_apps))
 
     def test_trusted_analytics_apps(self):
         """Verify applications on platform against settings.yml"""
