@@ -436,21 +436,19 @@ class DeleteOrganizationUser(BaseOrgUserClass):
                 self._assert_user_in_org_and_roles(manager_user, org.guid, manager_role)
                 self._assert_user_in_org_and_roles(updated_user, org.guid, updated_user_roles)
 
-    @unittest.expectedFailure
     def test_admin_cannot_delete_org_user_twice(self):
         """DPNG-2216 Deleting from org a user which is not in this org does not return any error"""
         deleted_user = self.test_user
         org = Organization.api_create()
         deleted_user.api_add_to_organization(org_guid=org.guid, roles=User.ORG_ROLES["auditor"])
         deleted_user.api_delete_from_organization(org_guid=org.guid)
-        self.assertRaisesUnexpectedResponse(404, "???", deleted_user.api_delete_from_organization, org_guid=org.guid)
+        self.assertRaisesUnexpectedResponse(404, "", deleted_user.api_delete_from_organization, org_guid=org.guid)
 
-    @unittest.expectedFailure
     def test_admin_cannot_delete_non_existing_org_user(self):
         """DPNG-2216 Deleting from org a user which is not in this org does not return any error"""
         deleted_user = self.test_user
         org = Organization.api_create()
-        self.assertRaisesUnexpectedResponse(404, "???", deleted_user.api_delete_from_organization, org_guid=org.guid)
+        self.assertRaisesUnexpectedResponse(404, "", deleted_user.api_delete_from_organization, org_guid=org.guid)
 
     def test_org_manager_can_delete_another_user(self):
         """DPNG-2459 Cannot delete user - 404"""

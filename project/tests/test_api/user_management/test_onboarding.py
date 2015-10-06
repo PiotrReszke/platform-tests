@@ -79,9 +79,9 @@ class Onboarding(ApiTestCase):
 
     @unittest.expectedFailure
     def test_invite_user_with_non_email_username(self):
-        """DPNG-2272 Attempt to add user with incorrect e-mail address results in Intenternal Server Error"""
+        """DPNG-2625 Onboarding user with invalid e-mail as username results in Internal Server Error"""
         username = "non_mail_username"
-        self.assertRaisesUnexpectedResponse(400, "", User.api_invite, username)
+        self.assertRaisesUnexpectedResponse(400, "???", User.api_invite, username)
 
     @unittest.expectedFailure
     def test_register_user_without_password(self):
@@ -97,8 +97,8 @@ class Onboarding(ApiTestCase):
         self.assertRaisesUnexpectedResponse(409, "Organization \\\"{}\\\" already exists".format(existing_org.name),
                                             User.api_register_after_onboarding, code, username,
                                             org_name=existing_org.name)
-        # username_list = [user.username for user in User.cf_api_get_all_users()]
-        # self.assertNotInList(username, username_list, "User was created")
+        username_list = [user.username for user in User.cf_api_get_all_users()]
+        self.assertNotInList(username, username_list, "User was created")
 
     def test_user_registers_with_no_organization_name(self):
         """DPNG-2458 It's possible to create user without organization after onboarding"""
