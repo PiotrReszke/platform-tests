@@ -5,7 +5,7 @@ jinja2
 paho-mqtt
 pexpect
 pyaml
-requests
+requests==2.7.0
 retry
 spur
 teamcity-messages
