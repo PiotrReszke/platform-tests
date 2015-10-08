@@ -54,7 +54,6 @@ class TestMarketplaceServices(ApiTestCase):
         cf_marketplace = ServiceType.cf_api_get_list_from_marketplace(self.test_space.guid)
         self.assertUnorderedListEqual(self.platform_marketplace_services, cf_marketplace)
 
-    @unittest.expectedFailure
     def test_create_gateway_instance(self):
         """DPNG-2457 Gateway-broker (0.4.3) doesn't work on sprint.gotapaas.com environment"""
         label = "gateway"
@@ -84,7 +83,6 @@ class TestMarketplaceServices(ApiTestCase):
         self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
         self._test_service_instance_creation_and_deletion(service_type)
 
-    @unittest.expectedFailure
     def test_create_memcached14_instance(self):
         """DPNG-2476 Cannot create memcached14 1Gb instance on Ireland - Bad Gateway"""
         label = "memcached14"

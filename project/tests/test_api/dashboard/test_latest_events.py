@@ -20,6 +20,7 @@ from test_utils import ApiTestCase, cleanup_after_failed_setup
 from objects import EventSummary, Organization, Transfer
 
 
+
 class DashboardLatestEvents(ApiTestCase):
 
     TEST_TRANSFER_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
@@ -27,6 +28,7 @@ class DashboardLatestEvents(ApiTestCase):
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
+        """Regression with DPNG-2125"""
         # produce an event for tested organization
         cls.tested_org = Organization.api_create()
         transfer = Transfer.api_create(org_guid=cls.tested_org.guid, source=cls.TEST_TRANSFER_LINK)
