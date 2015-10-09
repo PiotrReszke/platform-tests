@@ -1,5 +1,6 @@
 import time
 import unittest
+import re
 
 from test_utils import config, gmail_api, get_logger, ApiTestCase, platform_api_calls as api
 from objects import User, Organization
@@ -18,10 +19,12 @@ class Onboarding(ApiTestCase):
         Organization.cf_api_tear_down_test_orgs()
 
     def _assert_message_correct(self, message_subject, message_content):
-        expected_link = "https://console.{}/new-account".format(config.TEST_SETTINGS["TEST_ENVIRONMENT"])
+        code = gmail_api.extract_code_from_message(message_content)
+        expected_link_pattern = '"https?://console.{}/new-account\?code={}"'\
+            .format(config.TEST_SETTINGS["TEST_ENVIRONMENT"], code)
         message_link = gmail_api.get_link_from_message(message_content)
-        correct_link = (expected_link in message_link,
-                        "Link to create account: {}, expected: {}".format(message_link, expected_link))
+        correct_link = (re.match(expected_link_pattern, message_link),
+                        "Link to create account: {}, expected pattern: {}".format(message_link, expected_link_pattern))
         expected_inviting_user = config.TEST_SETTINGS["TEST_USERNAME"]
         correct_inviting_user = (expected_inviting_user in message_content,
                                  "Inviting user {} was not found in message content.".format(expected_inviting_user))
