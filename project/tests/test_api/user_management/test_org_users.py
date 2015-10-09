@@ -151,14 +151,12 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
                                             roles=expected_roles, client=inviting_client)
         self._assert_user_not_in_org(invited_user, org.guid)
 
-    @unittest.expectedFailure
     def test_cannot_add_existing_user_to_non_existing_org(self):
-        """DPNG-2270 Using incorrect guid format in request results in Internal Server Error"""
         invited_user = self.test_user
         invalid_org_guid = "this-org-guid-is-not-correct"
         roles = self.ALL_ROLES
         self.step("Check that adding user to organization using invalid org guid raises an error")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", invited_user.api_add_to_organization,
+        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", invited_user.api_add_to_organization,
                                             org_guid=invalid_org_guid, roles=roles)
 
     def test_cannot_add_existing_user_with_incorrect_role(self):
@@ -247,13 +245,11 @@ class AddNewUserToOrganization(BaseOrgUserClass):
         # assert user list did not change
         self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
-    @unittest.expectedFailure
     def test_cannot_add_new_user_to_non_existing_org(self):
-        """DPNG-2270 Using incorrect guid format in request results in Internal Server Error"""
         org_guid = "this-org-guid-is-not-correct"
         roles = self.ALL_ROLES
         self.step("Check that an error is raised when trying to add user using incorrect org guid")
-        self.assertRaisesUnexpectedResponse(400, "???", User.api_create_by_adding_to_organization, org_guid=org_guid,
+        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", User.api_create_by_adding_to_organization, org_guid=org_guid,
                                             roles=roles)
 
     def test_cannot_add_new_user_incorrect_role(self):
@@ -375,26 +371,22 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         updated_user.api_update_via_organization(org_guid=org.guid, new_roles=new_roles)
         self._assert_user_in_org_and_roles(updated_user, org.guid, new_roles)
 
-    @unittest.expectedFailure
     def test_cannot_update_non_existing_org_user(self):
-        """DPNG-2270 Using incorrect guid format in request results in Internal Server Error"""
         org = self.test_org
         invalid_guid = "invalid-user-guid"
         roles = User.ORG_ROLES["billing_manager"]
         self.step("Check that updating user which is not in an organization returns an error")
         org_users = User.api_get_list_via_organization(org_guid=org.guid)
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", api.api_update_organization_user, org_guid=org.guid,
+        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_organization_user, org_guid=org.guid,
                                             user_guid=invalid_guid, new_roles=roles)
         self.assertListEqual(User.api_get_list_via_organization(org_guid=org.guid), org_users)
 
-    @unittest.expectedFailure
     def test_cannot_update_org_user_in_non_existing_org(self):
-        """DPNG-2270 Using incorrect guid format in request results in Internal Server Error"""
         invalid_guid = "invalid-org-guid"
         user_guid = self.test_user.guid
         roles = User.ORG_ROLES["billing_manager"]
         self.step("Check that updating user using invalid org guid returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", api.api_update_organization_user, org_guid=invalid_guid,
+        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_organization_user, org_guid=invalid_guid,
                                             user_guid=user_guid, new_roles=roles)
 
     def test_cannot_update_org_user_with_incorrect_role(self):
