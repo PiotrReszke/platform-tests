@@ -104,14 +104,12 @@ class Onboarding(ApiTestCase):
         username = "non_mail_username"
         self.assertRaisesUnexpectedResponse(400, "???", User.api_invite, username)
 
-    @unittest.expectedFailure
     def test_user_cannot_register_without_password(self):
-        """DPNG-2367 Registration without password - http 500"""
         self.step("Invite a new user")
         username = User.api_invite()
         code = gmail_api.get_invitation_code(username)
         self.step("Check that an error is returned when the user tries to register without a password")
-        self.assertRaisesUnexpectedResponse(400, "???", api.api_register_new_user, code=code,
+        self.assertRaisesUnexpectedResponse(400, "Password cannot be empty", api.api_register_new_user, code=code,
                                             org_name=Organization.get_default_name())
         self.step("Check that the user was not created")
         username_list = [user.username for user in User.cf_api_get_all_users()]
