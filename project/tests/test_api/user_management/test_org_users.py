@@ -334,7 +334,6 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                                             org_guid=org.guid, new_roles=new_roles)
         self._assert_user_in_org_and_roles(updated_user, org.guid, expected_roles)
 
-    @unittest.expectedFailure
     def test_cannot_update_user_which_is_not_in_org(self):
         """DPNG-2196 It's possible to update user which was deleted from organization"""
         self.step("Add new user to the test organization")
@@ -343,7 +342,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         org = Organization.api_create()
         self.step("Check that attempt to update a user via org they are not in returns an error")
         org_users = User.api_get_list_via_organization(org.guid)
-        self.assertRaisesUnexpectedResponse(400, "???", user_not_in_org.api_update_via_organization, org_guid=org.guid,
+        self.assertRaisesUnexpectedResponse(400, "User not exists in organization.", user_not_in_org.api_update_via_organization, org_guid=org.guid,
                                             new_roles=User.ORG_ROLES["auditor"])
         self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
