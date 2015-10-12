@@ -105,8 +105,8 @@ class SpaceUsers(ApiTestCase):
         self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
 
     def test_change_user_role(self):
-        initial_roles = self.SPACE_ROLES[1]
-        new_roles = self.SPACE_ROLES[2]
+        initial_roles = [self.SPACE_ROLES[1]]
+        new_roles = [self.SPACE_ROLES[2]]
         self.step("Create new platform user by adding to space with roles {}".format(initial_roles))
         test_user = User.api_create_by_adding_to_space(org_guid=self.test_org.guid, space_guid=self.test_space.guid,
                                                        roles=initial_roles)
@@ -115,7 +115,7 @@ class SpaceUsers(ApiTestCase):
         self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
 
     def test_cannot_change_role_to_invalid_one(self):
-        initial_roles = self.SPACE_ROLES[1]
+        initial_roles = [self.SPACE_ROLES[1]]
         new_roles = ("wrong_role",)
         self.step("Create new platform user by adding to space with roles {}".format(initial_roles))
         test_user = User.api_create_by_adding_to_space(org_guid=self.test_org.guid, space_guid=self.test_space.guid,
