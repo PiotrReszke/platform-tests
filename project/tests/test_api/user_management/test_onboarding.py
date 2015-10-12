@@ -96,12 +96,11 @@ class Onboarding(ApiTestCase):
         self.step("Check that error is returned when the user tries to use code twice")
         self.assertRaisesUnexpectedResponse(403, "", User.api_register_after_onboarding, code, username)
 
-    @unittest.expectedFailure
     def test_invite_user_with_non_email_username(self):
         """DPNG-2625 Onboarding user with invalid e-mail as username results in Internal Server Error"""
         self.step("Check that passing invalid email results in error")
         username = "non_mail_username"
-        self.assertRaisesUnexpectedResponse(400, "???", User.api_invite, username)
+        self.assertRaisesUnexpectedResponse(400, "That email address is not valid", User.api_invite, username)
 
     def test_user_cannot_register_without_password(self):
         self.step("Invite a new user")
