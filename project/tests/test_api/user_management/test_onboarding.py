@@ -70,7 +70,6 @@ class Onboarding(ApiTestCase):
         self.step("Check that sending invitation to the same user causes an error.")
         self.assertRaisesUnexpectedResponse(409, "???", User.api_invite, user.username)
 
-    @unittest.expectedFailure
     def test_non_admin_user_cannot_invite_another_user(self):
         """DPNG-2366 Non admin user invites another user - http 500"""
         self.step("Create a test user")
@@ -78,7 +77,7 @@ class Onboarding(ApiTestCase):
         non_admin_user_client = non_admin_user.login()
         self.step("Check an error is returned when non-admin tries to onboard another user")
         username = User.get_default_username()
-        self.assertRaisesUnexpectedResponse(403, "???", User.api_invite, username,
+        self.assertRaisesUnexpectedResponse(403, "Access is denied", User.api_invite, username,
                                             inviting_client=non_admin_user_client)
         self._assert_user_received_messages(username, 0)
 
