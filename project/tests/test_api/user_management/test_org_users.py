@@ -402,18 +402,16 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                                             org_guid=org.guid, new_roles=invalid_roles)
         self._assert_user_in_org_and_roles(updated_user, org.guid, initial_roles)
 
-    @unittest.expectedFailure
     def test_update_role_of_one_org_manager_cannot_update_second(self):
-        """DPNG-2546 It's possible to update org role to non-manager for the last manager in an organization"""
         manager_role = User.ORG_ROLES["manager"]
-        org = self.test_org
+        org = Organization.api_create()
         self.step("Add two managers to the test organization")
         first_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=manager_role)
         second_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=manager_role)
         self.step("Remove manager role from one of the managers")
         first_user.api_update_via_organization(org_guid=org.guid, new_roles=self.NON_MANAGER_ROLES)
         self.step("Check that attempt to remove manager role from the second manager returns an error")
-        self.assertRaisesUnexpectedResponse(400, "???", second_user.api_update_via_organization,
+        self.assertRaisesUnexpectedResponse(400, "Bad Request", second_user.api_update_via_organization,
                                             org_guid=org.guid, new_roles=self.NON_MANAGER_ROLES)
         self._assert_user_in_org_and_roles(first_user, org.guid, self.NON_MANAGER_ROLES)
         self._assert_user_in_org_and_roles(second_user, org.guid, manager_role)
