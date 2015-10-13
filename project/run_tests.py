@@ -16,6 +16,8 @@
 
 import os
 import unittest
+import requests
+import sys
 
 from teamcity import is_running_under_teamcity
 from teamcity.unittestpy import TeamcityTestRunner
@@ -47,12 +49,21 @@ if __name__ == "__main__":
         if not os.path.exists(test_dir):
             raise NotADirectoryError("Directory {} doesn't exists".format(args.test))
 
-    # run tests
-    if is_running_under_teamcity():
-        runner = TeamcityTestRunner()
+    # check if environment is up and running
+    try:
+        scheme = config.get_config_value("login.do_scheme")
+        requests.get(scheme + "://console." + config.get_config_value("api_endpoint")).raise_for_status()
+        requests.get(scheme + "://" + config.get_config_value("cf_endpoint") + "/v2/info").raise_for_status()
+    except requests.HTTPError as e:
+            logger.error("Environment {} is unavailable - status {}".format(e.response.url, e.response.status_code))
+            sys.exit(1)
     else:
-        runner = unittest.TextTestRunner(verbosity=3)
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-    suite.addTests(loader.discover(test_dir))
-    runner.run(suite)
+        # run tests
+        if is_running_under_teamcity():
+            runner = TeamcityTestRunner()
+        else:
+            runner = unittest.TextTestRunner(verbosity=3)
+        loader = unittest.TestLoader()
+        suite = unittest.TestSuite()
+        suite.addTests(loader.discover(test_dir))
+        runner.run(suite)
