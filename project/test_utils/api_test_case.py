@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,6 @@ from . import get_logger, UnexpectedResponseError
 
 
 logger = get_logger("api_test_case")
-
 
 __all__ = ["ApiTestCase", "cleanup_after_failed_setup"]
 
@@ -60,7 +59,6 @@ class SeparatorMeta(type):
 
 
 class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
-
     STEP_NO = 0
     SUB_TEST_NO = 0
 
@@ -140,13 +138,15 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         if getattr(obj, "COMPARABLE_ATTRIBUTES", None) is None:
             raise ValueError("Object of type {} does not have attribute COMPARABLE_ATTRIBUTES".format(type(obj)))
         if type(obj) != type(expected_obj):
-            raise TypeError("Cannot compare object of type {} with object of type {}".format(type(obj), type(expected_obj)))
+            raise TypeError(
+                "Cannot compare object of type {} with object of type {}".format(type(obj), type(expected_obj)))
         differences = []
         for attribute in obj.COMPARABLE_ATTRIBUTES:
             obj_val = getattr(obj, attribute)
             expected_val = getattr(expected_obj, attribute)
             if obj_val != expected_val:
-                differences.append("{0}.{1}={2} not equal to {0}.{1}={3}".format(type(obj), attribute, obj_val, expected_val))
+                differences.append(
+                    "{0}.{1}={2} not equal to {0}.{1}={3}".format(type(obj), attribute, obj_val, expected_val))
         if differences != []:
             self.fail("Objects are not equal:\n{}".format("\n".join(differences)))
 
@@ -172,6 +172,16 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
                 time.sleep(5)
         raise exception
 
+    def assert_user_in_org_and_roles(self, invited_user, org_guid, expected_roles):
+        self.step("Check that the user is in the organization with expected roles ({}).".format(expected_roles))
+        org_users = usr.User.api_get_list_via_organization(org_guid)
+        self.assertInList(invited_user, org_users, "Invited user is not on org users list")
+        invited_user_roles = list(invited_user.org_roles.get(org_guid, []))
+        self.assertUnorderedListEqual(invited_user_roles, list(expected_roles),
+                                      "User's roles in org: {}, expected {}".format(invited_user_roles,
+                                                                                    list(expected_roles)))
+
+
 def cleanup_after_failed_setup(*cleanup_methods):
     def wrapper(func):
         @functools.wraps(func)
@@ -182,7 +192,9 @@ def cleanup_after_failed_setup(*cleanup_methods):
                 for cleanup_method in cleanup_methods:
                     cleanup_method()
                 raise
+
         return wrapped
+
     return wrapper
 
 

@@ -1,8 +1,6 @@
 import unittest
 import re
 
-from retry import retry
-
 from test_utils import config, gmail_api, get_logger, ApiTestCase, platform_api_calls as api
 from objects import User, Organization
 
@@ -26,8 +24,8 @@ class Onboarding(ApiTestCase):
     def _assert_message_correct(self, message_subject, message_content):
         self.step("Check that the e-mail invitation message is correct")
         code = gmail_api.extract_code_from_message(message_content)
-        expected_link_pattern = '"https?://console.{}/new-account\?code={}"'.format(config.TEST_SETTINGS["TEST_ENVIRONMENT"],
-                                                                                    code)
+        expected_link_pattern = '"https?://console.{}/new-account\?code={}"'.format(
+            config.TEST_SETTINGS["TEST_ENVIRONMENT"], code)
         message_link = gmail_api.get_link_from_message(message_content)
         correct_link = (re.match(expected_link_pattern, message_link),
                         "Link to create account: {}, expected pattern: {}".format(message_link, expected_link_pattern))
@@ -40,10 +38,9 @@ class Onboarding(ApiTestCase):
                          if not condition]
         self.assertTrue(all((correct_link[0], correct_inviting_user[0], correct_subject[0])), error_message)
 
-    @retry(AssertionError, tries=15, delay=2)
     def _assert_user_received_messages(self, username, number_of_messages):
         self.step("Check that the new user received {} e-mail message(s)".format(number_of_messages))
-        messages = gmail_api.get_messages(recipient=username)
+        messages = gmail_api.wait_for_messages(recipient=username, messages_number=number_of_messages)
         self.assertEqual(len(messages), number_of_messages, "There are {} messages for {}. Expected: {}"
                          .format(len(messages), username, number_of_messages))
         for message in messages:
@@ -52,15 +49,17 @@ class Onboarding(ApiTestCase):
     def test_simple_onboarding(self):
         self.step("Send an invite to a new user")
         username = User.api_invite()
-        self._assert_user_received_messages(username, 1)
-        code = gmail_api.get_invitation_code(username)
+        messages = gmail_api.wait_for_messages(recipient=username, messages_number=1)
+        self.assertEqual(len(messages), 1, "There are {} messages for {}. Expected: 1".format(len(messages), username))
+        message = messages[0]
+        self._assert_message_correct(message["subject"], message["content"])
+        code = gmail_api.extract_code_from_message(message["content"])
         self.step("Register the new user")
         user, organization = User.api_register_after_onboarding(code, username)
         self.step("Check that the user and their organization exist")
         organizations = Organization.api_get_list()
         self.assertInList(organization, organizations, "New organization was not found")
-        users = User.api_get_list_via_organization(org_guid=organization.guid)
-        self.assertInList(user, users, "Invited user was not found in new organization")
+        self.assert_user_in_org_and_roles(user, organization.guid, User.ORG_ROLES["manager"])
 
     @unittest.expectedFailure
     def test_cannot_invite_existing_user(self):

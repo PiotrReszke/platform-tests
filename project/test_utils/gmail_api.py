@@ -23,9 +23,9 @@ from operator import itemgetter
 from apiclient import discovery
 import httplib2
 import oauth2client
+from retry import retry
 
 from . import config, get_logger
-
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
 CLIENT_SECRET_FILE = 'secrets/client_secret.json'
@@ -92,6 +92,13 @@ def get_messages(recipient, user_id=TEST_EMAIL, subject=None):
     return messages
 
 
+@retry(AssertionError, tries=30, delay=2)
+def wait_for_messages(recipient, user_id=TEST_EMAIL, subject=None, messages_number=1):
+    messages = get_messages(recipient, user_id=user_id, subject=subject)
+    assert len(messages) == messages_number
+    return messages
+
+
 def extract_code_from_message(message):
     pattern = r"(?<=code=)([a-z]|[0-9]|-)+"
     match = re.search(pattern, message)
@@ -100,14 +107,9 @@ def extract_code_from_message(message):
     return match.group()
 
 
-def get_invitation_code(username, timeout=120):
-    start = time.time()
-    while time.time() - start < timeout:
-        messages = get_messages(recipient=username)
-        if len(messages) == 1:
-            return extract_code_from_message(messages[0]["content"])
-        time.sleep(10)
-    raise AssertionError("There are {} e-mail messages instead of 1".format(len(messages)))
+def get_invitation_code(username):
+    messages = wait_for_messages(recipient=username)
+    return extract_code_from_message(messages[0]["content"])
 
 
 def get_link_from_message(email_content):
