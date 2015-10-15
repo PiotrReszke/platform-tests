@@ -342,7 +342,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         org = Organization.api_create()
         self.step("Check that attempt to update a user via org they are not in returns an error")
         org_users = User.api_get_list_via_organization(org.guid)
-        self.assertRaisesUnexpectedResponse(400, "User not exists in organization.", user_not_in_org.api_update_via_organization, org_guid=org.guid,
+        self.assertRaisesUnexpectedResponse(404, "User not exists in organization.", user_not_in_org.api_update_via_organization, org_guid=org.guid,
                                             new_roles=User.ORG_ROLES["auditor"])
         self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
@@ -355,7 +355,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         self.step("Add updated user to the organization as {}".format(expected_roles))
         updated_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=expected_roles)
         self.step("Check that non-admin user cannot update another user in the test organization")
-        self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+        self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                             updated_user.api_update_via_organization, org_guid=org.guid,
                                             new_roles=User.ORG_ROLES["billing_manager"], client=updating_client)
         self._assert_user_in_org_and_roles(updated_user, org.guid, expected_roles)
@@ -541,7 +541,7 @@ class DeleteOrganizationUser(BaseOrgUserClass):
                 self.step("Add deleted user to the organization with roles {}".format(deleted_user_roles))
                 deleted_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=deleted_user_roles)
                 self.step("Check that non-manager cannot delete user from org")
-                self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                     deleted_user.api_delete_from_organization, org_guid=org.guid,
                                                     client=non_manager_client)
                 self._assert_user_in_org_and_roles(deleted_user, org.guid, deleted_user_roles)

@@ -100,7 +100,7 @@ class Onboarding(ApiTestCase):
         """DPNG-2625 Onboarding user with invalid e-mail as username results in Internal Server Error"""
         self.step("Check that passing invalid email results in error")
         username = "non_mail_username"
-        self.assertRaisesUnexpectedResponse(400, "That email address is not valid", User.api_invite, username)
+        self.assertRaisesUnexpectedResponse(409, "That email address is not valid", User.api_invite, username)
 
     def test_user_cannot_register_without_password(self):
         self.step("Invite a new user")
