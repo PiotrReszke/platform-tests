@@ -24,7 +24,7 @@ from . import CfApiClient, get_logger, log_command, get_config_value, TEST_SETTI
 
 __all__ = ["cf_login", "cf_push", "cf_create_service", "cf_delete", "cf_env", "cf_delete_service",
            "cf_api_get_service_instances", "cf_api_create_service_instance", "cf_api_get_app_env",
-           "cf_api_get_app_services", "cf_api_app_summary", "cf_api_space_summary", "cf_api_get_org_spaces",
+           "cf_api_get_space_services", "cf_api_app_summary", "cf_api_space_summary", "cf_api_get_org_spaces",
            "cf_api_get_space_routes", "cf_api_get_service_brokers", "cf_api_delete_org", "cf_api_delete_route",
            "JobFailedException"]
 
@@ -184,7 +184,7 @@ def cf_api_get_space_routes(space_guid):
                                             log_msg="CF: get routes in space")
 
 
-def cf_api_get_app_services(space_guid):
+def cf_api_get_space_services(space_guid):
     """GET /v2/spaces/{space_guid}/services"""
     return CfApiClient.get_client().request("GET", "spaces/{}/services".format(space_guid),
                                             log_msg="CF: get space services")
