@@ -17,6 +17,8 @@
 import logging
 import sys
 
+import requests
+
 
 __all__ = ["get_logger", "log_command", "log_http_request", "log_http_response"]
 
@@ -26,7 +28,7 @@ logging.basicConfig(stream=sys.stdout, format=format, level=logging.DEBUG)
 # logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
 logging.getLogger("paramiko.transport").setLevel(logging.WARNING)
 logging.getLogger("googleapiclient.discovery").setLevel(logging.WARNING)
-
+requests.packages.urllib3.disable_warnings()
 
 def get_logger(name):
     return logging.getLogger(name)

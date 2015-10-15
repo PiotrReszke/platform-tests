@@ -39,7 +39,7 @@ class TestMqtt(ApiTestCase):
     APP_REPO_PATH = "../../mqtt-demo"
     TEST_DATA_FILE = os.path.join(os.path.dirname(__file__), "shuttle_scale_cut_val.csv")
     APP_NAME = "mqtt-demo"
-    MQTT_SERVER = APP_NAME + '.' + config.TEST_SETTINGS["TEST_ENVIRONMENT"]
+    MQTT_SERVER = "{}.{}".format(APP_NAME, config.CONFIG["domain"])
     SERVER_CERTIFICATE = os.path.join(os.path.dirname(__file__), "mosquitto_demo_cert.pem")
     MQTT_TOPIC_NAME = "space-shuttle/test-data"
 

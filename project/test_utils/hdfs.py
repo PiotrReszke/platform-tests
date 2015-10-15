@@ -18,7 +18,7 @@ import re
 
 import spur
 
-from . import get_logger, log_command, get_config_value, TEST_SETTINGS, get_ssh_key_passphrase
+from . import get_logger, log_command, config
 
 
 __all__ = ["Hdfs"]
@@ -30,8 +30,8 @@ logger = get_logger("hdfs")
 class Hdfs(object):
 
     def __init__(self, node_name, username="ec2-user"):
-        test_environment = TEST_SETTINGS["TEST_ENVIRONMENT"]
-        self.hostname = get_config_value("cdh_host")
+        test_environment = config.CONFIG["domain"]
+        self.hostname = "cdh.{}".format(test_environment)
         self.username = username
         logger.info("Accessing HDFS on {}@{}".format(self.username, self.hostname))
         self.node_name = "hdfs://{}/".format(node_name)
@@ -41,7 +41,9 @@ class Hdfs(object):
 
     def _execute(self, command):
         log_command(command)
-        with spur.SshShell(hostname=self.hostname, username=self.username, password=get_ssh_key_passphrase()) as shell:
+        with spur.SshShell(hostname=self.hostname,
+                           username=self.username,
+                           password=config.CONFIG["ssh_key_passphrase"]) as shell:
             result = shell.run(command)
         if result.return_code != 0:
             raise result.to_error()

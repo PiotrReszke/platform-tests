@@ -24,7 +24,7 @@ import uuid
 import requests
 import websocket
 
-from test_utils import get_logger, UnexpectedResponseError, log_http_request, log_http_response, TEST_SETTINGS
+from test_utils import get_logger, UnexpectedResponseError, log_http_request, log_http_response, config
 from objects import ServiceType, ServiceInstance
 
 
@@ -168,7 +168,7 @@ class iPython(object):
         self.http_session = requests.Session()
         self.http_session.proxies = {"https": os.environ.get("HTTPS_PROXY"), "http": os.environ.get("HTTP_PROXY")}
         self.ws_sslopt = {}
-        if TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"]:
+        if not config.CONFIG["ssl_validation"]:
             self.http_session.verify = False
             self.ws_sslopt = {"cert_reqs": ssl.CERT_NONE}
 

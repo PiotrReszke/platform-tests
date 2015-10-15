@@ -30,13 +30,8 @@ if __name__ == "__main__":
                         "--environment",
                         default=None,
                         help="environment where tests are to be run, e.g. gotapaas.eu")
-    parser.add_argument("--disable-ssl-validation",
-                        action="store_true",
-                        default=False,
-                        help="Disable SSL validation")
     args = parser.parse_args()
-    config.update_test_settings(test_environment=args.environment,
-                                disable_ssl_validation=args.disable_ssl_validation)
+    config.update_test_config(domain=args.environment)
 
     all_orgs = Organization.cf_api_get_list()
     test_orgs = [o for o in all_orgs if re.match(TEST_ORG_PATTERN, o.name)]

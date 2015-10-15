@@ -19,7 +19,7 @@ import subprocess
 
 from retry import retry
 
-from . import CfApiClient, get_logger, log_command, get_config_value, TEST_SETTINGS, UnexpectedResponseError
+from . import CfApiClient, get_logger, log_command, config, UnexpectedResponseError
 
 
 __all__ = ["cf_login", "cf_push", "cf_create_service", "cf_delete", "cf_env", "cf_delete_service",
@@ -49,11 +49,11 @@ def log_output_on_error(func):
 
 
 def cf_login(organization_name, space_name):
-    api_url = get_config_value("cf_endpoint")
-    username = TEST_SETTINGS["TEST_USERNAME"]
-    password = TEST_SETTINGS["TEST_PASSWORD"]
+    api_url = "api.{}".format(config.CONFIG["domain"])
+    username = config.CONFIG["admin_username"]
+    password = config.CONFIG["admin_password"]
     command = ["cf", "login", "-a", api_url, "-u", username, "-p", password, "-o", organization_name, "-s", space_name]
-    if TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"] is True:
+    if not config.CONFIG["ssl_validation"]:
         command.append("--skip-ssl-validation")
     log_command(command, replace=(password, "[SECRET]"))
     subprocess.check_call(command)

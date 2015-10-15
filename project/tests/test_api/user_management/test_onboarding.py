@@ -24,12 +24,11 @@ class Onboarding(ApiTestCase):
     def _assert_message_correct(self, message_subject, message_content):
         self.step("Check that the e-mail invitation message is correct")
         code = gmail_api.extract_code_from_message(message_content)
-        expected_link_pattern = '"https?://console.{}/new-account\?code={}"'.format(
-            config.TEST_SETTINGS["TEST_ENVIRONMENT"], code)
+        expected_link_pattern = '"https?://console.{}/new-account\?code={}"'.format(config.CONFIG["domain"], code)
         message_link = gmail_api.get_link_from_message(message_content)
         correct_link = (re.match(expected_link_pattern, message_link),
                         "Link to create account: {}, expected pattern: {}".format(message_link, expected_link_pattern))
-        expected_inviting_user = config.TEST_SETTINGS["TEST_USERNAME"]
+        expected_inviting_user = config.CONFIG["admin_username"]
         correct_inviting_user = (expected_inviting_user in message_content,
                                  "Inviting user {} was not found in message content.".format(expected_inviting_user))
         correct_subject = (self.EXPECTED_EMAIL_SUBJECT in message_subject,

@@ -46,28 +46,27 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
     def __init__(self, platform_username, platform_password):
         self._username = platform_username
         self._password = platform_password
-        self._domain = config.get_config_value("api_endpoint")
-        self._login_endpoint = config.get_config_value("login_endpoint")
+        self._domain = config.CONFIG["domain"]
+        self._login_endpoint = "login.{}".format(self._domain)
         self._session = requests.Session()
-        proxy = config.TEST_SETTINGS["TEST_PROXY"]
+        proxy = config.CONFIG["proxy"]
         if proxy is not None:
             self._session.proxies = {"https": proxy, "http": proxy}
-        if config.TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"] is True:
-            self._session.verify = False
+        self._session.verify = config.CONFIG["ssl_validation"]
 
     def __repr__(self):
         return "{}: {}".format(self.__class__.__name__, self._username)
 
     @classmethod
     def get_admin_client(cls):
-        admin_username = config.TEST_SETTINGS["TEST_USERNAME"]
-        admin_password = config.TEST_SETTINGS["TEST_PASSWORD"]
+        admin_username = config.CONFIG["admin_username"]
+        admin_password = config.CONFIG["admin_password"]
         return cls.get_client(admin_username, admin_password)
 
     @classmethod
     def get_client(cls, username, password=None):
         if cls._CLIENTS.get(username) is None:
-            client_type = config.TEST_SETTINGS["TEST_CLIENT_TYPE"]
+            client_type = config.CONFIG["client_type"]
             if client_type == "console":
                 cls._CLIENTS[username] = ConsoleClient(username, password)
             elif client_type == "app":
@@ -122,7 +121,7 @@ class ConsoleClient(PlatformApiClient):
     def authenticate(self, password):
         request = requests.Request(
             method="POST",
-            url="{}://{}/login.do".format(config.get_config_value("login.do_scheme"), self._login_endpoint),
+            url="{}://{}/login.do".format(config.CONFIG["login.do_scheme"], self._login_endpoint),
             data={"username": self._username, "password": password},
             headers={"Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded"}
         )
@@ -167,7 +166,7 @@ class AppClient(PlatformApiClient):
     def _get_token(self):
         path = "https://{}/oauth/token".format(self._login_endpoint)
         headers = {
-            "Authorization": config.TEST_SETTINGS["TEST_LOGIN_TOKEN"],
+            "Authorization": config.CONFIG["login_token"],
             "Accept": "application/json"
         }
         data = {"username": self._username, "password": self._password, "grant_type": "password"}
@@ -201,12 +200,12 @@ class CfApiClient(AppClient):
 
     @property
     def url(self):
-        return "https://{}/v2/".format(config.get_config_value("cf_endpoint"))
+        return "https://api.{}/v2/".format(config.CONFIG["domain"])
 
     @classmethod
     def get_client(cls):
         if cls._CF_API_CLIENT is None:
-            admin_username = config.TEST_SETTINGS["TEST_USERNAME"]
-            admin_password = config.TEST_SETTINGS["TEST_PASSWORD"]
+            admin_username = config.CONFIG["admin_username"]
+            admin_password = config.CONFIG["admin_password"]
             cls._CF_API_CLIENT = cls(admin_username, admin_password)
         return cls._CF_API_CLIENT

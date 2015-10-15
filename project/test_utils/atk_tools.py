@@ -86,8 +86,8 @@ class ATKtools(object):
                 command += [k, v]
         log_command(command)
 
-        username = config.TEST_SETTINGS["TEST_USERNAME"]
-        password = config.TEST_SETTINGS["TEST_PASSWORD"]
+        username = config.CONFIG["admin_username"]
+        password = config.CONFIG["admin_password"]
 
         child = pexpect.spawn(" ".join(command))
         child.expect("URI of ATK or OAuth server:")

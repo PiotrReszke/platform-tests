@@ -30,7 +30,7 @@ logger = get_logger("user")
 @functools.total_ordering
 class User(object):
 
-    TEST_EMAIL = config.TEST_SETTINGS["TEST_EMAIL"]
+    TEST_EMAIL = config.CONFIG["test_user_email"]
     TEST_EMAIL_FORM = TEST_EMAIL.replace('@', '+{}@')
     __ADMIN = None
     ORG_ROLES = {
@@ -181,7 +181,7 @@ class User(object):
         """Return User object for admin user"""
         if cls.__ADMIN is None:
             users = User.cf_api_get_all_users()
-            admin_username = config.get_config_value("admin_username")
+            admin_username = config.CONFIG["admin_username"]
             cls.__ADMIN = next(user for user in users if user.username == admin_username)
         return cls.__ADMIN
 

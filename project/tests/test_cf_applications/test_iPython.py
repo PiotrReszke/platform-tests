@@ -19,7 +19,7 @@ import unittest
 
 from retry import retry
 
-from test_utils import ApiTestCase, get_logger, iPython, cleanup_after_failed_setup, TEST_SETTINGS
+from test_utils import ApiTestCase, get_logger, iPython, cleanup_after_failed_setup, config
 from objects import Organization, ServiceInstance, ServiceType, Application
 
 
@@ -120,7 +120,7 @@ class iPythonConsole(ApiTestCase):
         self.assertIn("URI of the ATK server", notebook.get_prompt_text())
         notebook.send_input(self.atk_url, reply=True)
         self.assertIn("User name", notebook.get_prompt_text())
-        notebook.send_input(TEST_SETTINGS["TEST_USERNAME"], reply=True)
+        notebook.send_input(config.CONFIG["admin_username"], reply=True)
         self.assertIn("", notebook.get_prompt_text())
-        notebook.send_input(TEST_SETTINGS["TEST_PASSWORD"], reply=True, obscure_from_log=True)
+        notebook.send_input(config.CONFIG["admin_password"], reply=True, obscure_from_log=True)
         self.assertEqual(notebook.check_command_status(), "ok")

@@ -27,10 +27,11 @@ from retry import retry
 
 from . import config, get_logger
 
+
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
-CLIENT_SECRET_FILE = 'secrets/client_secret.json'
+CLIENT_SECRET_FILE = os.path.join("secrets", "client_secret.json")
 APPLICATION_NAME = 'praca-email'
-TEST_EMAIL = config.TEST_SETTINGS["TEST_EMAIL"]
+TEST_EMAIL = config.CONFIG["test_user_email"]
 INVITATION_EMAIL_SUBJECT = "Invitation to join Trusted Analytics platform"
 INVITATION_LINK_PATTERN = r'"(https?://[^\s]+)"'
 

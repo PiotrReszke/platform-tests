@@ -19,179 +19,75 @@ import configparser
 import os
 
 
-__all__ = ["TEST_SETTINGS", "update_test_settings", "parse_arguments", "get_config_value",
-           "get_ssh_key_passphrase", "get_password"]
+__all__ = ["update_test_config", "parse_arguments", "CONFIG"]
 
-
+# secrets config
+__SECRETS = configparser.ConfigParser()
+__SECRETS.read(os.path.join("test_utils", "secrets", ".secret.ini"))
 # configuration variables depending on the environment
+__CONFIG = configparser.ConfigParser()
+__CONFIG.read_string("""
+    [DEFAULT]
+        admin_username = trusted.analytics.tester@gmail.com
+        login.do_scheme = http
+        ssl_validation = False
+    [gotapaas.eu]
+        login.do_scheme = https
+        ssl_validation = True
+    [demo-gotapaas.com]
+        ssl_validation = True
+""")
+
+
+# current test settings - set values constant for all environments
 CONFIG = {
-    "gotapaas.eu": {
-        "api_endpoint": "gotapaas.eu",
-        "login.do_scheme": "https",
-        "login_endpoint": "login.gotapaas.eu",
-        "cf_endpoint": "api.gotapaas.eu",
-        "admin_username": "trusted.analytics.tester@gmail.com",
-        "cdh_host": "cdh.gotapaas.eu",
-        "uaa": "uaa.gotapaas.eu"
-    },
-    "demo-gotapaas.com": {
-        "api_endpoint": "demo-gotapaas.com",
-        "login.do_scheme": "http",
-        "login_endpoint": "login.demo-gotapaas.com",
-        "cf_endpoint": "api.demo-gotapaas.com",
-        "admin_username": "trusted.analytics.tester@gmail.com",
-        "cdh_host": "cdh.demo-gotapaas.com",
-        "uaa": "login.demo-gotapaas.com"
-    },
-    "callisto.gotapaas.com": {
-        "api_endpoint": "callisto.gotapaas.com",
-        "login.do_scheme": "http",
-        "login_endpoint": "login.callisto.gotapaas.com",
-        "cf_endpoint": "api.callisto.gotapaas.com",
-        "admin_username": "trusted.analytics.tester@gmail.com",
-        "cdh_host": "cdh.callisto.gotapaas.com",
-        "uaa": "login.callisto.gotapaas.com"
-    },
-    "kerberos.gotapaas.com": {
-        "api_endpoint": "kerberos.gotapaas.com",
-        "login.do_scheme": "http",
-        "login_endpoint": "login.kerberos.gotapaas.com",
-        "cf_endpoint": "api.kerberos.gotapaas.com",
-        "admin_username": "trusted.analytics.tester@gmail.com",
-        "cdh_host": "cdh.kerberos.gotapaas.com",
-        "uaa": "login.kerberos.gotapaas.com"
-    },
-    "daily.gotapaas.com": {
-        "api_endpoint": "daily.gotapaas.com",
-        "login.do_scheme": "http",
-        "login_endpoint": "login.daily.gotapaas.com",
-        "cf_endpoint": "api.daily.gotapaas.com",
-        "admin_username": "trusted.analytics.tester@gmail.com",
-        "cdh_host": "cdh.daily.gotapaas.com",
-        "uaa": "login.daily.gotapaas.com"
-    },
-    "sprint.gotapaas.com": {
-        "api_endpoint": "sprint.gotapaas.com",
-        "login.do_scheme": "http",
-        "login_endpoint": "login.sprint.gotapaas.com",
-        "cf_endpoint": "api.sprint.gotapaas.com",
-        "admin_username": "trusted.analytics.tester@gmail.com",
-        "cdh_host": "cdh.sprint.gotapaas.com",
-        "uaa": "login.sprint.gotapaas.com"
-    },
-    "10.91.120.35.xip.io": {
-        "api_endpoint": "10.91.120.35.xip.io",
-        "login.do_scheme": "http",
-        "login_endpoint": "login.10.91.120.35.xip.io",
-        "cf_endpoint": "api.10.91.120.35.xip.io",
-        "admin_username": "jacek.skowron@intel.com",
-        "cdh_host": "cdh.10.91.120.35.xip.io",
-        "uaa": "login.10.91.120.35.xip.io"
-    },
-    "52.8.59.255.xip.io": {
-        "api_endpoint": "52.8.59.255.xip.io",
-        "login.do_scheme": "http",
-        "login_endpoint": "login.52.8.59.255.xip.io",
-        "cf_endpoint": "api.52.8.59.255.xip.io",
-        "admin_username": "trusted.analytics.tester@gmail.com",
-        "cdh_host": "cdh.52.8.59.255.xip.io",
-        "uaa": "login.52.8.59.255.xip.io"
-    },
-    "demotrustedanalytics.com": {
-        "api_endpoint": "demotrustedanalytics.com",
-        "login.do_scheme": "http",
-        "login_endpoint": "login.demotrustedanalytics.com",
-        "cf_endpoint": "api.demotrustedanalytics.com",
-        "admin_username": "trusted.analytics.tester@gmail.com",
-        "cdh_host": "cdh.demotrustedanalytics.com",
-        "uaa": "login.demotrustedanalytics.com"
-    }
+    "github_auth": (__SECRETS["github"]["username"], __SECRETS["github"]["password"]),
+    "ssh_key_passphrase": __SECRETS["ssh"].get("passphrase", ""),
+    "test_user_email": "intel.data.tests@gmail.com"
 }
 
 
-# passwords and other secrets
-__SECRET = configparser.ConfigParser()
-__SECRET.read("test_utils/secrets/.secret.ini")
+def update_test_config(domain=None, proxy=None, client_type=None):
+    defaults = __CONFIG.defaults()
+    defaults.update(__SECRETS.defaults())
+    if domain is not None:
+        CONFIG["domain"] = domain
+        CONFIG["admin_username"] = __CONFIG.get(domain, "admin_username", fallback=defaults["admin_username"])
+        CONFIG["admin_password"] = __SECRETS.get(domain, CONFIG["admin_username"],
+                                                 fallback=defaults[CONFIG["admin_username"]])
+        CONFIG["login_token"] = __SECRETS.get(domain, "login_token", fallback=defaults["login_token"])
+        CONFIG["login.do_scheme"] = __CONFIG.get(domain, "login.do_scheme", fallback=defaults["login.do_scheme"])
+        CONFIG["ssl_validation"] = __CONFIG.getboolean(domain, "ssl_validation",
+                                                       fallback=__CONFIG.getboolean("DEFAULT", "ssl_validation"))
+    CONFIG["proxy"] = proxy
+    if client_type is not None:
+        CONFIG["client_type"] = client_type
 
 
-TEST_SETTINGS = {
-    "GITHUB_AUTH": (__SECRET["github"]["username"], __SECRET["github"]["password"]),
-    "TEST_EMAIL": "intel.data.tests@gmail.com",
-    "TEST_DISABLE_SSL_VALIDATION": False
-}
-
-
-def update_test_settings(client_type=None, test_environment=None, test_username=None, proxy=None,
-                         disable_ssl_validation=None):
-    TEST_SETTINGS["TEST_ENVIRONMENT"] = test_environment or TEST_SETTINGS["TEST_ENVIRONMENT"]
-    TEST_SETTINGS["TEST_USERNAME"] = test_username or TEST_SETTINGS["TEST_USERNAME"]
-    TEST_SETTINGS["TEST_PROXY"] = proxy
-    TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"] = (disable_ssl_validation or
-                                                    TEST_SETTINGS["TEST_DISABLE_SSL_VALIDATION"])
-    TEST_SETTINGS["TEST_CLIENT_TYPE"] = client_type or TEST_SETTINGS["TEST_CLIENT_TYPE"]
-    TEST_SETTINGS["TEST_PASSWORD"] = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]][TEST_SETTINGS["TEST_USERNAME"]]
-    TEST_SETTINGS["TEST_LOGIN_TOKEN"] = __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]]["login_token"]
+# update settings using default values
+update_test_config(domain="daily-gotapaas.com",
+                   proxy="proxy-mu.intel.com:911",
+                   client_type="console")
+# update settings using environment variables (when tests are run with PyCharm runner)
+update_test_config(domain=os.environ.get("TEST_ENVIRONMENT"),
+                   proxy=os.environ.get("TEST_PROXY"),
+                   client_type=os.environ.get("TEST_CLIENT_TYPE"))
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Platform API Automated Tests")
-    parser.add_argument("-e",
-                        "--environment",
-                        default=None,
-                        help="environment where tests are to be run, e.g. gotapaas.eu")
-    parser.add_argument("-u",
-                        "--username",
-                        default=None,
-                        help="username for logging into Cloud Foundry")
+    parser.add_argument("-e", "--environment",
+                        help="environment where tests are to be run, e.g. gotapaas.eu",
+                        required=True)
     parser.add_argument("--proxy",
                         default=None,
                         help="set proxy for api client")
-    parser.add_argument("--test",
+    parser.add_argument("-t", "--test",
                         default=None,
-                        help="choose a group of tests which should be executed")
+                        help="a group of tests to execute")
     parser.add_argument("--client-type",
                         default="console",
                         choices=["console", "app"],
                         help="choose a client type for tests")
-    parser.add_argument("--disable-ssl-validation",
-                        action="store_true",
-                        help="Disable SSL validation")
+    parser.add_argument("-u", help="obsolete argument")
     return parser.parse_args()
-
-
-def get_config_value(key):
-    """Return config value for current environment"""
-    test_environment = TEST_SETTINGS["TEST_ENVIRONMENT"]
-    return CONFIG[test_environment][key]
-
-
-def get_ssh_key_passphrase():
-    if __SECRET.has_section("ssh"):
-        return __SECRET["ssh"]["passphrase"]
-
-
-def get_github_username():
-    return __SECRET["github"]["username"]
-
-
-def get_github_password():
-    return __SECRET["github"]["password"]
-
-
-def get_password(username):
-    return __SECRET[TEST_SETTINGS["TEST_ENVIRONMENT"]][username]
-
-
-# default settings
-update_test_settings(client_type="console",
-                     test_environment="gotapaas.eu",
-                     test_username="trusted.analytics.tester@gmail.com",
-                     proxy="proxy-mu.intel.com:911",
-                     disable_ssl_validation=False)
-# change settings when tests are run with PyCharm runner using environment variables
-update_test_settings(client_type=os.environ.get("TEST_CLIENT_TYPE"),
-                     test_environment=os.environ.get("TEST_ENVIRONMENT"),
-                     test_username=os.environ.get("TEST_USERNAME"),
-                     proxy=os.environ.get("TEST_PROXY"),
-                     disable_ssl_validation=(os.environ.get("TEST_DISABLE_SSL_VALIDATION") == 'True'))
-

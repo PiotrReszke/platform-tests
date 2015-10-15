@@ -23,8 +23,7 @@ import requests
 from retry import retry
 import yaml
 
-from test_utils import cloud_foundry as cf, platform_api_calls as api, TEST_SETTINGS, get_logger, \
-    UnexpectedResponseError
+from test_utils import cloud_foundry as cf, platform_api_calls as api, config, get_logger, UnexpectedResponseError
 
 
 logger = get_logger("application")
@@ -37,7 +36,7 @@ def github_get_file_content(repository, path, owner="intel-data"):
     """intel-data repository chosen as it contains data to be tested which then will go to trustedanalytics repo"""
     endpoint = "https://api.github.com/repos/{}/{}/contents/{}".format(owner, repository, path)
     logger.info("Retrieving content of {}/{}/{}".format(owner, repository, path))
-    auth = TEST_SETTINGS["GITHUB_AUTH"]
+    auth = config.CONFIG["github auth"]
     response = requests.get(endpoint, auth=auth)
     if response.status_code != 200:
         raise Exception("Github API response is {} {}".format(response.status_code, response.text))

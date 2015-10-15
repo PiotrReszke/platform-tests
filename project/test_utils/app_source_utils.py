@@ -27,8 +27,7 @@ logger = get_logger("source utils")
 
 
 def clone_repository(repository_name, target_directory, owner="intel-data"):
-    API_URL = "https://{}:{}@github.com/{}/{}.git".format(config.get_github_username(), config.get_github_password(),
-                                                          owner, repository_name)
+    API_URL = "https://{2}:{3}@github.com/{0}/{1}.git".format(owner, repository_name, *config.CONFIG["github_auth"])
     logger.info("Clone from {} to {}".format(API_URL, target_directory))
     if os.path.exists(target_directory):
         shutil.rmtree(target_directory)
