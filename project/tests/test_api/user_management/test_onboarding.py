@@ -61,13 +61,13 @@ class Onboarding(ApiTestCase):
         self.assertInList(organization, organizations, "New organization was not found")
         self.assert_user_in_org_and_roles(user, organization.guid, User.ORG_ROLES["manager"])
 
-    @unittest.expectedFailure
     def test_cannot_invite_existing_user(self):
         """DPNG-2364 Onboarding existing user sends a new email invitation"""
         self.step("Invite a test user. The new user registers.")
         user, organization = User.api_onboard()
         self.step("Check that sending invitation to the same user causes an error.")
-        self.assertRaisesUnexpectedResponse(409, "???", User.api_invite, user.username)
+        self.assertRaisesUnexpectedResponse(409, "User {} already exists".format(user.username),
+                                            User.api_invite, user.username)
 
     def test_non_admin_user_cannot_invite_another_user(self):
         """DPNG-2366 Non admin user invites another user - http 500"""

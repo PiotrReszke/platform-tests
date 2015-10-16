@@ -148,10 +148,10 @@ class SpaceUsers(ApiTestCase):
         org_users = User.api_get_list_via_organization(org_guid=self.test_org.guid)
         self.assertInList(test_user, org_users, "User is not in the organization")
 
-    @unittest.expectedFailure
     def test_delete_user_which_is_not_in_space(self):
         """DPNG-2293 Deleting from space a user which is not in this space does not return any error"""
         self.step("Create a new platform user by adding to the organization")
         test_user = User.api_create_by_adding_to_organization(self.test_org.guid)
         self.step("Check that deleting the user from space they are not in returns an error")
-        self.assertRaisesUnexpectedResponse(404, "???", test_user.api_delete_from_space, self.test_space.guid)
+        self.assertRaisesUnexpectedResponse(404, "The user is not in given space", test_user.api_delete_from_space,
+                                            self.test_space.guid)
