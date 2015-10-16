@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-import unittest
-
 from test_utils import ApiTestCase, get_logger
 from objects import Organization, User
 
@@ -24,6 +22,10 @@ logger = get_logger("test organization")
 
 
 class TestOrganization(ApiTestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        Organization.cf_api_tear_down_test_orgs()
 
     def test_create_organization(self):
         self.step("Create an organization")
@@ -73,7 +75,7 @@ class TestOrganization(ApiTestCase):
         self.step("Add new platform user to the organization")
         User.api_create_by_adding_to_organization(org.guid)
         self.step("Delete the organization")
-        org.api_delete(with_spaces=True)
+        org.api_delete()
         self.step("Check that the organization is not on org list")
         org_list = Organization.api_get_list()
         self.assertNotInList(org, org_list, "Organization with user was not deleted.")

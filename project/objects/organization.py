@@ -90,15 +90,9 @@ class Organization(object):
         self.name = new_name
         return api.api_rename_organization(self.guid, new_name, client=client)
 
-    def api_delete(self, with_spaces=False, client=None):
+    def api_delete(self, client=None):
         if self in self.TEST_ORGS:
             self.TEST_ORGS.remove(self)
-        if with_spaces:
-            spaces = self.api_get_spaces()  # when organization is created, a default space is added automatically
-            while len(spaces) > 0:
-                space = spaces.pop()
-                space.delete_associations()
-                space.api_delete()
         api.api_delete_organization(self.guid, client=client)
 
     def api_get_metrics(self, client=None):
