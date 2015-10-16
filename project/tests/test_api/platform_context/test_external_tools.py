@@ -38,5 +38,5 @@ class TestExternalTools(ApiTestCase):
                     tool.send_request()
                 else:
                     self.step("Check that request to {} returns fails with 4XX or 5XX".format(tool.name))
-                    self.assertRerturnsError(tool.send_request)
+                    self.assertReturnsError(tool.send_request)
 
