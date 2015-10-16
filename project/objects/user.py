@@ -65,7 +65,7 @@ class User(object):
     def api_onboard(cls, username=None, password="testPassw0rd", org_name=None, inviting_client=None):
         """Onboarding of a new user. Return new User and Organization objects."""
         username = cls.api_invite(username, inviting_client)
-        code = gmail_api.get_invitation_code(username)
+        code = gmail_api.get_invitation_code_for_user(username)
         return cls.api_register_after_onboarding(code, username, password, org_name)
 
     @classmethod
@@ -99,7 +99,7 @@ class User(object):
                                              roles=ORG_ROLES["manager"], inviting_client=None):
         username = username or cls.get_default_username()
         api.api_add_organization_user(org_guid, username, roles, client=inviting_client)
-        code = gmail_api.get_invitation_code(username)
+        code = gmail_api.get_invitation_code_for_user(username)
         client = PlatformApiClient.get_client(username)
         api.api_register_new_user(code, password, client=client)
         org_users = cls.api_get_list_via_organization(org_guid=org_guid)
@@ -111,11 +111,33 @@ class User(object):
         return new_user
 
     @classmethod
+    def api_create_users_for_tests(cls, number, password="testPassw0rd"):
+        usernames = []
+        roles = cls.ORG_ROLES["manager"]
+        org = Organization.api_create()
+        for i in range(number):
+            username = cls.get_default_username()
+            usernames.append(username)
+            api.api_add_organization_user(org.guid, username, roles)
+        codes = gmail_api.get_invitation_codes_for_list(usernames)
+        for username in usernames:
+            client = PlatformApiClient.get_client(username)
+            api.api_register_new_user(codes[username], password, client=client)
+        org_users = cls.api_get_list_via_organization(org_guid=org.guid)
+        new_users = [user for user in org_users if user.username in usernames]
+        if len(new_users) < len(usernames):
+            raise AssertionError("Not all users were created")
+        for user in new_users:
+            user.password = password
+            cls.TEST_USERS.append(user)
+        return new_users, org
+
+    @classmethod
     def api_create_by_adding_to_space(cls, org_guid, space_guid, username=None, password="testPassw0rd",
                                       roles=("managers",), inviting_client=None):
         username = username or cls.get_default_username()
         api.api_add_space_user(org_guid, space_guid, username, roles, inviting_client)
-        code = gmail_api.get_invitation_code(username)
+        code = gmail_api.get_invitation_code_for_user(username)
         client = PlatformApiClient.get_client(username)
         api.api_register_new_user(code, password, client=client)
         space_users = cls.api_get_list_via_space(space_guid)

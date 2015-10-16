@@ -1,5 +1,6 @@
 import unittest
 import re
+import time
 
 from test_utils import config, gmail_api, get_logger, ApiTestCase, platform_api_calls as api
 from objects import User, Organization
@@ -39,16 +40,22 @@ class Onboarding(ApiTestCase):
 
     def _assert_user_received_messages(self, username, number_of_messages):
         self.step("Check that the new user received {} e-mail message(s)".format(number_of_messages))
-        messages = gmail_api.wait_for_messages(recipient=username, messages_number=number_of_messages)
-        self.assertEqual(len(messages), number_of_messages, "There are {} messages for {}. Expected: {}"
-                         .format(len(messages), username, number_of_messages))
-        for message in messages:
-            self._assert_message_correct(message["subject"], message["content"])
+        if number_of_messages == 0:
+            time.sleep(60)  # waiting 60 sek to ensure that we will notice all messages that are about to came
+            self.assertFalse(gmail_api.is_there_any_messages_to(username),
+                             "There are some messages for {} but none was expected.".format(username))
+
+        else:
+            messages = gmail_api.wait_for_messages_to(recipient=username, messages_number=number_of_messages)
+            self.assertEqual(len(messages), number_of_messages, "There are {} messages for {}. Expected: {}"
+                             .format(len(messages), username, number_of_messages))
+            for message in messages:
+                self._assert_message_correct(message["subject"], message["content"])
 
     def test_simple_onboarding(self):
         self.step("Send an invite to a new user")
         username = User.api_invite()
-        messages = gmail_api.wait_for_messages(recipient=username, messages_number=1)
+        messages = gmail_api.wait_for_messages_to(recipient=username, messages_number=1)
         self.assertEqual(len(messages), 1, "There are {} messages for {}. Expected: 1".format(len(messages), username))
         message = messages[0]
         self._assert_message_correct(message["subject"], message["content"])
@@ -88,7 +95,7 @@ class Onboarding(ApiTestCase):
     def test_cannot_use_the_same_activation_code_twice(self):
         self.step("Invite a user")
         username = User.api_invite()
-        code = gmail_api.get_invitation_code(username)
+        code = gmail_api.get_invitation_code_for_user(username)
         self.step("The new user registers")
         User.api_register_after_onboarding(code, username)
         self.step("Check that error is returned when the user tries to use code twice")
@@ -104,7 +111,7 @@ class Onboarding(ApiTestCase):
         """DPNG-2367 Registration without password - http 500"""
         self.step("Invite a new user")
         username = User.api_invite()
-        code = gmail_api.get_invitation_code(username)
+        code = gmail_api.get_invitation_code_for_user(username)
         self.step("Check that an error is returned when the user tries to register without a password")
         self.assertRaisesUnexpectedResponse(400, "Password cannot be empty", api.api_register_new_user, code=code,
                                             org_name=Organization.get_default_name())
@@ -115,7 +122,7 @@ class Onboarding(ApiTestCase):
     def test_user_cannot_register_already_existing_organization(self):
         self.step("Invite a new user")
         username = User.api_invite()
-        code = gmail_api.get_invitation_code(username)
+        code = gmail_api.get_invitation_code_for_user(username)
         self.step("Check that an error is returned when the user registers with an already-existing org name")
         self.assertRaisesUnexpectedResponse(409, "Organization \\\"{}\\\" already exists".format(self.test_org.name),
                                             User.api_register_after_onboarding, code, username,
@@ -128,7 +135,7 @@ class Onboarding(ApiTestCase):
         """DPNG-2458 It's possible to create user without organization after onboarding"""
         self.step("Invite a new user")
         username = User.api_invite()
-        code = gmail_api.get_invitation_code(username)
+        code = gmail_api.get_invitation_code_for_user(username)
         self.step("Check that an error is returned when user registers without passing an org name")
         self.assertRaisesUnexpectedResponse(400, "Bad Request", api.api_register_new_user, code=code,
                                             password="testPassw0rd")
