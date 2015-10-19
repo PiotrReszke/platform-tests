@@ -107,6 +107,7 @@ class TestCreateAtkInstance(ApiTestCase):
             shutil.rmtree(cls.atk_client_directory)
         Organization.cf_api_tear_down_test_orgs()
 
+    @unittest.expectedFailure
     def test_atk_client_connection(self):
         """DPNG-2508 Hue integration"""
         self.step("Run atk connection test")
@@ -135,6 +136,7 @@ class TestCreateAtkInstance(ApiTestCase):
         self.assertNotIn("Traceback", response, msg=response.split("Traceback", 1)[1])
         self._assert_uaa_file_is_not_empty()
 
+    @unittest.expectedFailure
     def test_export_to_hive(self):
         """DPNG-2508 Hue integration"""
         self.step("Run atk test")
