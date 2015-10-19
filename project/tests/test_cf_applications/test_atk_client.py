@@ -30,7 +30,7 @@ logger = get_logger("test ATK")
 class AtkTestException(AssertionError):
     pass
 
-@unittest.skip("Problem with publishing in hive - DPNG-2010")
+@unittest.skip("DPNG-2508 Hue integration")
 class TestCreateAtkInstance(ApiTestCase):
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     UAA_FILENAME = "pyclient.test"
@@ -108,6 +108,7 @@ class TestCreateAtkInstance(ApiTestCase):
         Organization.cf_api_tear_down_test_orgs()
 
     def test_atk_client_connection(self):
+        """DPNG-2508 Hue integration"""
         self.step("Run atk connection test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "atk_client_connection_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
@@ -121,7 +122,7 @@ class TestCreateAtkInstance(ApiTestCase):
 
     @unittest.expectedFailure
     def test_csv_file(self):
-        """DPNG-2108 Dataset targetUri shows wrong hdfs path; DPNG-2106 Datasets published in Hue are empty"""
+        """DPNG-2106 Datasets published in Hue are empty"""
         self.step("Run atk test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "csv_file_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
@@ -135,6 +136,7 @@ class TestCreateAtkInstance(ApiTestCase):
         self._assert_uaa_file_is_not_empty()
 
     def test_export_to_hive(self):
+        """DPNG-2508 Hue integration"""
         self.step("Run atk test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "export_to_hive_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
@@ -148,7 +150,7 @@ class TestCreateAtkInstance(ApiTestCase):
 
     @unittest.expectedFailure
     def test_table_manipulation(self):
-        """DPNG-2199 ATK client cannot add column to frame; DPNG-2324 ATK client cannot drop frames in one request"""
+        """DPNG-2508 Hue integration; DPNG-2324 ATK client cannot drop frames in one request"""
         self.step("Run atk test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "table_manipulation_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
