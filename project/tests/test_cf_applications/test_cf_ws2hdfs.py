@@ -19,7 +19,7 @@ import time
 import websocket
 import unittest
 
-from test_utils import ApiTestCase, get_logger, app_source_utils, Topic, cloud_foundry as cf
+from test_utils import ApiTestCase, get_logger, app_source_utils, Topic, cloud_foundry as cf, config
 from objects import Application, Organization
 
 
@@ -41,8 +41,9 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
     def setUp(cls):
         app_source_utils.clone_repository("ingestion-ws-kafka-hdfs", cls.APP_REPO_PATH)
         app_source_utils.compile_gradle(cls.KAFKA2HDFS_PATH)
-        cls.seedorg, cls.seedspace = Organization.get_org_and_space_by_name("seedorg", "seedspace")
-        cf.cf_login(cls.seedorg.name, cls.seedspace.name)
+        cls.ref_org, cls.ref_space = Organization.get_org_and_space_by_name(config.CONFIG["reference_org"],
+                                                                            config.CONFIG["reference_space"])
+        cf.cf_login(cls.ref_org.name, cls.ref_space.name)
         cf.cf_create_service("kafka", "shared", "kafka-inst")
         cf.cf_create_service("zookeeper", "shared", "zookeeper-inst")
         cf.cf_create_service("hdfs", "shared", "hdfs-inst")
@@ -86,12 +87,12 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     def _push_ws2kafka(self, app_name, topic_name):
         self.app_ws2kafka = Application(local_path=self.WS2KAFKA_PATH, name=app_name, topic=topic_name,
-                                        space_guid=self.seedorg.guid)
+                                        space_guid=self.ref_org.guid)
         self.app_ws2kafka.change_name_in_manifest(self.app_ws2kafka.name)
         self.app_ws2kafka.cf_push()
 
     def _push_kafka2hdfs(self, app_name, topic_name, consumer_group_name):
-        self.app_kafka2hdfs = Application(local_path=self.KAFKA2HDFS_PATH, name=app_name, space_guid=self.seedorg.guid)
+        self.app_kafka2hdfs = Application(local_path=self.KAFKA2HDFS_PATH, name=app_name, space_guid=self.ref_org.guid)
         self.app_kafka2hdfs.change_name_in_manifest(self.app_kafka2hdfs.name)
         self.app_kafka2hdfs.change_topic_in_manifest(topic_name)
         self.app_kafka2hdfs.change_consumer_group_in_manifest(consumer_group_name)

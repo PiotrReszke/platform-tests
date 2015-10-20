@@ -48,9 +48,10 @@ class TestMqtt(ApiTestCase):
         app_source_utils.clone_repository("mqtt-demo", self.APP_REPO_PATH)
         self.step("Compile the sources")
         app_source_utils.compile_mvn(self.APP_REPO_PATH)
-        self.step("Login to cf, targeting seedorg and seedspace")
-        self.seedorg, self.seedspace = Organization.get_org_and_space_by_name("seedorg", "seedspace")
-        cf.cf_login(self.seedorg.name, self.seedspace.name)
+        self.step("Login to cf")
+        self.ref_org, self.ref_space = Organization.get_org_and_space_by_name(config.CONFIG["reference_org"],
+                                                                              config.CONFIG["reference_space"])
+        cf.cf_login(self.ref_org.name, self.ref_space.name)
 
     def tearDown(self):
         Application.delete_test_apps()

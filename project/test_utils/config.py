@@ -31,11 +31,16 @@ __CONFIG.read_string("""
         admin_username = trusted.analytics.tester@gmail.com
         login.do_scheme = http
         ssl_validation = False
+        reference_org = seedorg
+        reference_space = seedspace
     [gotapaas.eu]
         login.do_scheme = https
         ssl_validation = True
     [demo-gotapaas.com]
         ssl_validation = True
+    [52.20.52.106.xip.io]
+        reference_org = sato
+        reference_space = dev
 """)
 
 

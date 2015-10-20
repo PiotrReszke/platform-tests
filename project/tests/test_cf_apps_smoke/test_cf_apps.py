@@ -16,7 +16,7 @@
 
 import yaml
 
-from test_utils import ApiTestCase, get_logger
+from test_utils import ApiTestCase, get_logger, config
 from objects import Application, ServiceInstance, ServiceBroker, Organization, github_get_file_content
 
 
@@ -33,14 +33,15 @@ class TrustedAnalyticsApplicationsSmokeTest(ApiTestCase):
         cls.expected_app_names = {app_info["name"] for app_info in settings["applications"]}
         cls.expected_service_names = {app_info["name"] for app_info in settings["user_provided_service_instances"]}
         cls.expected_broker_names = {app_info["name"] for app_info in settings["service_brokers"]}
-        cls.step("Retrieve apps, services, and brokers present in seedspace on cf")
-        seedspace_guid = Organization.get_org_and_space_by_name("seedorg", "seedspace")[1].guid
-        cls.cf_apps = Application.cf_api_get_list(seedspace_guid)
-        cls.cf_services = ServiceInstance.cf_api_get_list(seedspace_guid)
-        cls.cf_brokers = ServiceBroker.cf_api_get_list(seedspace_guid)
-        cls.step("Retrieve apps, and services present in seedspace on the Platform")
-        cls.platform_apps = Application.api_get_list(seedspace_guid)
-        cls.platform_services = ServiceInstance.api_get_list(seedspace_guid)
+        cls.step("Retrieve apps, services, and brokers present in cf")
+        ref_space_guid = Organization.get_org_and_space_by_name(config.CONFIG["reference_org"],
+                                                                config.CONFIG["reference_space"])[1].guid
+        cls.cf_apps = Application.cf_api_get_list(ref_space_guid)
+        cls.cf_services = ServiceInstance.cf_api_get_list(ref_space_guid)
+        cls.cf_brokers = ServiceBroker.cf_api_get_list(ref_space_guid)
+        cls.step("Retrieve apps, and services on the Platform")
+        cls.platform_apps = Application.api_get_list(ref_space_guid)
+        cls.platform_services = ServiceInstance.api_get_list(ref_space_guid)
 
     def test_all_required_apps_are_present_in_cf(self):
         self.step("Check that all expected apps are present in cf")

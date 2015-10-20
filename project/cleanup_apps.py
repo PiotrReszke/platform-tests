@@ -34,7 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("-o",
                         "--organization",
                         default="seedorg",
-                        help="organization in which appliction have been pushed")
+                        help="organization in which application have been pushed")
     parser.add_argument("-s",
                         "--space",
                         default="seedspace",
