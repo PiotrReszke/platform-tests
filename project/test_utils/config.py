@@ -64,6 +64,8 @@ def update_test_config(domain=None, proxy=None, client_type=None):
         CONFIG["login.do_scheme"] = __CONFIG.get(domain, "login.do_scheme", fallback=defaults["login.do_scheme"])
         CONFIG["ssl_validation"] = __CONFIG.getboolean(domain, "ssl_validation",
                                                        fallback=__CONFIG.getboolean("DEFAULT", "ssl_validation"))
+        CONFIG["reference_org"] = __CONFIG.get(domain, "reference_org", fallback=defaults["reference_org"])
+        CONFIG["reference_space"] = __CONFIG.get(domain, "reference_space", fallback=defaults["reference_space"])
     CONFIG["proxy"] = proxy
     if client_type is not None:
         CONFIG["client_type"] = client_type

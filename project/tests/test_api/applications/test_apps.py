@@ -73,32 +73,30 @@ class Apps(ApiTestCase):
         self.test_app.api_delete()
         self.assertNotInList(self.test_app, Application.cf_api_get_list(self.test_space.guid))
 
-    @unittest.expectedFailure
     def test_delete_space_and_org_after_app_creation_and_deletion(self):
-        """ DPNG-2683 Cannot delete space where an app used to be """
+        """DPNG-2683 Cannot delete space where an app used to be"""
         self.step("Delete the test application")
         self.test_app.api_delete()
         self.step("Delete the space using platform api")
         self.test_space.api_delete()
+        self.step("Delete the organization using platform api")
+        self.test_org.api_delete()
         self.step("Check that the space is gone")
         space_list = Space.api_get_list()
         self.assertNotInList(self.test_space, space_list, "Space {} has not been deleted".format(self.test_space.name))
-        self.step("Delete the organization using platform api")
-        self.test_org.api_delete()
         self.step("Check that the organization is gone")
         org_list = Organization.api_get_list()
         self.assertNotInList(self.test_org, org_list, "Organization {} has not been deleted".format(self.test_org.name))
 
-    @unittest.expectedFailure
     def test_delete_space_and_org_without_deleting_an_app(self):
-        """ DPNG-2694 Cannot delete space with an running app """
+        """DPNG-2694 Cannot delete space with an running app"""
         self.step("Delete the space using platform api")
         self.test_space.api_delete()
+        self.step("Delete the test organization using platform api")
+        self.test_org.api_delete()
         self.step("Check that the space is gone")
         space_list = Space.api_get_list()
         self.assertNotInList(self.test_space, space_list, "Space {} has not been deleted".format(self.test_space.name))
-        self.step("Delete the test organization")
-        self.test_org.api_delete()
         self.step("Check that the organization is gone")
         org_list = Organization.api_get_list()
         self.assertNotInList(self.test_org, org_list, "Organization {} has not been deleted".format(self.test_org.name))
