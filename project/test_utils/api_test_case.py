@@ -19,7 +19,9 @@ import functools
 import time
 import unittest
 
-from objects import organization as org, user as usr
+from retry import retry
+
+from objects import organization as org, user as usr, space
 from . import get_logger, UnexpectedResponseError
 
 
@@ -108,7 +110,7 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         for item in container:
             if member == item:
                 standard_msg = "{} found in list".format(member, container)
-                self.fail(self._formatMessage(msg, standard_msg))
+                raise AssertionError(self._formatMessage(msg, standard_msg))
 
     def assertUnorderedListEqual(self, list1, list2, msg=None):
         self.assertListEqual(sorted(list1), sorted(list2), msg=msg)
@@ -181,6 +183,12 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
                                       "User's roles in org: {}, expected {}".format(invited_user_roles,
                                                                                     list(expected_roles)))
 
+    @retry(AssertionError, tries=10, delay=2)
+    def assertNotInListWithRetry(self, something, get_list_method, *args, **kwargs):
+        """Use when deleting something takes longer"""
+        obj_list = get_list_method(*args, **kwargs)
+        self.assertNotInList(something, obj_list)
+
 
 def cleanup_after_failed_setup(*cleanup_methods):
     def wrapper(func):
@@ -192,9 +200,7 @@ def cleanup_after_failed_setup(*cleanup_methods):
                 for cleanup_method in cleanup_methods:
                     cleanup_method()
                 raise
-
         return wrapped
-
     return wrapper
 
 

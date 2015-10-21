@@ -15,7 +15,7 @@
 #
 
 from datetime import datetime
-import unittest
+import time
 
 from test_utils import get_logger, ApiTestCase, app_source_utils, cleanup_after_failed_setup, cloud_foundry as cf
 from objects import Organization, Application, Space
@@ -30,7 +30,6 @@ class Apps(ApiTestCase):
     APP_NAME_PREFIX = "cf_env"
 
     @classmethod
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
         cls.step("Clone example application repository from github")
         app_source_utils.clone_repository("cf-env", cls.APP_REPO_PATH, owner="cloudfoundry-community")
@@ -79,11 +78,10 @@ class Apps(ApiTestCase):
         self.test_app.api_delete()
         self.step("Delete the space using platform api")
         self.test_space.api_delete()
+        self.step("Check that the space is gone")
+        self.assertNotInListWithRetry(self.test_space, Space.api_get_list)
         self.step("Delete the organization using platform api")
         self.test_org.api_delete()
-        self.step("Check that the space is gone")
-        space_list = Space.api_get_list()
-        self.assertNotInList(self.test_space, space_list, "Space {} has not been deleted".format(self.test_space.name))
         self.step("Check that the organization is gone")
         org_list = Organization.api_get_list()
         self.assertNotInList(self.test_org, org_list, "Organization {} has not been deleted".format(self.test_org.name))
@@ -92,11 +90,10 @@ class Apps(ApiTestCase):
         """DPNG-2694 Cannot delete space with an running app"""
         self.step("Delete the space using platform api")
         self.test_space.api_delete()
+        self.step("Check that the space is gone")
+        self.assertNotInListWithRetry(self.test_space, Space.api_get_list)
         self.step("Delete the test organization using platform api")
         self.test_org.api_delete()
-        self.step("Check that the space is gone")
-        space_list = Space.api_get_list()
-        self.assertNotInList(self.test_space, space_list, "Space {} has not been deleted".format(self.test_space.name))
         self.step("Check that the organization is gone")
         org_list = Organization.api_get_list()
         self.assertNotInList(self.test_org, org_list, "Organization {} has not been deleted".format(self.test_org.name))
