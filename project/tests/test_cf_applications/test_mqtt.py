@@ -24,7 +24,7 @@ import unittest
 import paho.mqtt.client as mqtt
 
 from test_utils import ApiTestCase, get_logger, config, app_source_utils, cloud_foundry as cf
-from objects import Application, Organization
+from objects import Application
 
 
 logger = get_logger("test_mqtt")
@@ -49,17 +49,16 @@ class TestMqtt(ApiTestCase):
         self.step("Compile the sources")
         app_source_utils.compile_mvn(self.APP_REPO_PATH)
         self.step("Login to cf")
-        self.ref_org, self.ref_space = Organization.get_org_and_space_by_name(config.CONFIG["reference_org"],
-                                                                              config.CONFIG["reference_space"])
-        cf.cf_login(self.ref_org.name, self.ref_space.name)
+        cf.cf_login(config.CONFIG["reference_org"], config.CONFIG["reference_space"])
 
     def tearDown(self):
         Application.delete_test_apps()
         cf.cf_delete_service(self.DB_SERVICE_INSTANCE_NAME)
         cf.cf_delete_service(self.MQTT_SERVICE_INSTANCE_NAME)
 
+    @unittest.expectedFailure
     def test_connection(self):
-        """DPNG-2273 Error connection MQTT client"""
+        """DPNG-2821 Hardcoded jar version in mqtt-demo manifest"""
         self.step("Create service instances of {} and {}".format(self.DB_SERVICE_NAME, self.MQTT_SERVICE_NAME))
         cf.cf_create_service(self.DB_SERVICE_NAME, "free", self.DB_SERVICE_INSTANCE_NAME)
         cf.cf_create_service(self.MQTT_SERVICE_NAME, "free", self.MQTT_SERVICE_INSTANCE_NAME)
