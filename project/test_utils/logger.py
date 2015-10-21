@@ -68,7 +68,9 @@ def log_http_request(prepared_request, username, password=None, description=""):
 def log_http_response(response, logged_body_length=LOGGED_RESPONSE_BODY_LENGTH):
     """If logged_body_length < 0, full response body is logged"""
     body = response.text
-    if len(body) > logged_body_length >= 0:
+    if logged_body_length == 0:
+        body = "[...]"
+    elif len(body) > logged_body_length > 0:
         half = logged_body_length // 2
         body = "{} [...] {}".format(body[:half], body[-half:])
     msg = [
