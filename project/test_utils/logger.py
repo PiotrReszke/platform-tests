@@ -19,8 +19,13 @@ import sys
 
 import requests
 
+from . import config
+
 
 __all__ = ["get_logger", "log_command", "log_http_request", "log_http_response"]
+
+
+LOGGED_RESPONSE_BODY_LENGTH = config.CONFIG["logged_response_body_length"]
 
 
 format = "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
@@ -60,7 +65,7 @@ def log_http_request(prepared_request, username, password=None, description=""):
     get_logger("http request").debug("\n".join(msg))
 
 
-def log_http_response(response, logged_body_length=1024):
+def log_http_response(response, logged_body_length=LOGGED_RESPONSE_BODY_LENGTH):
     """If logged_body_length < 0, full response body is logged"""
     body = response.text
     if len(body) > logged_body_length >= 0:

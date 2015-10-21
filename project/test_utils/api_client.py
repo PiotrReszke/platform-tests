@@ -16,7 +16,6 @@
 
 import abc
 import json
-import os
 import time
 
 import requests
@@ -39,7 +38,6 @@ class UnexpectedResponseError(AssertionError):
 class PlatformApiClient(metaclass=abc.ABCMeta):
     """Base class for HTTP clients"""
 
-    LOGGED_RESPONSE_BODY_LENGTH = 1024  # set to 0 to log full response body
     _CLIENTS = {}
 
     @abc.abstractmethod
@@ -85,7 +83,7 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
         request = self._session.prepare_request(request)
         log_http_request(request, self._username, self._password, description=log_msg)
         response = self._session.send(request)
-        log_http_response(response, self.LOGGED_RESPONSE_BODY_LENGTH)
+        log_http_response(response)
         if not response.ok:
             raise UnexpectedResponseError(response.status_code, response.text)
         if response.text == "":
@@ -98,7 +96,7 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
         request = self._session.prepare_request(request)
         log_http_request(request, self._username, description="PLATFORM: Download file")
         response = self._session.send(request, stream=True)
-        log_http_response(response, logged_body_length=-1)  # the body is a long stream of binary data
+        log_http_response(response, logged_body_length=0)  # the body is a long stream of binary data
         with open(target_file_path, 'w+b') as f:
             for chunk in response.iter_content(chunk_size=1024):
                 if chunk:
@@ -128,7 +126,7 @@ class ConsoleClient(PlatformApiClient):
         request = self._session.prepare_request(request)
         log_http_request(request, self._username, self._password, description="Authenticate user")
         response = self._session.send(request)
-        log_http_response(response, self.LOGGED_RESPONSE_BODY_LENGTH)
+        log_http_response(response)
         if not response.ok or "forgotPasswordLink" in response.text:
             raise UnexpectedResponseError(response.status_code, response.text)
 
@@ -175,7 +173,7 @@ class AppClient(PlatformApiClient):
         self._token_retrieval_time = time.time()
         log_http_request(request, self._username, self._password, "Retrieve cf token")
         response = self._session.send(request)
-        log_http_response(response, self.LOGGED_RESPONSE_BODY_LENGTH)
+        log_http_response(response)
         if not response.ok:
             raise UnexpectedResponseError(response.status_code, response.text)
         self._token = "Bearer {}".format(json.loads(response.text)["access_token"])

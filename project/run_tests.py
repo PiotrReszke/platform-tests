@@ -33,7 +33,8 @@ if __name__ == "__main__":
     args = config.parse_arguments()
     config.update_test_config(client_type=args.client_type,
                               domain=args.environment,
-                              proxy=args.proxy)
+                              proxy=args.proxy,
+                              logged_response_body_length=args.logged_response_body_length)
     for key in ["domain", "admin_username", "client_type", "proxy", "ssl_validation"]:
         logger.info("{}={}".format(key, config.CONFIG[key]))
 

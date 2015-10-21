@@ -52,7 +52,7 @@ CONFIG = {
 }
 
 
-def update_test_config(domain=None, proxy=None, client_type=None):
+def update_test_config(domain=None, proxy=None, client_type=None, logged_response_body_length=None):
     defaults = __CONFIG.defaults()
     defaults.update(__SECRETS.defaults())
     if domain is not None:
@@ -67,6 +67,8 @@ def update_test_config(domain=None, proxy=None, client_type=None):
         CONFIG["reference_org"] = __CONFIG.get(domain, "reference_org", fallback=defaults["reference_org"])
         CONFIG["reference_space"] = __CONFIG.get(domain, "reference_space", fallback=defaults["reference_space"])
     CONFIG["proxy"] = proxy
+    if logged_response_body_length is not None:
+        CONFIG["logged_response_body_length"] = logged_response_body_length
     if client_type is not None:
         CONFIG["client_type"] = client_type
 
@@ -74,11 +76,13 @@ def update_test_config(domain=None, proxy=None, client_type=None):
 # update settings using default values
 update_test_config(domain="daily-gotapaas.com",
                    proxy="proxy-mu.intel.com:911",
-                   client_type="console")
+                   client_type="console",
+                   logged_response_body_length=1024)
 # update settings using environment variables (when tests are run with PyCharm runner)
 update_test_config(domain=os.environ.get("TEST_ENVIRONMENT"),
                    proxy=os.environ.get("TEST_PROXY"),
-                   client_type=os.environ.get("TEST_CLIENT_TYPE"))
+                   client_type=os.environ.get("TEST_CLIENT_TYPE"),
+                   logged_response_body_length=os.environ.get("LOGGED_RESPONSE_BODY_LENGTH"))
 
 
 def parse_arguments():
@@ -97,4 +101,7 @@ def parse_arguments():
                         choices=["console", "app"],
                         help="choose a client type for tests")
     parser.add_argument("-u", help="obsolete argument")
+    parser.add_argument("--logged-response-body-length",
+                        default=1024,
+                        help="Limit response body length that is logged. Set to -1 to log full body.")
     return parser.parse_args()
