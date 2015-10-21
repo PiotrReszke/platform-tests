@@ -101,6 +101,7 @@ class Onboarding(ApiTestCase):
         self.assertRaisesUnexpectedResponse(409, "That email address is not valid", User.api_invite, username)
 
     def test_user_cannot_register_without_password(self):
+        """DPNG-2367 Registration without password - http 500"""
         self.step("Invite a new user")
         username = User.api_invite()
         code = gmail_api.get_invitation_code(username)
