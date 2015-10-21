@@ -30,7 +30,7 @@ logger = get_logger("test ATK")
 class AtkTestException(AssertionError):
     pass
 
-@unittest.skip("DPNG-2508 Hue integration")
+
 class TestCreateAtkInstance(ApiTestCase):
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     UAA_FILENAME = "pyclient.test"
