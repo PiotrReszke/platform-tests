@@ -23,8 +23,9 @@ import unittest
 
 import paho.mqtt.client as mqtt
 
-from test_utils import ApiTestCase, get_logger, config, app_source_utils, cloud_foundry as cf
-from objects import Application
+from test_utils import ApiTestCase, get_logger, config, app_source_utils, cloud_foundry as cf, \
+    cleanup_after_failed_setup
+from objects import Application, Organization
 
 
 logger = get_logger("test_mqtt")
@@ -43,16 +44,19 @@ class TestMqtt(ApiTestCase):
     SERVER_CERTIFICATE = os.path.join(os.path.dirname(__file__), "mosquitto_demo_cert.pem")
     MQTT_TOPIC_NAME = "space-shuttle/test-data"
 
+    @cleanup_after_failed_setup(Organization.cf_api_delete)
     def setUp(self):
         self.step("Clone repository mqtt-demo")
         app_source_utils.clone_repository("mqtt-demo", self.APP_REPO_PATH)
         self.step("Compile the sources")
         app_source_utils.compile_mvn(self.APP_REPO_PATH)
+        self.step("Create test organization and space")
+        test_org = Organization.api_create(space_names=("test-space",))
+        test_space = test_org.spaces[0]
         self.step("Login to cf")
-        cf.cf_login(config.CONFIG["reference_org"], config.CONFIG["reference_space"])
+        cf.cf_login(test_org.name, test_space.name)
 
     def tearDown(self):
-        Application.delete_test_apps()
         cf.cf_delete_service(self.DB_SERVICE_INSTANCE_NAME)
         cf.cf_delete_service(self.MQTT_SERVICE_INSTANCE_NAME)
 
