@@ -31,6 +31,7 @@ class AtkTestException(AssertionError):
     pass
 
 
+@unittest.skip("DPNG-2758 atk-broker creates broken instances; Bad Gateway status for organization removal - DPNG-2424")
 class TestCreateAtkInstance(ApiTestCase):
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     UAA_FILENAME = "pyclient.test"
@@ -59,6 +60,9 @@ class TestCreateAtkInstance(ApiTestCase):
                                                                                                        "developers"))
         cls.step("Login to cf")
         cf.cf_login(cls.test_org.name, cls.test_space.name)
+
+        cls.step("Check if atk-client has correct credentials and is able to download token")
+        ATKtools.check_uaac_token()
 
         cls.step("Create transfer and check it's finished")
         cls.transfer = Transfer.api_create(source=cls.DATA_SOURCE, org=cls.test_org)
@@ -109,7 +113,7 @@ class TestCreateAtkInstance(ApiTestCase):
 
     @unittest.expectedFailure
     def test_atk_client_connection(self):
-        """DPNG-2508 Hue integration"""
+        """DPNG-2758 atk-broker from nexus creates broken instances; DPNG-2508 Hue integration"""
         self.step("Run atk connection test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "atk_client_connection_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
@@ -123,7 +127,7 @@ class TestCreateAtkInstance(ApiTestCase):
 
     @unittest.expectedFailure
     def test_csv_file(self):
-        """DPNG-2106 Datasets published in Hue are empty"""
+        """DPNG-2758 atk-broker from nexus creates broken instances; DPNG-2106 Datasets published in Hue are empty"""
         self.step("Run atk test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "csv_file_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
@@ -138,7 +142,7 @@ class TestCreateAtkInstance(ApiTestCase):
 
     @unittest.expectedFailure
     def test_export_to_hive(self):
-        """DPNG-2508 Hue integration"""
+        """DPNG-2758 atk-broker from nexus creates broken instances; DPNG-2508 Hue integration"""
         self.step("Run atk test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "export_to_hive_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],

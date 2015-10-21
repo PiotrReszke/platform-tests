@@ -19,7 +19,8 @@ import subprocess
 import pexpect
 import time
 
-from . import log_command, get_logger, config, platform_api_calls as api
+from . import log_command, get_logger, log_http_request, log_http_response, UnexpectedResponseError, config, \
+    platform_api_calls as api
 
 __all__ = ["ATKtools"]
 
@@ -119,4 +120,25 @@ class ATKtools(object):
 
     @classmethod
     def hive_clean_up(cls, atk_virtualenv, table_removal_script, atk_url, uaa_file):
-        atk_virtualenv.run_atk_script(table_removal_script, atk_url, arguments={"--uaa_file_name": uaa_file}, timeout=960)
+        atk_virtualenv.run_atk_script(table_removal_script, atk_url, arguments={"--uaa_file_name": uaa_file},
+                                      timeout=960)
+
+    @classmethod
+    def check_uaac_token(cls):
+        uaa_endpoint = config.CONFIG["domain"]
+        path = "https://{}/oauth/token".format("uaa." + uaa_endpoint)
+        headers = {
+            "Authorization": config.CONFIG["uaa_token"],
+            "Accept": "application/json"
+        }
+        data = {"grant_type": "client_credentials"}
+        request = requests.Request("POST", path, data=data, headers=headers)
+        session = requests.Session()
+        request = session.prepare_request(request)
+        log_http_request(request, username="ATK client", password=None)
+        response = session.send(request)
+        log_http_response(response)
+        if not response.ok:
+            raise UnexpectedResponseError(response.status_code, response.text)
+        if "access_token" not in response.text:
+            raise AtkScriptException("UAA response doesn't contain token: {}".format(response.text))

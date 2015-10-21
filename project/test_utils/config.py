@@ -61,6 +61,7 @@ def update_test_config(domain=None, proxy=None, client_type=None, logged_respons
         CONFIG["admin_password"] = __SECRETS.get(domain, CONFIG["admin_username"],
                                                  fallback=defaults[CONFIG["admin_username"]])
         CONFIG["login_token"] = __SECRETS.get(domain, "login_token", fallback=defaults["login_token"])
+        CONFIG["uaa_token"] = __SECRETS.get(domain, "uaa_token", fallback=defaults["uaa_token"])
         CONFIG["login.do_scheme"] = __CONFIG.get(domain, "login.do_scheme", fallback=defaults["login.do_scheme"])
         CONFIG["ssl_validation"] = __CONFIG.getboolean(domain, "ssl_validation",
                                                        fallback=__CONFIG.getboolean("DEFAULT", "ssl_validation"))
