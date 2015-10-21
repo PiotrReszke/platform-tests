@@ -96,7 +96,7 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
         """Download (large) file in chunks and save it to target_file_path."""
         request = requests.Request("GET", url=self.url + endpoint)
         request = self._session.prepare_request(request)
-        log_http_request(request, self._username, description="Download file")
+        log_http_request(request, self._username, description="PLATFORM: Download file")
         response = self._session.send(request, stream=True)
         log_http_response(response, logged_body_length=-1)  # the body is a long stream of binary data
         with open(target_file_path, 'w+b') as f:

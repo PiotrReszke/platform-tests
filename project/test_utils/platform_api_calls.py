@@ -141,8 +141,7 @@ def api_get_atk_client_file_name(client=None):
 def api_get_file(source_file_name, target_file_path, client=None):
     """GET /files/{file_name}"""
     client = client or PlatformApiClient.get_admin_client()
-    client.download_file(endpoint="files/{}".format(source_file_name), target_file_path=target_file_path,
-                         log_msg="PLATFORM: download file")
+    client.download_file(endpoint="files/{}".format(source_file_name), target_file_path=target_file_path)
 
 
 # ============================================= hive / dataset-publisher ============================================= #
