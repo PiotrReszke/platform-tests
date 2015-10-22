@@ -218,7 +218,7 @@ class User(object):
         for user in user_list:
             try:
                 user.cf_api_delete(async=async)
-            except JobFailedException:
+            except cf.JobFailedException:
                 failed_to_delete.append(user)
                 logger.exception("Could not delete {}\n".format(user))
         return failed_to_delete

@@ -16,8 +16,8 @@
 
 import functools
 
-from test_utils import platform_api_calls as api, get_logger
-
+from test_utils import platform_api_calls as api, get_logger, UnexpectedResponseError
+from objects import Organization
 
 logger = get_logger("dataset")
 
@@ -26,7 +26,8 @@ logger = get_logger("dataset")
 class DataSet(object):
 
     COMPARABLE_ATTRIBUTES = ["category", "creation_time", "data_sample", "format", "is_public", "id",
-                             "org_guid", "record_count", "size", "source", "target_uri", "title"]
+                             "org_guid", "record_count", "size", "source_uri", "target_uri", "title"]
+    TEST_TRANSFER_TITLES = []
 
     def __init__(self, category=None, creation_time=None, data_sample=None, format=None, id=None, is_public=None,
                  org_guid=None, record_count=None, size=None, source_uri=None, target_uri=None, title=None):
@@ -51,13 +52,17 @@ class DataSet(object):
                    source_uri=data["sourceUri"], target_uri=data["targetUri"])
 
     @classmethod
-    def api_get_list(cls, org_list, query="", filters=(), size=100, time_from=0, client=None):
-        return cls.api_get_list_and_metadata(org_list, query, filters, size, time_from, client)["data_sets"]
+    def api_get_list(cls, org_list, query="", filters=(), size=100, time_from=0, only_private=False, only_public=False,
+                     client=None):
+        return cls.api_get_list_and_metadata(org_list, query, filters, size, time_from, only_private, only_public,
+                                             client)["data_sets"]
 
     @classmethod
-    def api_get_list_and_metadata(cls, org_list, query="", filters=(), size=100, time_from=0, client=None):
+    def api_get_list_and_metadata(cls, org_list, query="", filters=(), size=100, time_from=0, only_private=False,
+                                  only_public=False, client=None):
         org_guids = [org.guid for org in org_list]
-        response = api.api_get_datasets(org_guids, query, filters, size, time_from, client=client)
+        response = api.api_get_datasets(org_guids, query, filters, size, time_from, only_private, only_public,
+                                        client=client)
         return {
             "categories": response["categories"],
             "formats": response["formats"],
@@ -66,10 +71,15 @@ class DataSet(object):
         }
 
     @classmethod
+    def api_get_matching_to_transfer_list(cls, org_list, transfer_title_list, client=None):
+        """Return datasets whose title is in transfer_title_list."""
+        datasets = cls.api_get_list(org_list=org_list, client=client)
+        return [ds for ds in datasets if ds.title in transfer_title_list]
+
+    @classmethod
     def api_get_matching_to_transfer(cls, org_list, transfer_title, client=None):
         """Return dataset whose title matches transfer_title or return None if such dataset is not found."""
-        datasets = cls.api_get_list(org_list=org_list, client=client)
-        return next((ds for ds in datasets if ds.title == transfer_title), None)
+        return next(iter(cls.api_get_matching_to_transfer_list(org_list, [transfer_title], client)), None)
 
     @classmethod
     def api_get(cls, data_set_id, client=None):
@@ -93,3 +103,15 @@ class DataSet(object):
                                        source_uri=self.source_uri, target_uri=self.target_uri, title=self.title,
                                        client=client)
 
+    def api_delete(self, client=None):
+        api.api_delete_dataset(self.id, client)
+
+    @classmethod
+    def api_teardown_test_datasets(cls):
+        dataset_list = cls.api_get_matching_to_transfer_list(Organization.TEST_ORGS, cls.TEST_TRANSFER_TITLES)
+        cls.TEST_TRANSFER_TITLES = []
+        for ds in dataset_list:
+            try:
+                ds.api_delete()
+            except UnexpectedResponseError:
+                logger.warning("Failed to delete: {}".format(ds))

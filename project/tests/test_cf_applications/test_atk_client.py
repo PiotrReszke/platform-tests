@@ -61,7 +61,7 @@ class TestCreateAtkInstance(ApiTestCase):
         cf.cf_login(cls.test_org.name, cls.test_space.name)
 
         cls.step("Create transfer and check it's finished")
-        cls.transfer = Transfer.api_create(source=cls.DATA_SOURCE, org_guid=cls.test_org.guid)
+        cls.transfer = Transfer.api_create(source=cls.DATA_SOURCE, org=cls.test_org)
         cls.transfer.ensure_finished()
         cls.step("Publish in hive the data set created based on the submitted transfer")
         cls.dataset = DataSet.api_get_matching_to_transfer(org_list=[cls.test_org], transfer_title=cls.transfer.title)

@@ -18,7 +18,8 @@ import datetime
 import functools
 import time
 
-from test_utils import get_logger, platform_api_calls as api
+from test_utils import get_logger, platform_api_calls as api, UnexpectedResponseError
+from objects import DataSet
 
 
 __all__ = ["Transfer"]
@@ -35,6 +36,8 @@ class Transfer(object):
                              "state", "title", "user_id"]
     new_status = "NEW"
     finished_status = "FINISHED"
+
+    TEST_TRANSFERS = []
 
     def __init__(self, category=None, id=None, id_in_object_store=None, is_public=None, org_guid=None, source=None,
                  state=None, timestamps=None, title=None, user_id=None):
@@ -60,14 +63,17 @@ class Transfer(object):
                    timestamps=api_response["timestamps"], title=api_response["title"], user_id=api_response["userId"])
 
     @classmethod
-    def api_create(cls, category="other", is_public=False, org_guid=None, source=None, title=None, user_id=0,
+    def api_create(cls, category="other", is_public=False, org=None, source=None, title=None, user_id=0,
                    client=None):
         title = title or "test_transfer" + datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-        response = api.api_create_transfer(category=category, is_public=is_public, org_guid=org_guid,
+        response = api.api_create_transfer(category=category, is_public=is_public, org_guid=getattr(org, "guid", None),
                                            source=source, title=title, client=client)
-        return cls(category=category, id=response["id"], id_in_object_store=response["idInObjectStore"],
-                   is_public=is_public, org_guid=org_guid, source=source, state=response["state"],
-                   timestamps=response["timestamps"], title=title, user_id=user_id)
+        new_transfer = cls(category=category, id=response["id"], id_in_object_store=response["idInObjectStore"],
+                           is_public=is_public, org_guid=getattr(org, "guid", None), source=source,
+                           state=response["state"], timestamps=response["timestamps"], title=title, user_id=user_id)
+        cls.TEST_TRANSFERS.append(new_transfer)
+        DataSet.TEST_TRANSFER_TITLES.append(title)
+        return new_transfer
 
     @classmethod
     def api_get_list(cls, orgs, client=None):
@@ -100,3 +106,12 @@ class Transfer(object):
 
     def is_finished(self):
         return self.finished_status in self.timestamps.keys()
+
+    @classmethod
+    def api_teardown_test_transfers(cls):
+        for transfer in cls.TEST_TRANSFERS:
+            try:
+                transfer.api_delete()
+            except UnexpectedResponseError:
+                logger.warning("Failed to delete {}".format(transfer))
+        cls.TEST_TRANSFERS = []

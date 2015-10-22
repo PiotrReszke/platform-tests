@@ -21,7 +21,7 @@ import unittest
 
 from retry import retry
 
-from objects import organization as org, user as usr, space
+from objects import organization as org, user as usr, space, transfer as tr, dataset as ds
 from . import get_logger, UnexpectedResponseError
 
 
@@ -66,6 +66,8 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
 
     @classmethod
     def tearDownClass(cls):
+        ds.DataSet.api_teardown_test_datasets()
+        tr.Transfer.api_teardown_test_transfers()
         org.Organization.cf_api_tear_down_test_orgs()
         usr.User.cf_api_tear_down_test_users()
 
