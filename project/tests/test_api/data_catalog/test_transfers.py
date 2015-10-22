@@ -14,12 +14,11 @@
 # limitations under the License.
 #
 
-import csv
-import os
 import time
 import unittest
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api
+from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api, \
+    generate_csv_file, tear_down_test_files
 from objects import Organization, Transfer, DataSet, User
 
 
@@ -73,8 +72,6 @@ class SubmitTransfer(ApiTestCase):
 
 class TransferFromLocalFile(ApiTestCase):
 
-    CSV_FILE_PATH = "test_file.csv"
-
     @classmethod
     @cleanup_after_failed_setup(DataSet.api_teardown_test_datasets, Transfer.api_teardown_test_transfers,
                                 Organization.cf_api_tear_down_test_orgs)
@@ -84,24 +81,24 @@ class TransferFromLocalFile(ApiTestCase):
         cls.step("Add admin to the organization")
         User.get_admin().api_add_to_organization(org_guid=cls.org.guid)
 
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        os.remove(cls.CSV_FILE_PATH)
-
-    def _generate_csv_file(self, file_path, column_count, row_count):
-        with open(file_path, "w", newline="") as csv_file:
-            csv_writer = csv.writer(csv_file)
-            csv_writer.writerow(["COL_{}".format(i) for i in range(column_count)])
-            for i in range(row_count):
-                csv_writer.writerow([str(j) * 20 for j in range(column_count)])
+    def tearDown(self):
+        tear_down_test_files()
 
     def test_create_transfer_from_file(self):
         """DPNG-3156 DAS can't be found by uploader sometimes"""
         self.step("Generate sample csv file")
-        self._generate_csv_file(self.CSV_FILE_PATH, 10, 10)
+        file_path = generate_csv_file(column_count=10, row_count=10)
         self.step("Create transfer by uploading a csv file")
-        new_transfer = Transfer.api_create_by_file_upload(self.org, self.CSV_FILE_PATH)
-        new_transfer.ensure_finished()
-        self.step("Get dataset matching to transfer {}".format(new_transfer.title))
-        DataSet.api_get_matching_to_transfer([self.org], new_transfer.title)
+        transfer = Transfer.api_create_by_file_upload(self.org, file_path)
+        transfer.ensure_finished()
+        self.step("Get data set matching to transfer {}".format(transfer.title))
+        DataSet.api_get_matching_to_transfer([self.org], transfer.title)
+
+    def test_submit_transfer_from_large_file(self):
+        self.step("Generate 20MB csv file")
+        file_path = generate_csv_file(size=20*1024*1024)
+        self.step("Create transfer by uploading the created file")
+        transfer = Transfer.api_create_by_file_upload(self.org, file_path)
+        transfer.ensure_finished()
+        self.step("Get data set matching to transfer {}".format(transfer.title))
+        DataSet.api_get_matching_to_transfer([self.org], transfer.title)

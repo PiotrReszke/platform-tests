@@ -40,11 +40,12 @@ class Transfer(object):
     TEST_TRANSFERS = []
 
     def __init__(self, category=None, id=None, id_in_object_store=None, is_public=None, org_guid=None, source=None,
-                 state=None, timestamps=None, title=None, user_id=None):
+                 state=None, timestamps=None, title=None, user_id=None, from_local_file=False):
         self.title, self.category, self.source = title, category, source
         self.id, self.id_in_object_store = id, id_in_object_store
         self.is_public, self.state, self.timestamps = is_public, state, timestamps
         self.organization_guid, self.user_id = org_guid, user_id
+        self.from_local_file = from_local_file
 
     def __eq__(self, other):
         return all([getattr(self, attribute) == getattr(other, attribute) for attribute in self.COMPARABLE_ATTRIBUTES])
@@ -64,21 +65,29 @@ class Transfer(object):
 
     @classmethod
     def api_create(cls, category="other", is_public=False, org=None, source=None, title=None, user_id=0,
-                   client=None):
+                   client=None, from_local_file=False):
         title = title or "test_transfer" + datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-        response = api.api_create_transfer(category=category, is_public=is_public, org_guid=getattr(org, "guid", None),
-                                           source=source, title=title, client=client)
-        new_transfer = cls(category=category, id=response["id"], id_in_object_store=response["idInObjectStore"],
+        if not from_local_file:
+            response = api.api_create_transfer(category=category, is_public=is_public, org_guid=getattr(org, "guid", None),
+                                               source=source, title=title, client=client)
+            new_transfer = cls(category=category, id=response["id"], id_in_object_store=response["idInObjectStore"],
                            is_public=is_public, org_guid=getattr(org, "guid", None), source=source,
                            state=response["state"], timestamps=response["timestamps"], title=title, user_id=user_id)
+
+        else:
+            response = api.api_create_transfer_from_local_file(category=category, is_public=is_public,
+                                                               org_guid=getattr(org, "guid", None), title=title,
+                                                               client=client, file=source)
+            transfer_list = cls.api_get_list(orgs=[org])
+            new_transfer = next((tr for tr in transfer_list if tr.title == title), None)
         cls.TEST_TRANSFERS.append(new_transfer)
         DataSet.TEST_TRANSFER_TITLES.append(title)
         return new_transfer
 
     @classmethod
-    def api_create_by_file_upload(cls, org, file_dir, category="other", is_public=False, title=None, client=None):
+    def api_create_by_file_upload(cls, org, file_path, category="other", is_public=False, title=None, client=None):
         title = title or "test_transfer" + datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-        api.api_create_transfer_by_file_upload(org.guid, source=file_dir, category=category, is_public=is_public,
+        api.api_create_transfer_by_file_upload(org.guid, source=file_path, category=category, is_public=is_public,
                                                title=title, client=client)
         new_transfer = cls.api_get_transfer_by_title([org], title)
         cls.TEST_TRANSFERS.append(new_transfer)

@@ -27,3 +27,4 @@ from .platform_api_calls import *
 from .ipython_tools import iPython
 from .cloud_foundry import *
 
+from .file_utils import *

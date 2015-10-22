@@ -76,13 +76,13 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
             method=method.upper(),
             url=self.url + endpoint,
             headers=headers,
-            files=files,
             data=data,
             params=params,
-            json=body
+            json=body,
+            files=files
         )
         request = self._session.prepare_request(request)
-        log_http_request(request, self._username, self._password, description=log_msg)
+        log_http_request(request, self._username, self._password, description=log_msg, data=data)
         response = self._session.send(request)
         log_http_response(response)
         if not response.ok:

@@ -16,6 +16,7 @@
 
 import logging
 import sys
+import json
 
 import requests
 
@@ -47,8 +48,8 @@ def log_command(command, replace=None):
     logger.info(msg)
 
 
-def log_http_request(prepared_request, username, password=None, description=""):
-    body = prepared_request.body
+def log_http_request(prepared_request, username, password=None, description="", data=None):
+    body = prepared_request.body if not data else json.dumps(data)
     if body is None:
         body = ""
     if password:
