@@ -63,6 +63,8 @@ class SeparatorMeta(type):
 class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
     STEP_NO = 0
     SUB_TEST_NO = 0
+    PREREQUISITE_FAILED = False
+    FAILS_AND_ERRORS = 0
 
     @classmethod
     def tearDownClass(cls):
@@ -192,17 +194,22 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         self.assertNotInList(something, obj_list)
 
     @classmethod
-    def skip_if_previous_test_failed(cls):
+    def mark_prerequisite(cls, is_first=False):
         """For wrapping test methods which should be skipped based on previous failures"""
         def wrapper(func):
             @functools.wraps(func)
             def wrapped(self, *args, **kwargs):
+                if is_first:
+                    cls.PREREQUISITE_FAILED = False
+                    cls.FAILS_AND_ERRORS = (len(self._outcome.result.failures) or len(self._outcome.result.errors))
                 if not isinstance(self, cls):
                     raise TypeError("This decorator can only be used for unittest.TestCase methods")
-                if (len(self._outcome.result.failures) or len(self._outcome.result.errors)) > 0:
+                if cls.PREREQUISITE_FAILED or \
+                        ((len(self._outcome.result.failures) or len(self._outcome.result.errors)) > cls.FAILS_AND_ERRORS):
+                    cls.PREREQUISITE_FAILED = True
                     raise unittest.SkipTest("Skipped due to failed prerequisite")
                 else:
-                    func(self, *args, **kwargs)
+                   func(self, *args, **kwargs)
             return wrapped
         return wrapper
 

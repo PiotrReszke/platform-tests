@@ -16,7 +16,7 @@
 
 import time
 import ssl
-
+import unittest
 import websocket
 
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, app_source_utils, Topic, cloud_foundry \
@@ -64,6 +64,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
             cls.ws_opts = {}
             cls.ws_protocol = "wss://"
 
+    @ApiTestCase.mark_prerequisite(is_first=True)
     def test_cf_app_step_1_push_ws2kafka_kafka2hdfs(self):
         postfix = str(int(time.time()))
         self.step("Push application ws2kafka")
@@ -77,7 +78,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         self.assertTrue(self.app_ws2kafka.is_started, "ws2kafka app is not started")
         self.assertTrue(self.app_kafka2hdfs.is_started, "kafka2hdfs app is not started")
 
-    @ApiTestCase.skip_if_previous_test_failed()
+    @ApiTestCase.mark_prerequisite()
     def test_cf_app_step_2_send_from_ws2kafka_to_kafka2hdfs(self):
         self.step("Send messages from ws2kafka to kafka2hdfs")
         self.expected_messages = self._send_ws_messages("{}/{}".format(self.app_ws2kafka.urls[0],
@@ -86,7 +87,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         self.assertEqual(app_stats_message_count, self.MESSAGE_COUNT,
                          "Sent {0} messages, collected {1}".format(self.MESSAGE_COUNT, app_stats_message_count))
 
-    @ApiTestCase.skip_if_previous_test_failed()
+    @ApiTestCase.mark_prerequisite()
     def test_cf_app_step_3_check_messages_in_hdfs(self):
         self.step("Check hdfs topic messages")
         broker_guid = self.app_kafka2hdfs.cf_api_env()["VCAP_SERVICES"]["hdfs"][0]["credentials"]["uri"].split("/")[-2]
@@ -98,8 +99,9 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
                         )
         self.assertUnorderedListEqual(topic_messages, self.expected_messages)
 
+    @unittest.skip
     def test_cf_app_ws2kafka_gearpump_kafka2hdfs(self):
-        """Base case test for procedure gearpump"""
+        """On hold until gearpump instance creation is possible"""
         postfix = str(int(time.time()))
         app_ws2kafka = self._push_ws2kafka(app_name="ws2kafka-gp-in", topic_name="topic-gp-in")
         app_kafka2hdfs = self._push_kafka2hdfs(app_name="kafka2hdfs-gp-out", topic_name="topic-gp-out",
