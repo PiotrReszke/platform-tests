@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 import time
 
 from test_utils import ApiTestCase, get_logger, platform_api_calls as api, cleanup_after_failed_setup
@@ -35,6 +34,7 @@ def tearDownModule():
 @cleanup_after_failed_setup(tearDownModule)
 def setUpModule():
     global USERS, TEST_ORG
+    logger.debug("Create users for org tests")
     users, org = User.api_create_users_for_tests(4)
     TEST_ORG = org
     for user in users:
@@ -63,7 +63,6 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
 
     @classmethod
     def setUpClass(cls):
-        cls.step("Onboard test user")
         cls.test_user = USERS[0]["user"]
         cls.test_client = USERS[0]["client"]
 
@@ -341,9 +340,8 @@ class UpdateOrganizationUser(BaseOrgUserClass):
 
     def test_cannot_update_user_which_is_not_in_org(self):
         """DPNG-2196 It's possible to update user which was deleted from organization"""
-        self.step("Add new user to the test organization")
         user_not_in_org = USERS[1]["user"]
-        self.step("Create another test organization")
+        self.step("Create test organization")
         org = Organization.api_create()
         self.step("Check that attempt to update a user via org they are not in returns an error")
         org_users = User.api_get_list_via_organization(org.guid)
@@ -413,6 +411,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
 
     def test_update_role_of_one_org_manager_cannot_update_second(self):
         manager_role = User.ORG_ROLES["manager"]
+        self.step("Create a test organization")
         org = Organization.api_create()
         first_user = USERS[0]["user"]
         second_user = USERS[1]["user"]
@@ -518,8 +517,11 @@ class DeleteOrganizationUser(BaseOrgUserClass):
         deleted_user = self.test_user
         self.step("Create a test organization")
         org = Organization.api_create()
+        self.step("Add test user to organization")
         deleted_user.api_add_to_organization(org_guid=org.guid, roles=User.ORG_ROLES["auditor"])
+        self.step("Delete test user from organization")
         deleted_user.api_delete_from_organization(org_guid=org.guid)
+        self.step("Try to delete test user from organization second time")
         self.assertRaisesUnexpectedResponse(404, "", deleted_user.api_delete_from_organization, org_guid=org.guid)
 
     def test_admin_cannot_delete_non_existing_org_user(self):
@@ -532,8 +534,10 @@ class DeleteOrganizationUser(BaseOrgUserClass):
 
     def test_org_manager_can_delete_another_user(self):
         """DPNG-2459 Cannot delete user - 404"""
+        self.step("Create a test organization")
         org = Organization.api_create()
         manager_role = User.ORG_ROLES["manager"]
+        self.step("Add org manager to organization")
         self.test_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
         user_client = self.test_client
         deleted_user = USERS[1]["user"]

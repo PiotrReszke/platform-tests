@@ -84,6 +84,18 @@ def _retrieve_message_ids_matching_query(service, user_id, query=''):
     return [msg["id"] for msg in messages]
 
 
+def _get_info_from_headers(headers):
+    message_subject = recipient = sender = None
+    for header in headers:
+        if header["name"] == "Delivered-To":
+            recipient = header["value"]
+        if header["name"] == "Subject":
+            message_subject = header["value"]
+        if header["name"] == "From":
+            sender = header["value"]
+    return {"subject": message_subject, "recipient": recipient, "sender": sender}
+
+
 def get_messages_from_query(query, expected_number=None, user_id=TEST_EMAIL):
     service = _get_service()
     message_ids = _retrieve_message_ids_matching_query(service, user_id, query)
@@ -95,15 +107,14 @@ def get_messages_from_query(query, expected_number=None, user_id=TEST_EMAIL):
     for message_id in message_ids:
         message = service.users().messages().get(userId=user_id, id=message_id, format='full').execute()
         timestamp = message['internalDate']
-        for header in message['payload']['headers']:
-            if header["name"] == "Delivered-To":
-                recipient = header["value"]
-            if header["name"] == "Subject":
-                message_subject = header["value"]
+        headers = _get_info_from_headers(message['payload']['headers'])
         msg_str = base64.urlsafe_b64decode(message['payload']['body']['data'].encode('ASCII'))
         message_content = msg_str.decode("utf-8")
-        messages.append(
-            {"subject": message_subject, "content": message_content, "timestamp": timestamp, "recipient": recipient})
+        messages.append({"subject": headers["subject"],
+                         "content": message_content,
+                         "timestamp": timestamp,
+                         "recipient": headers["recipient"],
+                         "sender": headers["sender"]})
     return messages
 
 
@@ -134,7 +145,6 @@ def extract_code_from_message(message):
 
 
 def get_invitation_code_for_user(username):
-    get_query(recipient=username)
     messages = wait_for_messages_to(recipient=username)
     return extract_code_from_message(messages[0]["content"])
 
