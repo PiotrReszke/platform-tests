@@ -206,9 +206,8 @@ def api_get_external_tools(client=None):
 def api_get_marketplace_services(space_guid, client=None):
     """GET /rest/services"""
     client = client or PlatformApiClient.get_admin_client()
-    response = client.request("GET", "rest/services", params={"space": space_guid},
-                              log_msg="PLATFORM: get marketplace service list")
-    return response["resources"]
+    return client.request("GET", "rest/services", params={"space": space_guid},
+                          log_msg="PLATFORM: get marketplace service list")
 
 
 def api_get_service(service_guid, client=None):

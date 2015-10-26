@@ -26,12 +26,12 @@ __all__ = ["ServiceType"]
 class ServiceType(object):
     """Otherwise known as broker"""
 
-    COMPARABLE_ATTRIBUTES = ["guid", "label", "description", "url", "tags", "space_guid", "is_active", "display_name"]
+    COMPARABLE_ATTRIBUTES = ["guid", "label", "description", "tags", "space_guid", "is_active", "display_name"]
 
-    def __init__(self, label, guid=None, description=None, url=None, tags=None, space_guid=None, is_active=None,
+    def __init__(self, label, guid=None, description=None, tags=None, space_guid=None, is_active=None,
                  display_name=None, service_plans=None):
         self.guid, self.label, self.description, self.display_name = guid, label, description, display_name
-        self.url, self.tags, self.space_guid, self.is_active = url, tags, space_guid, is_active
+        self.tags, self.space_guid, self.is_active = tags, space_guid, is_active
         self.service_plans = service_plans
 
     def __repr__(self):
@@ -69,7 +69,7 @@ class ServiceType(object):
             service_plans = [{"guid": sp["metadata"]["guid"], "name": sp["entity"]["name"]}
                              for sp in entity["service_plans"]]
         return cls(guid=metadata["guid"], label=entity["label"], description=entity["description"],
-                   url=metadata["url"], tags=entity["tags"], space_guid=space_guid, is_active=entity["active"],
+                   tags=entity["tags"], space_guid=space_guid, is_active=entity["active"],
                    display_name=display_name, service_plans=service_plans)
 
     @classmethod
