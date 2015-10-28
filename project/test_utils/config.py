@@ -41,6 +41,9 @@ __CONFIG.read_string("""
     [52.20.52.106.xip.io]
         reference_org = sato
         reference_space = dev
+    [10.239.165.208.xip.io]
+        reference_org = sh.intel.com
+        reference_space = dp2
 """)
 
 
