@@ -44,7 +44,7 @@ __CONFIG.read_string("""
     [10.239.165.208.xip.io]
         reference_org = sh.intel.com
         reference_space = dp2
-        ssl_validation = True
+        ssl_validation = False
 """)
 
 
