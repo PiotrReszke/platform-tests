@@ -71,11 +71,12 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
                 cls._CLIENTS[username] = AppClient(username, password)
         return cls._CLIENTS[username]
 
-    def request(self, method, endpoint, headers=None, params=None, data=None, body=None, log_msg=""):
+    def request(self, method, endpoint, headers=None, files=None, params=None, data=None, body=None, log_msg=""):
         request = requests.Request(
             method=method.upper(),
             url=self.url + endpoint,
             headers=headers,
+            files=files,
             data=data,
             params=params,
             json=body
@@ -178,14 +179,14 @@ class AppClient(PlatformApiClient):
             raise UnexpectedResponseError(response.status_code, response.text)
         self._token = "Bearer {}".format(json.loads(response.text)["access_token"])
 
-    def request(self, method, endpoint, headers=None, params=None, data=None, body=None, log_msg=""):
+    def request(self, method, endpoint, headers=None, files=None, params=None, data=None, body=None, log_msg=""):
         # check that token has not expired
         if (self._token is not None) and (time.time() - self._token_retrieval_time > self._TOKEN_EXPIRY_TIME):
             self._get_token()
         headers = {} if headers is None else headers
         headers["Authorization"] = self._token
         self._application_name = next((k for k, v in self.APP_ENDPOINT_MAP.items() if v(endpoint)), "")
-        return super().request(method, endpoint, headers, params, data, body, log_msg)
+        return super().request(method, endpoint, headers, files, params, data, body, log_msg)
 
 
 class CfApiClient(AppClient):

@@ -52,7 +52,7 @@ def log_http_request(prepared_request, username, password=None, description=""):
     if body is None:
         body = ""
     if password:
-        body = body.replace(password, "[SECRET]")
+        body = str(body).replace(password, "[SECRET]")
     msg = [
         description,
         "----------------Request------------------",

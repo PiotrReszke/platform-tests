@@ -76,8 +76,22 @@ class Transfer(object):
         return new_transfer
 
     @classmethod
-    def api_get_list(cls, orgs, client=None):
-        response = api.api_get_transfers([org.guid for org in orgs], client=client)
+    def api_create_by_file_upload(cls, org, file_dir, category="other", is_public=False, title=None, client=None):
+        title = title or "test_transfer" + datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        api.api_create_transfer_by_file_upload(org.guid, source=file_dir, category=category, is_public=is_public,
+                                               title=title, client=client)
+        new_transfer = cls.api_get_transfer_by_title([org], title)
+        cls.TEST_TRANSFERS.append(new_transfer)
+        DataSet.TEST_TRANSFER_TITLES.append(title)
+        return new_transfer
+
+    @classmethod
+    def api_get_transfer_by_title(cls, org_list, title):
+        return next(iter(transfer for transfer in cls.api_get_list(org_list) if transfer.title == title))
+
+    @classmethod
+    def api_get_list(cls, org_list, client=None):
+        response = api.api_get_transfers([org.guid for org in org_list], client=client)
         return [cls._from_api_response(transfer_data) for transfer_data in response]
 
     @classmethod

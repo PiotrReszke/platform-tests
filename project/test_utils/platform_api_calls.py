@@ -15,6 +15,7 @@
 #
 
 import json
+import os
 
 from . import PlatformApiClient
 
@@ -52,6 +53,18 @@ def api_create_transfer(category=None, is_public=None, org_guid=None, source=Non
     body = {key: val for key, val in zip(body_keys, values) if val is not None}
     client = client or PlatformApiClient.get_admin_client()
     return client.request("POST", "rest/das/requests", body=body, log_msg="PLATFORM: create a transfer")
+
+
+def api_create_transfer_by_file_upload(org_guid, source, category=None, is_public=None, title=None, client=None):
+    """POST /rest/upload/{org_id}"""
+    body_keys = ["category", "publicRequest", "orgUUID", "title"]
+    values = [category, is_public, org_guid, title]
+    data = {key: val for key, val in zip(body_keys, values) if val is not None}
+    _, file_name = os.path.split(source)
+    files = {"file": (file_name, open(source, "rb"), "application/vnd.ms-excel")}
+    client = client or PlatformApiClient.get_admin_client()
+    return client.request("POST", "rest/upload/{}".format(org_guid), data=data, log_msg="PLATFORM: create a transfer",
+                          files=files)
 
 
 def api_get_transfer(request_id, client=None):

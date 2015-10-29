@@ -103,6 +103,12 @@ class DataSet(object):
                                        source_uri=self.source_uri, target_uri=self.target_uri, title=self.title,
                                        client=client)
 
+    def api_update(self, creation_time=None, target_uri=None, category=None, format=None, record_count=None,
+                   is_public=None, org_guid=None, source_uri=None, size=None, data_sample=None, title=None,
+                   client=None):
+        api.api_update_dataset(self.id, creation_time, target_uri, category, format, record_count, is_public, org_guid,
+                               source_uri, size, data_sample, title, client)
+
     def api_delete(self, client=None):
         api.api_delete_dataset(self.id, client)
 

@@ -79,7 +79,7 @@ def update_test_config(domain=None, proxy=None, client_type=None, logged_respons
 
 
 # update settings using default values
-update_test_config(domain="daily-gotapaas.com",
+update_test_config(domain="daily.gotapaas.com",
                    proxy="proxy-mu.intel.com:911",
                    client_type="console",
                    logged_response_body_length=1024)
