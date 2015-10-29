@@ -38,7 +38,7 @@ class DataTransfer(ApiTestCase):
 
     def test_admin_can_get_transfer_list(self):
         self.step("Check if the list of transfers can be retrieved")
-        transfers = Transfer.api_get_list(orgs=[self.org])
+        transfers = Transfer.api_get_list(org_list=[self.org])
         logger.info("{} transfers".format(len(transfers)))
 
     def test_submit_transfer(self):
