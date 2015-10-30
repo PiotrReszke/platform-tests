@@ -15,8 +15,7 @@
 #
 
 from datetime import datetime
-import time
-from unittest import expectedFailure
+import unittest
 
 from test_utils import get_logger, ApiTestCase, app_source_utils, cleanup_after_failed_setup, cloud_foundry as cf
 from objects import Organization, Application, Space
@@ -54,7 +53,7 @@ class Apps(ApiTestCase):
         application.cf_push()
         return application
 
-    @expectedFailure
+    @unittest.expectedFailure
     def test_api_push_stop_start_delete(self):
         """DPNG-3037 when stopping application app name changes name to \"STOPPED\" """
         self.step("Stop the application and check that it is stopped")

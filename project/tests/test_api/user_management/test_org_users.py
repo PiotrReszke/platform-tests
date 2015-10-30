@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,6 @@ from objects import Organization, User
 
 
 logger = get_logger("test org users")
-
 
 USERS = []
 TEST_ORG = None
@@ -43,7 +42,6 @@ def setUpModule():
 
 
 class BaseOrgUserClass(ApiTestCase):
-
     ALL_ROLES = {role for role_set in User.ORG_ROLES.values() for role in role_set}
     NON_MANAGER_ROLES = ALL_ROLES - User.ORG_ROLES["manager"]
 
@@ -60,7 +58,6 @@ class BaseOrgUserClass(ApiTestCase):
 
 
 class AddExistingUserToOrganization(BaseOrgUserClass):
-
     @classmethod
     def setUpClass(cls):
         cls.test_user = USERS[0]["user"]
@@ -179,7 +176,6 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
 
 
 class AddNewUserToOrganization(BaseOrgUserClass):
-
     @classmethod
     def setUpClass(cls):
         cls.test_user = USERS[0]["user"]
@@ -271,7 +267,6 @@ class AddNewUserToOrganization(BaseOrgUserClass):
 
 
 class UpdateOrganizationUser(BaseOrgUserClass):
-
     @classmethod
     def setUpClass(cls):
         cls.test_user = USERS[0]["user"]
@@ -345,9 +340,9 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         org = Organization.api_create()
         self.step("Check that attempt to update a user via org they are not in returns an error")
         org_users = User.api_get_list_via_organization(org.guid)
-        self.assertRaisesUnexpectedResponse(404, "User not exists in organization.",
-                                            user_not_in_org.api_update_via_organization, org_guid=org.guid,
-                                            new_roles=User.ORG_ROLES["auditor"])
+        self.assertRaisesUnexpectedResponse(
+            404, "User {} does not exist in organization {}.".format(user_not_in_org.guid, org.guid),
+            user_not_in_org.api_update_via_organization, org_guid=org.guid, new_roles=User.ORG_ROLES["auditor"])
         self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
     def test_user_cannot_update_user_in_org_where_they_are_not_added(self):
@@ -428,7 +423,6 @@ class UpdateOrganizationUser(BaseOrgUserClass):
 
 
 class DeleteOrganizationUser(BaseOrgUserClass):
-
     @classmethod
     def setUpClass(cls):
         cls.test_user = USERS[0]["user"]
@@ -569,7 +563,6 @@ class DeleteOrganizationUser(BaseOrgUserClass):
 
 
 class GetOrganizationUsers(BaseOrgUserClass):
-
     @classmethod
     def setUpClass(cls):
         cls.step("Create a test organization")
@@ -582,10 +575,10 @@ class GetOrganizationUsers(BaseOrgUserClass):
         cls.non_managers = {}
         cls.non_manager_clients = {}
         for index, roles in enumerate(cls.NON_MANAGER_ROLES):
-            user = USERS[index+1]["user"]
+            user = USERS[index + 1]["user"]
             user.api_add_to_organization(org_guid=cls.test_org.guid, roles=[roles])
             cls.non_managers[(roles,)] = user
-            cls.non_manager_clients[roles] = USERS[index+1]["client"]
+            cls.non_manager_clients[roles] = USERS[index + 1]["client"]
 
     def test_non_manager_in_org_cannot_get_org_users(self):
         for role, client in self.non_manager_clients.items():
