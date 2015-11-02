@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -65,8 +65,14 @@ def get_query(recipient, email_subject=None):
     return query
 
 
-def _retrieve_message_ids_matching_query(user_id, query=''):
-    service = _get_service()
+def get_query_for_list(usernames):
+    query = ""
+    for username in usernames:
+        query += "to:{} | ".format(username)
+    return query
+
+
+def _retrieve_message_ids_matching_query(service, user_id, query=''):
     response = service.users().messages().list(userId=user_id, q=query).execute()
     messages = []
     if 'messages' in response:
@@ -78,26 +84,56 @@ def _retrieve_message_ids_matching_query(user_id, query=''):
     return [msg["id"] for msg in messages]
 
 
-def get_messages(recipient, user_id=TEST_EMAIL, subject=None):
-    query = get_query(recipient, subject)
-    message_ids = _retrieve_message_ids_matching_query(user_id, query)
+def _get_info_from_headers(headers):
+    message_subject = recipient = sender = None
+    for header in headers:
+        if header["name"] == "Delivered-To":
+            recipient = header["value"]
+        if header["name"] == "Subject":
+            message_subject = header["value"]
+        if header["name"] == "From":
+            sender = header["value"]
+    return {"subject": message_subject, "recipient": recipient, "sender": sender}
+
+
+def get_messages_from_query(query, expected_number=None, user_id=TEST_EMAIL):
     service = _get_service()
+    message_ids = _retrieve_message_ids_matching_query(service, user_id, query)
+    actual_number = len(message_ids)
+    if expected_number is not None:
+        assert actual_number == expected_number, "There are {} messages matching query: '{}'. Expected: {}".format(
+            actual_number, query, expected_number)
     messages = []
     for message_id in message_ids:
         message = service.users().messages().get(userId=user_id, id=message_id, format='full').execute()
         timestamp = message['internalDate']
-        message_subject = message['payload']['headers'][12]['value']
+        headers = _get_info_from_headers(message['payload']['headers'])
         msg_str = base64.urlsafe_b64decode(message['payload']['body']['data'].encode('ASCII'))
         message_content = msg_str.decode("utf-8")
-        messages.append({"subject": message_subject, "content": message_content, "timestamp": timestamp})
+        messages.append({"subject": headers["subject"],
+                         "content": message_content,
+                         "timestamp": timestamp,
+                         "recipient": headers["recipient"],
+                         "sender": headers["sender"]})
     return messages
 
 
 @retry(AssertionError, tries=30, delay=2)
-def wait_for_messages(recipient, user_id=TEST_EMAIL, subject=None, messages_number=1):
-    messages = get_messages(recipient, user_id=user_id, subject=subject)
-    assert len(messages) == messages_number
+def wait_for_messages_matching_query(query, messages_number=1):
+    messages = get_messages_from_query(query, messages_number)
     return messages
+
+
+def wait_for_messages_to(recipient, messages_number=1):
+    query = get_query(recipient=recipient)
+    return wait_for_messages_matching_query(query, messages_number=messages_number)
+
+
+def is_there_any_messages_to(recipient, user_id=TEST_EMAIL):
+    service = _get_service()
+    query = get_query(recipient)
+    message_ids = _retrieve_message_ids_matching_query(service, user_id, query)
+    return len(message_ids) != 0
 
 
 def extract_code_from_message(message):
@@ -108,19 +144,23 @@ def extract_code_from_message(message):
     return match.group()
 
 
-def get_invitation_code(username):
-    messages = wait_for_messages(recipient=username)
+def get_invitation_code_for_user(username):
+    messages = wait_for_messages_to(recipient=username)
     return extract_code_from_message(messages[0]["content"])
+
+
+def get_invitation_codes_for_list(usernames):
+    query = get_query_for_list(usernames)
+    messages = wait_for_messages_matching_query(query, messages_number=len(usernames))
+    codes = {}
+    for message in messages:
+        codes[message["recipient"]] = extract_code_from_message(message["content"])
+    return codes
 
 
 def get_link_from_message(email_content):
     match = re.search(INVITATION_LINK_PATTERN, email_content)
     if match is None:
-        raise AssertionError("Invitation link was not found in email content")
+        raise AssertionError("Invitation link was not found in email content: {}".format(email_content))
     return match.group()
 
-
-def get_code_from_latest_message(username):
-    time.sleep(30)
-    messages = sorted(get_messages(recipient=username), key=itemgetter('timestamp'), reverse=True)
-    return extract_code_from_message(messages[0]["content"])

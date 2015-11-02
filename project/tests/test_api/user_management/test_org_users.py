@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,26 +13,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 import time
-import unittest
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api
+from test_utils import ApiTestCase, get_logger, platform_api_calls as api, cleanup_after_failed_setup
 from objects import Organization, User
 
 
 logger = get_logger("test org users")
 
+USERS = []
+TEST_ORG = None
+
+
+def tearDownModule():
+    User.cf_api_tear_down_test_users()
+    Organization.cf_api_tear_down_test_orgs()
+
+
+@cleanup_after_failed_setup(tearDownModule)
+def setUpModule():
+    global USERS, TEST_ORG
+    logger.debug("Create users for org tests")
+    users, org = User.api_create_users_for_tests(4)
+    TEST_ORG = org
+    for user in users:
+        client = user.login()
+        USERS.append({"user": user, "client": client})
+
 
 class BaseOrgUserClass(ApiTestCase):
-
     ALL_ROLES = {role for role_set in User.ORG_ROLES.values() for role in role_set}
     NON_MANAGER_ROLES = ALL_ROLES - User.ORG_ROLES["manager"]
 
     @classmethod
     def tearDownClass(cls):
-        User.cf_api_tear_down_test_users()
-        Organization.cf_api_tear_down_test_orgs()
+        # way to silent tearDownClass method inherited from ApiTestCase class
+        # it has to be silented due to user reuse (user created in setUpModule can't be deleted
+        pass
 
     def _assert_user_not_in_org(self, user, org_guid):
         self.step("Check that the user is not in the organization.")
@@ -41,13 +58,10 @@ class BaseOrgUserClass(ApiTestCase):
 
 
 class AddExistingUserToOrganization(BaseOrgUserClass):
-
     @classmethod
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, User.cf_api_tear_down_test_users)
     def setUpClass(cls):
-        cls.step("Onboard test user")
-        cls.test_user, cls.test_org = User.api_onboard()
-        cls.test_client = cls.test_user.login()
+        cls.test_user = USERS[0]["user"]
+        cls.test_client = USERS[0]["client"]
 
     def test_add_existing_user_with_no_roles(self):
         invited_user = self.test_user
@@ -102,7 +116,7 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
         self.assert_user_in_org_and_roles(invited_user, org.guid, expected_roles)
 
     def test_org_manager_adds_existing_user(self):
-        invited_user = User.api_create_by_adding_to_organization(self.test_org.guid)
+        invited_user = USERS[1]["user"]
         for expected_roles in User.ORG_ROLES.values():
             with self.subTest(role=expected_roles):
                 inviting_user, inviting_client = self.test_user, self.test_client
@@ -116,7 +130,7 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
 
     def test_non_manager_cannot_add_existing_user_to_org(self):
         """DPNG-2271 /org/:org_guid/users returns different error messages for similar invalid requests"""
-        invited_user = User.api_create_by_adding_to_organization(self.test_org.guid)
+        invited_user = USERS[1]["user"]
         for non_manager_roles in self.NON_MANAGER_ROLES:
             non_manager_roles = [non_manager_roles]
             with self.subTest(inviting_user_role=non_manager_roles):
@@ -162,13 +176,11 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
 
 
 class AddNewUserToOrganization(BaseOrgUserClass):
-
     @classmethod
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, User.cf_api_tear_down_test_users)
     def setUpClass(cls):
-        cls.step("Onboard test user")
-        cls.test_user, cls.test_org = User.api_onboard()
-        cls.test_client = cls.test_user.login()
+        cls.test_user = USERS[0]["user"]
+        cls.test_client = USERS[0]["client"]
+        cls.test_org = TEST_ORG
 
     def test_add_new_user_with_no_roles(self):
         """DPNG-2540 Cannot add new user to organization without roles"""
@@ -199,7 +211,7 @@ class AddNewUserToOrganization(BaseOrgUserClass):
         """DPNG-2181 Cannot add new organization user with role other than manager"""
         for expected_roles in User.ORG_ROLES.values():
             with self.subTest(role=expected_roles):
-                inviting_user, inviting_client = self.test_user, self.test_client
+                inviting_client = self.test_client
                 org = self.test_org
                 self.step("Org manager adds a new user to an organization with roles {}".format(expected_roles))
                 new_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=expected_roles,
@@ -240,8 +252,8 @@ class AddNewUserToOrganization(BaseOrgUserClass):
         org_guid = "this-org-guid-is-not-correct"
         roles = self.ALL_ROLES
         self.step("Check that an error is raised when trying to add user using incorrect org guid")
-        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", User.api_create_by_adding_to_organization, org_guid=org_guid,
-                                            roles=roles)
+        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception",
+                                            User.api_create_by_adding_to_organization, org_guid=org_guid, roles=roles)
 
     def test_cannot_add_new_user_incorrect_role(self):
         org = self.test_org
@@ -255,15 +267,11 @@ class AddNewUserToOrganization(BaseOrgUserClass):
 
 
 class UpdateOrganizationUser(BaseOrgUserClass):
-
     @classmethod
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, User.cf_api_tear_down_test_users)
     def setUpClass(cls):
-        cls.step("Create a test organization")
-        cls.admin_org = Organization.api_create()
-        cls.step("Onboard a test user")
-        cls.test_user, cls.test_org = User.api_onboard()
-        cls.test_client = cls.test_user.login()
+        cls.test_user = USERS[0]["user"]
+        cls.test_client = USERS[0]["client"]
+        cls.test_org = TEST_ORG
 
     def test_update_org_user_add_new_role(self):
         updated_user = self.test_user
@@ -327,36 +335,40 @@ class UpdateOrganizationUser(BaseOrgUserClass):
 
     def test_cannot_update_user_which_is_not_in_org(self):
         """DPNG-2196 It's possible to update user which was deleted from organization"""
-        self.step("Add new user to the test organization")
-        user_not_in_org = User.api_create_by_adding_to_organization(self.test_org.guid)
-        self.step("Create another test organization")
+        user_not_in_org = USERS[1]["user"]
+        self.step("Create test organization")
         org = Organization.api_create()
         self.step("Check that attempt to update a user via org they are not in returns an error")
         org_users = User.api_get_list_via_organization(org.guid)
-        self.assertRaisesUnexpectedResponse(404, "User not exists in organization.", user_not_in_org.api_update_via_organization, org_guid=org.guid,
-                                            new_roles=User.ORG_ROLES["auditor"])
+        self.assertRaisesUnexpectedResponse(
+            404, "User {} does not exist in organization {}.".format(user_not_in_org.guid, org.guid),
+            user_not_in_org.api_update_via_organization, org_guid=org.guid, new_roles=User.ORG_ROLES["auditor"])
         self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
     def test_user_cannot_update_user_in_org_where_they_are_not_added(self):
-        org = self.admin_org
+        org = Organization.api_create()
         expected_roles = User.ORG_ROLES["auditor"]
         updating_client = self.test_client
         self.step("Add updating user to the organization as {}".format(expected_roles))
         self.test_user.api_add_to_organization(org_guid=org.guid, roles=expected_roles)
         self.step("Add updated user to the organization as {}".format(expected_roles))
-        updated_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=expected_roles)
+        updated_user = USERS[1]["user"]
+        updated_user.api_add_to_organization(org_guid=org.guid, roles=expected_roles)
         self.step("Check that non-admin user cannot update another user in the test organization")
-        self.assertRaisesUnexpectedResponse(403, "Forbidden",
-                                            updated_user.api_update_via_organization, org_guid=org.guid,
-                                            new_roles=User.ORG_ROLES["billing_manager"], client=updating_client)
+        self.assertRaisesUnexpectedResponse(403, "Forbidden", updated_user.api_update_via_organization,
+                                            org_guid=org.guid, new_roles=User.ORG_ROLES["billing_manager"],
+                                            client=updating_client)
         self.assert_user_in_org_and_roles(updated_user, org.guid, expected_roles)
 
     def test_change_org_manager_role_in_org_with_two_managers(self):
         manager_roles = User.ORG_ROLES["manager"]
         new_roles = self.NON_MANAGER_ROLES
-        org = self.test_org
+        org = Organization.api_create()
+        self.step("Add first manager to newly created organization")
+        self.test_user.api_add_to_organization(org_guid=org.guid, roles=manager_roles)
         self.step("Add new manager to organization with a manager")
-        updated_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=manager_roles)
+        updated_user = USERS[1]["user"]
+        updated_user.api_add_to_organization(org_guid=org.guid, roles=manager_roles)
         self.step("Check that it's possible to remove manager role from the user")
         updated_user.api_update_via_organization(org_guid=org.guid, new_roles=new_roles)
         self.assert_user_in_org_and_roles(updated_user, org.guid, new_roles)
@@ -367,8 +379,8 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         roles = User.ORG_ROLES["billing_manager"]
         self.step("Check that updating user which is not in an organization returns an error")
         org_users = User.api_get_list_via_organization(org_guid=org.guid)
-        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_organization_user, org_guid=org.guid,
-                                            user_guid=invalid_guid, new_roles=roles)
+        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_organization_user,
+                                            org_guid=org.guid, user_guid=invalid_guid, new_roles=roles)
         self.assertListEqual(User.api_get_list_via_organization(org_guid=org.guid), org_users)
 
     def test_cannot_update_org_user_in_non_existing_org(self):
@@ -376,8 +388,8 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         user_guid = self.test_user.guid
         roles = User.ORG_ROLES["billing_manager"]
         self.step("Check that updating user using invalid org guid returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_organization_user, org_guid=invalid_guid,
-                                            user_guid=user_guid, new_roles=roles)
+        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_organization_user,
+                                            org_guid=invalid_guid, user_guid=user_guid, new_roles=roles)
 
     def test_cannot_update_org_user_with_incorrect_role(self):
         updated_user = self.test_user
@@ -394,10 +406,13 @@ class UpdateOrganizationUser(BaseOrgUserClass):
 
     def test_update_role_of_one_org_manager_cannot_update_second(self):
         manager_role = User.ORG_ROLES["manager"]
+        self.step("Create a test organization")
         org = Organization.api_create()
+        first_user = USERS[0]["user"]
+        second_user = USERS[1]["user"]
         self.step("Add two managers to the test organization")
-        first_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=manager_role)
-        second_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=manager_role)
+        first_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
+        second_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
         self.step("Remove manager role from one of the managers")
         first_user.api_update_via_organization(org_guid=org.guid, new_roles=self.NON_MANAGER_ROLES)
         self.step("Check that attempt to remove manager role from the second manager returns an error")
@@ -408,13 +423,11 @@ class UpdateOrganizationUser(BaseOrgUserClass):
 
 
 class DeleteOrganizationUser(BaseOrgUserClass):
-
     @classmethod
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, User.cf_api_tear_down_test_users)
     def setUpClass(cls):
-        cls.step("Onboard test user")
-        cls.test_user, cls.test_org = User.api_onboard()
-        cls.test_client = cls.test_user.login()
+        cls.test_user = USERS[0]["user"]
+        cls.test_client = USERS[0]["client"]
+        cls.test_org = TEST_ORG
 
     def test_admin_deletes_the_only_org_user_non_manager(self):
         deleted_user = self.test_user
@@ -445,10 +458,11 @@ class DeleteOrganizationUser(BaseOrgUserClass):
         not_deleted_user = self.test_user
         not_deleted_user_roles = User.ORG_ROLES["auditor"]
         deleted_user_roles = User.ORG_ROLES["billing_manager"]
+        deleted_user = USERS[1]["user"]
         self.step("Create a test organization")
         org = Organization.api_create()
         self.step("Add two non-manager users to the organization")
-        deleted_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=deleted_user_roles)
+        deleted_user.api_add_to_organization(org_guid=org.guid, roles=deleted_user_roles)
         not_deleted_user.api_add_to_organization(org_guid=org.guid, roles=not_deleted_user_roles)
         self.step("Remove one of the users from the organization")
         deleted_user.api_delete_from_organization(org_guid=org.guid)
@@ -458,11 +472,12 @@ class DeleteOrganizationUser(BaseOrgUserClass):
     def test_admin_deletes_one_of_org_managers_cannot_delete_second(self):
         roles = User.ORG_ROLES["manager"]
         not_deleted_user = self.test_user
+        deleted_user = USERS[1]["user"]
         self.step("Create a test organization")
         org = Organization.api_create()
         self.step("Add two managers to the organization")
         not_deleted_user.api_add_to_organization(org_guid=org.guid, roles=roles)
-        deleted_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=roles)
+        deleted_user.api_add_to_organization(org_guid=org.guid, roles=roles)
         self.step("Remove one of the managers from the organization")
         deleted_user.api_delete_from_organization(org_guid=org.guid)
         self._assert_user_not_in_org(deleted_user, org.guid)
@@ -477,11 +492,12 @@ class DeleteOrganizationUser(BaseOrgUserClass):
             updated_user_roles = [updated_user_roles]
             with self.subTest(updated_rols=updated_user_roles):
                 manager_user = self.test_user
+                updated_user = USERS[1]["user"]
                 self.step("Create a test organization")
                 org = Organization.api_create()
                 self.step("Add two managers to the organization")
                 manager_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
-                updated_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=manager_role)
+                updated_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
                 self.step("Update roles of one of the managers to {}".format(updated_user_roles))
                 updated_user.api_update_via_organization(org_guid=org.guid, new_roles=updated_user_roles)
                 self.assert_user_in_org_and_roles(updated_user, org.guid, updated_user_roles)
@@ -495,8 +511,11 @@ class DeleteOrganizationUser(BaseOrgUserClass):
         deleted_user = self.test_user
         self.step("Create a test organization")
         org = Organization.api_create()
+        self.step("Add test user to organization")
         deleted_user.api_add_to_organization(org_guid=org.guid, roles=User.ORG_ROLES["auditor"])
+        self.step("Delete test user from organization")
         deleted_user.api_delete_from_organization(org_guid=org.guid)
+        self.step("Try to delete test user from organization second time")
         self.assertRaisesUnexpectedResponse(404, "", deleted_user.api_delete_from_organization, org_guid=org.guid)
 
     def test_admin_cannot_delete_non_existing_org_user(self):
@@ -509,49 +528,57 @@ class DeleteOrganizationUser(BaseOrgUserClass):
 
     def test_org_manager_can_delete_another_user(self):
         """DPNG-2459 Cannot delete user - 404"""
+        self.step("Create a test organization")
+        org = Organization.api_create()
+        manager_role = User.ORG_ROLES["manager"]
+        self.step("Add org manager to organization")
+        self.test_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
+        user_client = self.test_client
+        deleted_user = USERS[1]["user"]
         for roles in User.ORG_ROLES.values():
             with self.subTest(deleted_user_roles=roles):
-                org = self.test_org
-                user_client = self.test_client
                 self.step("Add user to the test org with roles {}".format(roles))
-                deleted_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=roles)
+                deleted_user.api_add_to_organization(org_guid=org.guid, roles=roles)
                 self.step("Org manager removes the user from the test org")
                 deleted_user.api_delete_from_organization(org_guid=org.guid, client=user_client)
                 self._assert_user_not_in_org(deleted_user, org.guid)
 
     def test_non_manager_cannot_delete_user(self):
+        deleted_user_roles = User.ORG_ROLES["auditor"]
+        non_manager_user, non_manager_client = self.test_user, self.test_client
+        deleted_user = USERS[1]["user"]
         for non_manager_roles in self.NON_MANAGER_ROLES:
             non_manager_roles = [non_manager_roles]
             with self.subTest(non_manager_roles=non_manager_roles):
-                deleted_user_roles = User.ORG_ROLES["auditor"]
-                non_manager_user, non_manager_client = self.test_user, self.test_client
                 self.step("Create a test organization")
                 org = Organization.api_create()
                 self.step("Add deleting user to the organization with roles {}".format(non_manager_roles))
                 non_manager_user.api_add_to_organization(org_guid=org.guid, roles=non_manager_roles)
                 self.step("Add deleted user to the organization with roles {}".format(deleted_user_roles))
-                deleted_user = User.api_create_by_adding_to_organization(org_guid=org.guid, roles=deleted_user_roles)
+                deleted_user.api_add_to_organization(org_guid=org.guid, roles=deleted_user_roles)
                 self.step("Check that non-manager cannot delete user from org")
-                self.assertRaisesUnexpectedResponse(403, "Forbidden",
-                                                    deleted_user.api_delete_from_organization, org_guid=org.guid,
-                                                    client=non_manager_client)
+                self.assertRaisesUnexpectedResponse(403, "Forbidden", deleted_user.api_delete_from_organization,
+                                                    org_guid=org.guid, client=non_manager_client)
                 self.assert_user_in_org_and_roles(deleted_user, org.guid, deleted_user_roles)
 
 
 class GetOrganizationUsers(BaseOrgUserClass):
-
     @classmethod
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, User.cf_api_tear_down_test_users)
     def setUpClass(cls):
         cls.step("Create a test organization")
         cls.test_org = Organization.api_create()
         cls.step("Add new manager user to the test org")
-        cls.manager = User.api_create_by_adding_to_organization(org_guid=cls.test_org.guid, roles=User.ORG_ROLES["manager"])
-        cls.manager_client = cls.manager.login()
+        cls.manager = USERS[0]["user"]
+        cls.manager.api_add_to_organization(org_guid=cls.test_org.guid, roles=User.ORG_ROLES["manager"])
+        cls.manager_client = USERS[0]["client"]
         cls.step("Add non-manager users to the test org")
-        cls.non_managers = {(roles,): User.api_create_by_adding_to_organization(org_guid=cls.test_org.guid, roles=[roles])
-                            for roles in cls.NON_MANAGER_ROLES}
-        cls.non_manager_clients = {roles: user.login() for roles, user in cls.non_managers.items()}
+        cls.non_managers = {}
+        cls.non_manager_clients = {}
+        for index, roles in enumerate(cls.NON_MANAGER_ROLES):
+            user = USERS[index + 1]["user"]
+            user.api_add_to_organization(org_guid=cls.test_org.guid, roles=[roles])
+            cls.non_managers[(roles,)] = user
+            cls.non_manager_clients[roles] = USERS[index + 1]["client"]
 
     def test_non_manager_in_org_cannot_get_org_users(self):
         for role, client in self.non_manager_clients.items():
@@ -562,15 +589,14 @@ class GetOrganizationUsers(BaseOrgUserClass):
 
     def test_manager_can_get_org_users(self):
         self.step("Check that manager can get list of users in org")
-        expected_users = [user for user in [self.manager] + list(self.non_managers.values())]
+        expected_users = [self.manager] + list(self.non_managers.values())
         user_list = User.api_get_list_via_organization(org_guid=self.test_org.guid, client=self.manager_client)
         self.assertUnorderedListEqual(user_list, expected_users)
 
     def test_user_not_in_org_cannot_get_org_users(self):
-        self.step("Onboard new user, don't add them to the test org")
-        user_not_in_org, _ = User.api_onboard()
-        client = user_not_in_org.login()
+        self.step("Create new org")
+        org = Organization.api_create()
+        client = USERS[0]["client"]
         self.step("Check that the user cannot get list of users in the test org")
         self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
-                                            User.api_get_list_via_organization, org_guid=self.test_org.guid,
-                                            client=client)
+                                            User.api_get_list_via_organization, org_guid=org.guid, client=client)
