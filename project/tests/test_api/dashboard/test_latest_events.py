@@ -41,7 +41,6 @@ class DashboardLatestEvents(ApiTestCase):
         cls.step("Retrieve latest events from dashboard")
         cls.dashboard_latest_events = EventSummary.api_get_latest_events_from_org_metrics(cls.tested_org.guid)
 
-    @unittest.expectedFailure
     def test_10_latest_events_on_dashboard_the_same_as_in_LES(self):
         """DPNG-2091 There's no organisations distinction on dashboard in latest events section"""
         self.step("Retrieve latest events from the LES filtering with tested organization")
