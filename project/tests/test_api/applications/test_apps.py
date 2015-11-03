@@ -53,7 +53,6 @@ class Apps(ApiTestCase):
         application.cf_push()
         return application
 
-    @unittest.expectedFailure
     def test_api_push_stop_start_delete(self):
         """DPNG-3037 when stopping application app name changes name to \"STOPPED\" """
         self.step("Stop the application and check that it is stopped")

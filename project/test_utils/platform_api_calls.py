@@ -288,7 +288,7 @@ def api_get_app_orphan_services(app_guid, client=None):
 def api_change_app_status(app_guid, status, client=None):
     """POST /rest/apps/{app_guid}/status"""
     client = client or PlatformApiClient.get_admin_client()
-    return client.request("POST", "rest/apps/{}/status".format(app_guid), body={"name": status},
+    return client.request("POST", "rest/apps/{}/status".format(app_guid), body={"state": status},
                           log_msg="PLATFORM: restage app")
 
 
