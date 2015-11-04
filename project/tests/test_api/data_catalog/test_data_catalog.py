@@ -230,6 +230,7 @@ class ModifyDataSetsInDataCatalog(ApiTestCase):
         self.assertRaisesUnexpectedResponse(409, "???", new_dataset.api_update, category=category)
 
     def test_create_dataset_from_file(self):
+        """DPNG-3156 DAS can't be found by uploader sometimes"""
         self.step("Download and save example csv file")
         file_name = "file.csv"
         urllib.request.urlretrieve(EXAMPLE_LINK, file_name)
