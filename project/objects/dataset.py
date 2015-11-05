@@ -16,6 +16,8 @@
 
 import functools
 
+from retry import retry
+
 from test_utils import platform_api_calls as api, get_logger, UnexpectedResponseError
 from objects import Organization
 
@@ -27,6 +29,9 @@ class DataSet(object):
 
     COMPARABLE_ATTRIBUTES = ["category", "creation_time", "data_sample", "format", "is_public", "id",
                              "org_guid", "record_count", "size", "source_uri", "target_uri", "title"]
+    CATEGORIES = ["other", "agriculture", "climate", "science", "energy", "business", "consumer", "education",
+                  "finance", "manufacturing", "ecosystems", "health"]
+    FILE_FORMATS = ["CSV"]
     TEST_TRANSFER_TITLES = []
 
     def __init__(self, category=None, creation_time=None, data_sample=None, format=None, id=None, is_public=None,
@@ -45,30 +50,19 @@ class DataSet(object):
         return "{0} (title={1}, id={2})".format(self.__class__.__name__, self.title, self.id)
 
     @classmethod
-    def _from_api_response(cls, data):
-        return cls(id=data["id"], category=data["category"], title=data["title"], format=data["format"],
-                   creation_time=data["creationTime"], is_public=data["isPublic"], org_guid=data["orgUUID"],
-                   data_sample=data["dataSample"], record_count=data["recordCount"], size=data["size"],
-                   source_uri=data["sourceUri"], target_uri=data["targetUri"])
-
-    @classmethod
     def api_get_list(cls, org_list, query="", filters=(), size=100, time_from=0, only_private=False, only_public=False,
                      client=None):
-        return cls.api_get_list_and_metadata(org_list, query, filters, size, time_from, only_private, only_public,
-                                             client)["data_sets"]
-
-    @classmethod
-    def api_get_list_and_metadata(cls, org_list, query="", filters=(), size=100, time_from=0, only_private=False,
-                                  only_public=False, client=None):
         org_guids = [org.guid for org in org_list]
         response = api.api_get_datasets(org_guids, query, filters, size, time_from, only_private, only_public,
                                         client=client)
-        return {
-            "categories": response["categories"],
-            "formats": response["formats"],
-            "total": response["total"],
-            "data_sets": [cls._from_api_response(data) for data in response["hits"]]
-        }
+        data_sets = []
+        for data in response["hits"]:
+            data_set = cls(id=data["id"], category=data["category"], title=data["title"], format=data["format"],
+                           creation_time=data["creationTime"], is_public=data["isPublic"], org_guid=data["orgUUID"],
+                           data_sample=data["dataSample"], record_count=data["recordCount"], size=data["size"],
+                           source_uri=data["sourceUri"], target_uri=data["targetUri"])
+            data_sets.append(data_set)
+        return data_sets
 
     @classmethod
     def api_get_matching_to_transfer_list(cls, org_list, transfer_title_list, client=None):
@@ -77,24 +71,22 @@ class DataSet(object):
         return [ds for ds in datasets if ds.title in transfer_title_list]
 
     @classmethod
+    @retry(AssertionError, tries=15, delay=2)
     def api_get_matching_to_transfer(cls, org_list, transfer_title, client=None):
-        """Return dataset whose title matches transfer_title or return None if such dataset is not found."""
-        return next(iter(cls.api_get_matching_to_transfer_list(org_list, [transfer_title], client)), None)
+        """Return dataset whose title matches transfer_title or raise AssertionError if such dataset is not found."""
+        dataset = next(iter(cls.api_get_matching_to_transfer_list(org_list, [transfer_title], client)), None)
+        if dataset is None:
+            raise AssertionError("Dataset with title {} was not found".format(transfer_title))
+        return dataset
 
     @classmethod
     def api_get(cls, data_set_id, client=None):
-        return cls.api_get_with_metadata(data_set_id, client)["data_set"]
-
-    @classmethod
-    def api_get_with_metadata(cls, data_set_id, client=None):
-        response = api.api_get_dataset(data_set_id, client=client)
-        return {
-            "index": response["_index"],
-            "found": response["found"],
-            "type": response["_type"],
-            "version": response["_version"],
-            "data_set": cls._from_api_response(response["_source"])
-        }
+        response = api.api_get_dataset(data_set_id, client)
+        source = response["_source"]
+        return cls(id=response["_id"], category=source["category"], title=source["title"], format=source["format"],
+                   creation_time=source["creationTime"], is_public=source["isPublic"], org_guid=source["orgUUID"],
+                   data_sample=source["dataSample"], record_count=source["recordCount"], size=source["size"],
+                   source_uri=source["sourceUri"], target_uri=source["targetUri"])
 
     def publish_in_hive(self, client=None):
         return api.api_publish_dataset(category=self.category, creation_time=self.creation_time,

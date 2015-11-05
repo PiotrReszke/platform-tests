@@ -14,7 +14,10 @@
 # limitations under the License.
 #
 
+import csv
+import os
 import time
+import unittest
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api
 from objects import Organization, Transfer, DataSet, User
@@ -23,7 +26,7 @@ from objects import Organization, Transfer, DataSet, User
 logger = get_logger("test data transfer")
 
 
-class DataTransfer(ApiTestCase):
+class SubmitTransfer(ApiTestCase):
 
     EXAMPLE_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
 
@@ -50,7 +53,6 @@ class DataTransfer(ApiTestCase):
         self.assertEqual(transfer, retrieved_transfer, "The transfer is not the same")
 
     def test_no_token_in_create_transfer_response(self):
-        """Verify that the request to create a transfer does not leak 'token' field"""
         self.step("Create new transfer and check that 'token' field was not returned in response")
         response = api.api_create_transfer(
             source=self.EXAMPLE_LINK,
@@ -59,3 +61,47 @@ class DataTransfer(ApiTestCase):
             org_guid=self.org.guid
         )
         self.assertTrue("token" not in response, "token field was returned in response")
+
+    @unittest.expectedFailure
+    def test_cannot_create_transfer_with_incorrect_category(self):
+        """DPNG-3035: It's possible to create transfer with unknown category"""
+        incorrect_category = "unknown_category"
+        self.step("Try to create a transfer with not existing category")
+        self.assertRaisesUnexpectedResponse(409, "???", Transfer.api_create, category=incorrect_category, org=self.org,
+                                            source=self.EXAMPLE_LINK)
+
+
+class TransferFromLocalFile(ApiTestCase):
+
+    CSV_FILE_PATH = "test_file.csv"
+
+    @classmethod
+    @cleanup_after_failed_setup(DataSet.api_teardown_test_datasets, Transfer.api_teardown_test_transfers,
+                                Organization.cf_api_tear_down_test_orgs)
+    def setUpClass(cls):
+        cls.step("Create test organization")
+        cls.org = Organization.api_create()
+        cls.step("Add admin to the organization")
+        User.get_admin().api_add_to_organization(org_guid=cls.org.guid)
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        os.remove(cls.CSV_FILE_PATH)
+
+    def _generate_csv_file(self, file_path, column_count, row_count):
+        with open(file_path, "w", newline="") as csv_file:
+            csv_writer = csv.writer(csv_file)
+            csv_writer.writerow(["COL_{}".format(i) for i in range(column_count)])
+            for i in range(row_count):
+                csv_writer.writerow([str(j) * 20 for j in range(column_count)])
+
+    def test_create_transfer_from_file(self):
+        """DPNG-3156 DAS can't be found by uploader sometimes"""
+        self.step("Generate sample csv file")
+        self._generate_csv_file(self.CSV_FILE_PATH, 10, 10)
+        self.step("Create transfer by uploading a csv file")
+        new_transfer = Transfer.api_create_by_file_upload(self.org, self.CSV_FILE_PATH)
+        new_transfer.ensure_finished()
+        self.step("Get dataset matching to transfer {}".format(new_transfer.title))
+        DataSet.api_get_matching_to_transfer([self.org], new_transfer.title)
