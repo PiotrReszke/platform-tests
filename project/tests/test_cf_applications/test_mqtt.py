@@ -44,7 +44,7 @@ class TestMqtt(ApiTestCase):
     SERVER_CERTIFICATE = os.path.join(os.path.dirname(__file__), "mosquitto_demo_cert.pem")
     MQTT_TOPIC_NAME = "space-shuttle/test-data"
 
-    @cleanup_after_failed_setup(Organization.cf_api_delete)
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUp(self):
         self.step("Clone repository mqtt-demo")
         app_source_utils.clone_repository("mqtt-demo", self.APP_REPO_PATH)
@@ -57,12 +57,11 @@ class TestMqtt(ApiTestCase):
         cf.cf_login(test_org.name, test_space.name)
 
     def tearDown(self):
-        cf.cf_delete_service(self.DB_SERVICE_INSTANCE_NAME)
-        cf.cf_delete_service(self.MQTT_SERVICE_INSTANCE_NAME)
+        Organization.cf_api_tear_down_test_orgs()
 
     @unittest.expectedFailure
     def test_connection(self):
-        """DPNG-2821 Hardcoded jar version in mqtt-demo manifest"""
+        """DPNG-3213 Cannot push mqtt-demo due to lacking atkscoringengine service"""
         self.step("Create service instances of {} and {}".format(self.DB_SERVICE_NAME, self.MQTT_SERVICE_NAME))
         cf.cf_create_service(self.DB_SERVICE_NAME, "free", self.DB_SERVICE_INSTANCE_NAME)
         cf.cf_create_service(self.MQTT_SERVICE_NAME, "free", self.MQTT_SERVICE_INSTANCE_NAME)
