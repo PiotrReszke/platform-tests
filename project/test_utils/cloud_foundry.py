@@ -17,20 +17,15 @@
 import functools
 import subprocess
 
-from retry import retry
-
-from . import CfApiClient, get_logger, log_command, config, UnexpectedResponseError
+from . import CfApiClient, get_logger, log_command, config
 
 
 __all__ = ["cf_login", "cf_push", "cf_create_service", "cf_delete", "cf_env", "cf_delete_service",
-           "cf_api_get_service_instances", "cf_api_create_service_instance", "cf_api_get_app_env",
-           "cf_api_get_space_services", "cf_api_app_summary", "cf_api_space_summary", "cf_api_get_org_spaces",
-           "cf_api_get_space_routes", "cf_api_get_service_brokers", "cf_api_delete_org", "cf_api_delete_route",
-           "JobFailedException"]
-
-
-class JobFailedException(Exception):
-    pass
+           "cf_api_app_summary", "cf_api_create_service_instance", "cf_api_delete_app", "cf_api_delete_org",
+           "cf_api_delete_route", "cf_api_delete_space", "cf_api_delete_user", "cf_api_get_app_env",
+           "cf_api_get_org_spaces", "cf_api_get_org_users", "cf_api_get_orgs", "cf_api_get_service_brokers",
+           "cf_api_get_service_instances", "cf_api_get_space_routes", "cf_api_get_space_services",
+           "cf_api_space_summary", "cf_api_get_spaces", "cf_api_get_users"]
 
 
 # ====================================================== cf cli ====================================================== #
@@ -111,27 +106,6 @@ def __get_all_pages(endpoint, query_params=None, log_msg=""):
     return resources
 
 
-@retry(TimeoutError, tries=10, delay=2)
-def __handle_delete_request(endpoint, log_msg, async=True):
-    params = {"async": str(async).lower(), "recursive": "true"}
-    try:
-        response = CfApiClient.get_client().request("DELETE", endpoint=endpoint, params=params, log_msg=log_msg)
-    except UnexpectedResponseError as e:
-        if e.status == 404:  # Deleted resource could not be found
-            return
-    if async:
-        # Ensure that job requested asynchronously is finished within timeout
-        job_id = response["entity"]["guid"]
-        job_status_response = CfApiClient.get_client().request(method="GET", endpoint="jobs/{}".format(job_id),
-                                                               log_msg="CF: get job status for {}".format(log_msg))
-        job_status = job_status_response["entity"]["status"]
-        if job_status == "finished":
-            return
-        if job_status == "failed":
-            raise JobFailedException("Job failed")
-        raise TimeoutError("Job did not finish")
-
-
 # -------------------------------------------------- organizations --------------------------------------------------- #
 
 def cf_api_get_orgs():
@@ -139,10 +113,10 @@ def cf_api_get_orgs():
     return __get_all_pages(endpoint="organizations", log_msg="CF: get all organizations")
 
 
-@retry(JobFailedException, tries=3)
-def cf_api_delete_org(org_guid, async=True):
+def cf_api_delete_org(org_guid):
     """DELETE /v2/organizations/{org_guid}"""
-    __handle_delete_request(endpoint="organizations/{}".format(org_guid), log_msg="CF: delete organization", async=async)
+    CfApiClient.get_client().request("DELETE", endpoint="organizations/{}".format(org_guid),
+                                     params={"recursive": "true", "async": "false"}, log_msg="CF: delete organization")
 
 
 def cf_api_get_org_spaces(org_guid):
@@ -172,10 +146,10 @@ def cf_api_space_summary(space_guid):
                                             log_msg="CF: get space summary")
 
 
-@retry(JobFailedException, tries=3)
-def cf_api_delete_space(space_guid, async=True):
+def cf_api_delete_space(space_guid):
     """DELETE /v2/spaces/{space_guid}"""
-    __handle_delete_request(endpoint="spaces/{}".format(space_guid), log_msg="CF: delete space", async=async)
+    CfApiClient.get_client().request("DELETE", endpoint="spaces/{}".format(space_guid),
+                                     params={"recursive": "true", "async": "false"}, log_msg="CF: delete space")
 
 
 def cf_api_get_space_routes(space_guid):
@@ -197,10 +171,10 @@ def cf_api_get_users():
     return __get_all_pages(endpoint="users", log_msg="CF: get all users")
 
 
-@retry(JobFailedException, tries=3)
-def cf_api_delete_user(user_guid, async=True):
+def cf_api_delete_user(user_guid):
     """DELETE /v2/users/{user_guid}"""
-    __handle_delete_request(endpoint="users/{}".format(user_guid), log_msg="CF: delete user", async=async)
+    CfApiClient.get_client().request("DELETE", endpoint="users/{}".format(user_guid), params={"async": "false"},
+                                     log_msg="CF: delete user")
 
 
 # ------------------------------------------------ service instances ------------------------------------------------- #
@@ -233,10 +207,11 @@ def cf_api_app_summary(app_guid):
     """GET /v2/apps/{app_guid}/summary"""
     return CfApiClient.get_client().request("GET", "apps/{}/summary".format(app_guid), log_msg="CF: get app summary")
 
-@retry(JobFailedException, tries=3)
-def cf_api_delete_app(app_guid, async=True):
+
+def cf_api_delete_app(app_guid):
     """DELETE /v2/apps/{app_guid}"""
-    __handle_delete_request(endpoint="apps/{}".format(app_guid), log_msg="CF: delete app", async=async)
+    CfApiClient.get_client().request("DELETE", endpoint="apps/{}".format(app_guid), log_msg="CF: delete app")
+
 
 # ------------------------------------------------- service brokers -------------------------------------------------- #
 
@@ -250,10 +225,11 @@ def cf_api_get_service_brokers(space_guid=None):
 
 # ----------------------------------------------------- routes ------------------------------------------------------- #
 
-@retry(JobFailedException, tries=3)
-def cf_api_delete_route(route_guid, async=True):
+def cf_api_delete_route(route_guid):
     """DELETE /v2/routes/{route_guid}"""
-    __handle_delete_request(endpoint="routes/{}".format(route_guid), log_msg="CF: delete route", async=async)
+    CfApiClient.get_client().request("DELETE", endpoint="routes/{}".format(route_guid), params={"async": "false"},
+                                     log_msg="CF: delete route")
+
 
 # -------------------------------------------------- service keys ---------------------------------------------------- #
 

@@ -15,7 +15,6 @@
 #
 
 from datetime import datetime
-import unittest
 
 from test_utils import get_logger, ApiTestCase, app_source_utils, cleanup_after_failed_setup, cloud_foundry as cf
 from objects import Organization, Application, Space

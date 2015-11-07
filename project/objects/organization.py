@@ -135,32 +135,15 @@ class Organization(object):
             org_services.extend(services)
         return org_apps, org_services
 
-    def cf_api_delete(self, async=True):
-        try:
-            cf.cf_api_delete_org(self.guid, async=async)
-        except UnexpectedResponseError as e:
-            if "CF-AssociationNotEmpty" in e.error_message:  # routes are not deleted by cf api delete
-                spaces = self.cf_api_get_spaces()
-                for space in spaces:
-                    space.cf_api_delete_routes()
-                cf.cf_api_delete_org(self.guid)
-            elif "CF-OrganizationNotFound" in e.error_message:
-                logger.warning("Organization {} was not found".format(self.guid))
-            else:
-                raise
-
-    @classmethod
-    def cf_api_delete_orgs_from_list(cls, org_list, async=True):
-        failed_to_delete = []
-        for org in org_list:
-            try:
-                org.cf_api_delete(async=async)
-            except cf.JobFailedException:
-                failed_to_delete.append(org)
-                logger.exception("Could not delete {}\n".format(org))
-        return failed_to_delete
+    def cf_api_delete(self):
+        cf.cf_api_delete_org(self.guid)
 
     @classmethod
     def cf_api_tear_down_test_orgs(cls):
         """Use this method in tearDown and tearDownClass."""
-        cls.TEST_ORGS = cls.cf_api_delete_orgs_from_list(cls.TEST_ORGS, async=False)
+        while len(cls.TEST_ORGS) > 0:
+            test_org = cls.TEST_ORGS.pop()
+            try:
+                test_org.cf_api_delete()
+            except UnexpectedResponseError as e:
+                logger.warning("Failed to delete {}: {}".format(test_org, e.error_message))

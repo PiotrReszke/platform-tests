@@ -17,11 +17,13 @@
 import argparse
 import re
 
-from test_utils import get_logger, config
+from test_utils import get_logger, config, UnexpectedResponseError
 from objects import Organization
+
 
 TEST_ORG_PATTERN = "(^|^new-)test_org_[0-9]{8}_[0-9]{6}_[0-9]{6}$"
 logger = get_logger("organization cleanup")
+
 
 if __name__ == "__main__":
 
@@ -35,8 +37,13 @@ if __name__ == "__main__":
 
     all_orgs = Organization.cf_api_get_list()
     test_orgs = [o for o in all_orgs if re.match(TEST_ORG_PATTERN, o.name)]
-    logger.info("Deleting {} organizations: {}".format(len(test_orgs), test_orgs))
-    failed_to_delete = Organization.cf_api_delete_orgs_from_list(test_orgs)
-    logger.info("Deleted {} orgs. Could not delete {}: {}".format(
-        len(test_orgs) - len(failed_to_delete), len(failed_to_delete), failed_to_delete
-    ))
+    logger.info("Deleting {} organizations:\n{}".format(len(test_orgs), "\n".join([str(o) for o in test_orgs])))
+    failed_to_delete = []
+    for test_org in test_orgs:
+        try:
+            test_org.cf_api_delete()
+        except UnexpectedResponseError as e:
+            failed_to_delete.append(test_org)
+            logger.warning("Failed to delete {}: {}".format(test_org, e))
+    logger.info("Could not delete {} orgs:\n{}".format(len(failed_to_delete), "\n".join(failed_to_delete)))
+

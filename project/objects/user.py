@@ -223,27 +223,15 @@ class User(object):
         response = cf.cf_api_get_org_users(org_guid=org_guid, space_guid=space_guid)
         return cls._get_user_list_from_cf_api_response(response)
 
-    def cf_api_delete(self, async=True):
-        try:
-            cf.cf_api_delete_user(self.guid, async=async)
-        except UnexpectedResponseError as e:
-            if "CF-UserNotFound" in e.error_message:
-                logger.warning("User {} was not found".format(self.guid))
-            else:
-                raise
-
-    @classmethod
-    def cf_api_delete_users_from_list(cls, user_list, async=True):
-        failed_to_delete = []
-        for user in user_list:
-            try:
-                user.cf_api_delete(async=async)
-            except cf.JobFailedException:
-                failed_to_delete.append(user)
-                logger.exception("Could not delete {}\n".format(user))
-        return failed_to_delete
+    def cf_api_delete(self):
+        cf.cf_api_delete_user(self.guid)
 
     @classmethod
     def cf_api_tear_down_test_users(cls):
         """Use this method in tearDown and tearDownClass."""
-        cls.TEST_USERS = cls.cf_api_delete_users_from_list(cls.TEST_USERS, async=False)
+        while len(cls.TEST_USERS) > 0:
+            test_user = cls.TEST_USERS.pop()
+            try:
+                test_user.cf_api_delete()
+            except UnexpectedResponseError as e:
+                logger.warning("Failed to delete {}: {}".format(test_user, e.error_message))

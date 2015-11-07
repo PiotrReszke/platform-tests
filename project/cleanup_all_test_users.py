@@ -17,11 +17,13 @@
 import argparse
 import re
 
-from test_utils import get_logger, config
+from test_utils import get_logger, config, UnexpectedResponseError
 from objects import User
 
-TEST_USER_PATTERN = "intel\.data\.tests\+[0-9]{10}.*@gmail\.com$"
+
+TEST_USER_PATTERN = "^intel\.data\.tests\+[0-9]{10}.*@gmail\.com$"
 logger = get_logger("user cleanup")
+
 
 if __name__ == "__main__":
 
@@ -34,9 +36,13 @@ if __name__ == "__main__":
     config.update_test_config(domain=args.environment)
 
     all_users = User.cf_api_get_all_users()
-    test_users = [u for u in all_users if re.match(TEST_USER_PATTERN, u.username or "")]
-    logger.info("Deleting {} users: {}".format(len(test_users), test_users))
-    failed_to_delete = User.cf_api_delete_users_from_list(test_users, async=False)
-    logger.info("Deleted {} users. Could not delete {}: {}".format(
-        len(test_users) - len(failed_to_delete), len(failed_to_delete), failed_to_delete
-    ))
+    test_users = [u for u in all_users if re.match(TEST_USER_PATTERN, u.username or "")]  # there is a user without username
+    logger.info("Deleting {} users:\n{}".format(len(test_users), "\n".join([str(u) for u in test_users])))
+    failed_to_delete = []
+    for test_user in test_users:
+        try:
+            test_user.cf_api_delete()
+        except UnexpectedResponseError as e:
+            failed_to_delete.append(test_user)
+            logger.warning("Failed to delete {}: {}".format(test_user, e))
+    logger.info("Could not delete {} users:\n{}".format(len(failed_to_delete), "\n".join(failed_to_delete)))
