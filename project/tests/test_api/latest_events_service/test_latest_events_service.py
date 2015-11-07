@@ -15,12 +15,12 @@
 #
 
 from test_utils import ApiTestCase
-from objects import EventSummary, Organization
+from objects import LatestEvent
 
 
 class LatestEventsService(ApiTestCase):
 
     def test_latest_events(self):
         self.step("Check that latest events service does not crash after basic request")
-        event_summary = EventSummary.api_get_latest_events()
+        event_summary = LatestEvent.api_get_latest_events()
         self.assertLessEqual(0, len(event_summary))

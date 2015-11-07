@@ -23,6 +23,6 @@ from .service_type import ServiceType
 from .dataset import DataSet
 from .transfer import Transfer
 from .service_broker import ServiceBroker
-from .event_summary import EventSummary
+from .latest_event import LatestEvent
 from .external_tools import ExternalTools
 
