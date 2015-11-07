@@ -181,14 +181,12 @@ class User(object):
                                roles=roles, client=client)
         self.space_roles[space_guid] = list(roles)
 
-    def api_update_via_organization(self, org_guid, new_roles=None, client=None):
-        api.api_update_organization_user(org_guid, self.guid, new_roles, client=client)
+    def api_update_org_roles(self, org_guid, new_roles=None, client=None):
+        api.api_update_org_user_roles(org_guid, self.guid, new_roles, client=client)
         self.org_roles[org_guid] = list(new_roles)
 
-    def api_update_via_space(self, space_guid, new_username=None, new_roles=None, client=None):
-        api.api_update_space_user(space_guid, self.guid, new_username, new_roles, client=client)
-        if new_username is not None:
-            self.username = new_username
+    def api_update_space_roles(self, space_guid, new_roles=None, client=None):
+        api.api_update_space_user_roles(space_guid, self.guid, new_roles, client=client)
         if new_roles is not None:
             self.space_roles[space_guid] = list(new_roles)
 

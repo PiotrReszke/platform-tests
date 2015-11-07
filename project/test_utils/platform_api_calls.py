@@ -388,10 +388,10 @@ def api_delete_organization_user(org_guid, user_guid, client=None):
                           log_msg="PLATFORM: delete user from org")
 
 
-def api_update_organization_user(org_guid, user_guid, new_roles=None, client=None):
+def api_update_org_user_roles(org_guid, user_guid, new_roles=None, client=None):
     """POST /rest/orgs/{organization_guid}/users/{user_guid}"""
     client = client or PlatformApiClient.get_admin_client()
-    body = dict()
+    body = {}
     if new_roles is not None:
         body["roles"] = list(new_roles)
     return client.request("POST", "rest/orgs/{}/users/{}".format(org_guid, user_guid), body=body,
@@ -423,16 +423,14 @@ def api_delete_space_user(space_guid, user_guid, client=None):
                           log_msg="PLATFORM: delete user from space")
 
 
-def api_update_space_user(space_guid, user_guid, new_username=None, new_roles=None, client=None):
+def api_update_space_user_roles(space_guid, user_guid, new_roles=None, client=None):
     """POST /rest/spaces/{space_guid}/users/{user_guid}"""
     client = client or PlatformApiClient.get_admin_client()
-    body = dict()
-    if new_username is not None:
-        body["username"] = new_username
+    body = {}
     if new_roles is not None:
         body["roles"] = new_roles
     return client.request("POST", "rest/spaces/{}/users/{}".format(space_guid, user_guid), body=body,
-                          log_msg="PLATFORM: update user in space")
+                          log_msg="PLATFORM: update user roles in space")
 
 
 def api_invite_user(email, client=None):

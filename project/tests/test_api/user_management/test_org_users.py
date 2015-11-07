@@ -282,7 +282,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         self.step("Add test user to the organization with roles {}".format(initial_roles))
         updated_user.api_add_to_organization(org_guid=org.guid, roles=initial_roles)
         self.step("Update user roles to {}".format(expected_roles))
-        updated_user.api_update_via_organization(org_guid=org.guid, new_roles=expected_roles)
+        updated_user.api_update_org_roles(org_guid=org.guid, new_roles=expected_roles)
         self.assert_user_in_org_and_roles(updated_user, org.guid, expected_roles)
 
     def test_update_org_user_remove_role(self):
@@ -294,7 +294,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         self.step("Add test user to the organization with roles {}".format(initial_roles))
         updated_user.api_add_to_organization(org_guid=org.guid, roles=initial_roles)
         self.step("Update user roles to {}".format(expected_roles))
-        updated_user.api_update_via_organization(org_guid=org.guid, new_roles=expected_roles)
+        updated_user.api_update_org_roles(org_guid=org.guid, new_roles=expected_roles)
         self.assert_user_in_org_and_roles(updated_user, org.guid, expected_roles)
 
     def test_update_org_user_change_role(self):
@@ -306,7 +306,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         self.step("Add test user to the organization with roles {}".format(initial_roles))
         updated_user.api_add_to_organization(org_guid=org.guid, roles=initial_roles)
         self.step("Update user roles to {}".format(expected_roles))
-        updated_user.api_update_via_organization(org_guid=org.guid, new_roles=expected_roles)
+        updated_user.api_update_org_roles(org_guid=org.guid, new_roles=expected_roles)
         self.assert_user_in_org_and_roles(updated_user, org.guid, expected_roles)
 
     def test_update_org_user_with_the_same_role(self):
@@ -317,7 +317,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         self.step("Add test user to the organization with roles {}".format(initial_roles))
         updated_user.api_add_to_organization(org_guid=org.guid, roles=initial_roles)
         self.step("Update user roles to the same roles")
-        updated_user.api_update_via_organization(org_guid=org.guid, new_roles=expected_roles)
+        updated_user.api_update_org_roles(org_guid=org.guid, new_roles=expected_roles)
         self.assert_user_in_org_and_roles(updated_user, org.guid, expected_roles)
 
     def test_cannot_remove_manager_role_for_the_only_org_manager(self):
@@ -329,7 +329,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         self.step("Add test user to the organization as the only manager")
         updated_user.api_add_to_organization(org_guid=org.guid, roles=expected_roles)
         self.step("Check that removing manager role of the only manager returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", updated_user.api_update_via_organization,
+        self.assertRaisesUnexpectedResponse(400, "Bad Request", updated_user.api_update_org_roles,
                                             org_guid=org.guid, new_roles=new_roles)
         self.assert_user_in_org_and_roles(updated_user, org.guid, expected_roles)
 
@@ -342,7 +342,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         org_users = User.api_get_list_via_organization(org.guid)
         self.assertRaisesUnexpectedResponse(
             404, "User {} does not exist in organization {}.".format(user_not_in_org.guid, org.guid),
-            user_not_in_org.api_update_via_organization, org_guid=org.guid, new_roles=User.ORG_ROLES["auditor"])
+            user_not_in_org.api_update_org_roles, org_guid=org.guid, new_roles=User.ORG_ROLES["auditor"])
         self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
     def test_user_cannot_update_user_in_org_where_they_are_not_added(self):
@@ -355,7 +355,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         updated_user = USERS[1]["user"]
         updated_user.api_add_to_organization(org_guid=org.guid, roles=expected_roles)
         self.step("Check that non-admin user cannot update another user in the test organization")
-        self.assertRaisesUnexpectedResponse(403, "Forbidden", updated_user.api_update_via_organization,
+        self.assertRaisesUnexpectedResponse(403, "Forbidden", updated_user.api_update_org_roles,
                                             org_guid=org.guid, new_roles=User.ORG_ROLES["billing_manager"],
                                             client=updating_client)
         self.assert_user_in_org_and_roles(updated_user, org.guid, expected_roles)
@@ -370,7 +370,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         updated_user = USERS[1]["user"]
         updated_user.api_add_to_organization(org_guid=org.guid, roles=manager_roles)
         self.step("Check that it's possible to remove manager role from the user")
-        updated_user.api_update_via_organization(org_guid=org.guid, new_roles=new_roles)
+        updated_user.api_update_org_roles(org_guid=org.guid, new_roles=new_roles)
         self.assert_user_in_org_and_roles(updated_user, org.guid, new_roles)
 
     def test_cannot_update_non_existing_org_user(self):
@@ -379,7 +379,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         roles = User.ORG_ROLES["billing_manager"]
         self.step("Check that updating user which is not in an organization returns an error")
         org_users = User.api_get_list_via_organization(org_guid=org.guid)
-        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_organization_user,
+        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_org_user_roles,
                                             org_guid=org.guid, user_guid=invalid_guid, new_roles=roles)
         self.assertListEqual(User.api_get_list_via_organization(org_guid=org.guid), org_users)
 
@@ -388,7 +388,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         user_guid = self.test_user.guid
         roles = User.ORG_ROLES["billing_manager"]
         self.step("Check that updating user using invalid org guid returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_organization_user,
+        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_org_user_roles,
                                             org_guid=invalid_guid, user_guid=user_guid, new_roles=roles)
 
     def test_cannot_update_org_user_with_incorrect_role(self):
@@ -400,7 +400,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         self.step("Add test user to organization with roles {}".format(initial_roles))
         updated_user.api_add_to_organization(org_guid=org.guid, roles=initial_roles)
         self.step("Check that updating user using invalid role returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", updated_user.api_update_via_organization,
+        self.assertRaisesUnexpectedResponse(400, "Bad Request", updated_user.api_update_org_roles,
                                             org_guid=org.guid, new_roles=invalid_roles)
         self.assert_user_in_org_and_roles(updated_user, org.guid, initial_roles)
 
@@ -414,9 +414,9 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         first_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
         second_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
         self.step("Remove manager role from one of the managers")
-        first_user.api_update_via_organization(org_guid=org.guid, new_roles=self.NON_MANAGER_ROLES)
+        first_user.api_update_org_roles(org_guid=org.guid, new_roles=self.NON_MANAGER_ROLES)
         self.step("Check that attempt to remove manager role from the second manager returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", second_user.api_update_via_organization,
+        self.assertRaisesUnexpectedResponse(400, "Bad Request", second_user.api_update_org_roles,
                                             org_guid=org.guid, new_roles=self.NON_MANAGER_ROLES)
         self.assert_user_in_org_and_roles(first_user, org.guid, self.NON_MANAGER_ROLES)
         self.assert_user_in_org_and_roles(second_user, org.guid, manager_role)
@@ -499,7 +499,7 @@ class DeleteOrganizationUser(BaseOrgUserClass):
                 manager_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
                 updated_user.api_add_to_organization(org_guid=org.guid, roles=manager_role)
                 self.step("Update roles of one of the managers to {}".format(updated_user_roles))
-                updated_user.api_update_via_organization(org_guid=org.guid, new_roles=updated_user_roles)
+                updated_user.api_update_org_roles(org_guid=org.guid, new_roles=updated_user_roles)
                 self.assert_user_in_org_and_roles(updated_user, org.guid, updated_user_roles)
                 self.step("Check that removing the last manger returns an error")
                 self.assertRaisesUnexpectedResponse(400, "Bad Request", manager_user.api_delete_from_organization,

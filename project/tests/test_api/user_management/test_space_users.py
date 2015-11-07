@@ -93,17 +93,6 @@ class SpaceUsers(ApiTestCase):
         new_user = User.api_create_by_adding_to_space(self.test_org.guid, self.test_space.guid)
         self._assert_user_in_space_with_roles(new_user, self.test_space.guid)
 
-    @unittest.expectedFailure
-    def test_cannot_change_username(self):
-        """DPNG-2247 user-management documentation allows for updating username for org and space user"""
-        self.step("Create new platform user by adding to the space")
-        test_user = User.api_create_by_adding_to_space(org_guid=self.test_org.guid, space_guid=self.test_space.guid)
-        new_name = "new_" + test_user.username
-        self.step("Check that attempt to update the user's username returns an error")
-        self.assertRaisesUnexpectedResponse("400", "Bad Request", test_user.api_update_via_space,
-                                            self.test_space.guid, new_username=new_name)
-        self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
-
     def test_change_user_role(self):
         initial_roles = [self.SPACE_ROLES[1]]
         new_roles = [self.SPACE_ROLES[2]]
@@ -111,7 +100,7 @@ class SpaceUsers(ApiTestCase):
         test_user = User.api_create_by_adding_to_space(org_guid=self.test_org.guid, space_guid=self.test_space.guid,
                                                        roles=initial_roles)
         self.step("Update the user, change their role to {}".format(new_roles))
-        test_user.api_update_via_space(self.test_space.guid, new_roles=new_roles)
+        test_user.api_update_space_roles(self.test_space.guid, new_roles=new_roles)
         self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
 
     def test_cannot_change_role_to_invalid_one(self):
@@ -121,7 +110,7 @@ class SpaceUsers(ApiTestCase):
         test_user = User.api_create_by_adding_to_space(org_guid=self.test_org.guid, space_guid=self.test_space.guid,
                                                        roles=initial_roles)
         self.step("Check that updating space user roles to invalid ones returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", test_user.api_update_via_space,
+        self.assertRaisesUnexpectedResponse(400, "Bad Request", test_user.api_update_space_roles,
                                             self.test_space.guid, new_roles=new_roles)
         self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
 
@@ -130,7 +119,7 @@ class SpaceUsers(ApiTestCase):
         self.step("Create new platform user by adding to space")
         test_user = User.api_create_by_adding_to_space(org_guid=self.test_org.guid, space_guid=self.test_space.guid)
         self.step("Update the user, removing all space roles")
-        test_user.api_update_via_space(self.test_space.guid, new_roles=())
+        test_user.api_update_space_roles(self.test_space.guid, new_roles=())
         self._assert_user_not_in_space(test_user, self.test_space.guid)
         self.step("Check that the user is still in the organization")
         org_users = User.api_get_list_via_organization(org_guid=self.test_org.guid)
