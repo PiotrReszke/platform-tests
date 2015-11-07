@@ -29,8 +29,8 @@ import requests  # use requests==2.7.0
 parser = argparse.ArgumentParser()
 parser.add_argument("-e", help="environment (e.g. sprint.gotapaas.com)", required=True)
 parser.add_argument("-n", help="number of iterations", type=int, required=True)
-# parser.add_argument("-p", help="password for trusted.analytics.tester@gmail.com", required=True)
-# parser.add_argument("-c", help="password for retrieving cf token", required=True)
+parser.add_argument("-p", help="password for trusted.analytics.tester@gmail.com", required=True)
+parser.add_argument("-c", help="password for retrieving cf token", required=True)
 args = parser.parse_args()
 
 
@@ -56,14 +56,14 @@ class ApiObject(object):
     CONSOLE_LOGIN_ENDPOINT = "http://login.{}/login.do".format(args.e)
     CF_LOGIN_ENDPOINT = "https://login.{}/oauth/token".format(args.e)
     USERNAME = "trusted.analytics.tester@gmail.com"
-    PASSWORD = "super-secret-tester-pass"
+    PASSWORD = args.p
     SESSION = requests.session()
     SESSION.verify = False
     CF_SESSION = requests.session()
     CF_SESSION.verify = False
     CF_TOKEN = None
     TOKEN_RETRIEVAL_TIME = 0
-    CF_PASS = "Basic Y2Y6"
+    CF_PASS = args.c
 
     @classmethod
     def handle_request(cls, request, description=""):
