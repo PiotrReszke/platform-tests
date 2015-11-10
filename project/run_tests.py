@@ -24,17 +24,17 @@ from teamcity.unittestpy import TeamcityTestRunner
 from test_utils import config, get_logger
 
 
-logger = get_logger("run tests")
-
-
 if __name__ == "__main__":
+
+    logger = get_logger("run_tests")
 
     # parse settings passed from command line and update config
     args = config.parse_arguments()
     config.update_test_config(client_type=args.client_type,
                               domain=args.environment,
                               proxy=args.proxy,
-                              logged_response_body_length=args.logged_response_body_length)
+                              logged_response_body_length=args.logged_response_body_length,
+                              logging_level=args.logging_level)
     for key in ["domain", "admin_username", "client_type", "proxy", "ssl_validation"]:
         logger.info("{}={}".format(key, config.CONFIG[key]))
 

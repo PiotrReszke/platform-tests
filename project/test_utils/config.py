@@ -18,6 +18,8 @@ import argparse
 import configparser
 import os
 
+from . import logger
+
 
 __all__ = ["update_test_config", "parse_arguments", "CONFIG"]
 
@@ -56,7 +58,8 @@ CONFIG = {
 }
 
 
-def update_test_config(domain=None, proxy=None, client_type=None, logged_response_body_length=None):
+def update_test_config(domain=None, proxy=None, client_type=None, logged_response_body_length=None,
+                       logging_level=None):
     defaults = __CONFIG.defaults()
     defaults.update(__SECRETS.defaults())
     if domain is not None:
@@ -73,16 +76,19 @@ def update_test_config(domain=None, proxy=None, client_type=None, logged_respons
         CONFIG["reference_space"] = __CONFIG.get(domain, "reference_space", fallback=defaults["reference_space"])
     CONFIG["proxy"] = proxy
     if logged_response_body_length is not None:
-        CONFIG["logged_response_body_length"] = logged_response_body_length
+        logger.LOGGED_RESPONSE_BODY_LENGTH = logged_response_body_length
     if client_type is not None:
         CONFIG["client_type"] = client_type
+    if logging_level is not None:
+        logger.set_level(logging_level)
 
 
 # update settings using default values
 update_test_config(domain="daily.gotapaas.com",
                    proxy="proxy-mu.intel.com:911",
                    client_type="console",
-                   logged_response_body_length=1024)
+                   logged_response_body_length=1024,
+                   logging_level="DEBUG")
 # update settings using environment variables (when tests are run with PyCharm runner)
 update_test_config(domain=os.environ.get("TEST_ENVIRONMENT"),
                    proxy=os.environ.get("TEST_PROXY"),
@@ -109,4 +115,7 @@ def parse_arguments():
     parser.add_argument("--logged-response-body-length",
                         default=1024,
                         help="Limit response body length that is logged. Set to -1 to log full body.")
+    parser.add_argument("-l", "--logging-level",
+                        choices=["DEBUG", "INFO", "WARNING"],
+                        default="DEBUG")
     return parser.parse_args()

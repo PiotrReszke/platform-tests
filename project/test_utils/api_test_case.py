@@ -21,13 +21,13 @@ import unittest
 
 from retry import retry
 
-from objects import organization as org, user as usr, space, transfer as tr, dataset as ds
+from objects import organization as org, user as usr, transfer as tr, dataset as ds
 from . import get_logger, UnexpectedResponseError
 
 
-logger = get_logger("api_test_case")
-
 __all__ = ["ApiTestCase", "cleanup_after_failed_setup"]
+
+logger = get_logger(__name__)
 
 FUNCTIONS_TO_LOG = ('setUp', 'tearDown', 'setUpClass', 'tearDownClass')
 SEPARATOR = "****************************** {} {} {} ******************************"
@@ -42,9 +42,9 @@ def log_fixture_separator(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         class_name = "in {}".format(args[0].__name__) if func_is_classmethod else ""
-        logger.info(SEPARATOR.format("BEGIN", func_name, class_name))
+        logger.debug(SEPARATOR.format("BEGIN", func_name, class_name))
         func(*args, **kwargs)
-        logger.info(SEPARATOR.format("END", func_name, class_name))
+        logger.debug(SEPARATOR.format("END", func_name, class_name))
 
     if func_is_classmethod:
         return classmethod(wrapper)
@@ -94,7 +94,7 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         test_name = "{}.{}".format(self.__class__.__name__, self._testMethodName)
         separator = "*" * len(test_name)
         self.__class__.STEP_NO = self.__class__.SUB_TEST_NO = 0
-        logger.info("\n{0}\n\n{1}\n\n{0}\n".format(separator, test_name))
+        logger.debug("\n{0}\n\n{1}\n\n{0}\n".format(separator, test_name))
         return super().run(result=result)
 
     @staticmethod

@@ -15,29 +15,42 @@
 #
 
 import logging
-import sys
 import json
+import sys
 
 import requests
 
-from . import config
+
+__all__ = ["get_logger", "set_level", "log_command", "log_http_request", "log_http_response",
+           "LOGGED_RESPONSE_BODY_LENGTH"]
 
 
-__all__ = ["get_logger", "log_command", "log_http_request", "log_http_response"]
+__LOGGING_LEVEL = logging.NOTSET
+LOGGED_RESPONSE_BODY_LENGTH = 0
 
 
-LOGGED_RESPONSE_BODY_LENGTH = config.CONFIG["logged_response_body_length"]
-
-
-format = "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
-logging.basicConfig(stream=sys.stdout, format=format, level=logging.DEBUG)
-# logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
-logging.getLogger("paramiko.transport").setLevel(logging.WARNING)
-logging.getLogger("googleapiclient.discovery").setLevel(logging.WARNING)
 requests.packages.urllib3.disable_warnings()
+logger_format = "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
+logging.basicConfig(stream=sys.stdout, format=logger_format)
+
+
+def set_level(level_name):
+    global __LOGGING_LEVEL
+    __LOGGING_LEVEL = getattr(logging, level_name)
+    # set logging level to all already-defined loggers
+    for _, logger in logging.Logger.manager.loggerDict.items():
+        if not isinstance(logger, logging.PlaceHolder):
+            logger.setLevel(__LOGGING_LEVEL)
+    # set custom logging levels to third-party library loggers
+    logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(__LOGGING_LEVEL)
+    logging.getLogger("paramiko.transport").setLevel(logging.WARNING)
+    logging.getLogger("googleapiclient.discovery").setLevel(logging.WARNING)
+
 
 def get_logger(name):
-    return logging.getLogger(name)
+    logger = logging.getLogger(name)
+    logger.setLevel(__LOGGING_LEVEL)
+    return logger
 
 
 def log_command(command, replace=None):
@@ -66,8 +79,10 @@ def log_http_request(prepared_request, username, password=None, description="", 
     get_logger("http request").debug("\n".join(msg))
 
 
-def log_http_response(response, logged_body_length=LOGGED_RESPONSE_BODY_LENGTH):
+def log_http_response(response, logged_body_length=None):
     """If logged_body_length < 0, full response body is logged"""
+    if logged_body_length is None:
+        logged_body_length = LOGGED_RESPONSE_BODY_LENGTH
     body = response.text
     if logged_body_length == 0:
         body = "[...]"
