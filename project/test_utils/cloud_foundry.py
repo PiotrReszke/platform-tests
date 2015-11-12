@@ -24,9 +24,9 @@ __all__ = ["cf_login", "cf_push", "cf_create_service", "cf_delete", "cf_env", "c
            "cf_api_app_summary", "cf_api_create_service_instance", "cf_api_delete_app", "cf_api_delete_org",
            "cf_api_delete_route", "cf_api_delete_space", "cf_api_delete_user", "cf_api_get_app_env",
            "cf_api_get_org_spaces", "cf_api_get_org_users", "cf_api_get_orgs", "cf_api_get_service_brokers",
-           "cf_api_get_service_instances", "cf_api_get_space_routes", "cf_api_get_space_services",
-           "cf_api_space_summary", "cf_api_get_spaces", "cf_api_get_users", "uaa_api_user_delete",
-           "cf_get_ref_org_and_space_guids"]
+           "cf_api_get_space_routes", "cf_api_get_space_services", "cf_api_space_summary", "cf_api_get_spaces",
+           "cf_api_get_users", "uaa_api_user_delete", "cf_get_ref_org_and_space_guids",
+           "cf_api_get_user_provided_service_instances"]
 
 
 # ====================================================== cf cli ====================================================== #
@@ -172,10 +172,22 @@ def cf_api_get_space_routes(space_guid):
                                             log_msg="CF: get routes in space")
 
 
-def cf_api_get_space_services(space_guid):
+def cf_api_get_space_services(space_guid, label=None):
     """GET /v2/spaces/{space_guid}/services"""
-    return CfApiClient.get_client().request("GET", "spaces/{}/services".format(space_guid),
+    params = {}
+    if label is not None:
+        params["q"] = "label:{}".format(label)
+    return CfApiClient.get_client().request("GET", "spaces/{}/services".format(space_guid), params=params,
                                             log_msg="CF: get space services")
+
+# -------------------------------------------------- service plans --------------------------------------------------- #
+
+def cf_api_get_service_plans(service_guid=None):
+    """GET /v2/service_plans"""
+    params = {}
+    if service_guid is not None:
+        params["q"] = "service_guid:{}".format(service_guid)
+    return CfApiClient.get_client().request("GET", "service_plans", params=params, log_msg="CF: get service plans")
 
 
 # ------------------------------------------------------ users ------------------------------------------------------- #
@@ -193,11 +205,6 @@ def cf_api_delete_user(user_guid):
 
 # ------------------------------------------------ service instances ------------------------------------------------- #
 
-def cf_api_get_service_instances(org_guid):
-    """GET /v2/service_instances"""
-    return __get_all_pages(endpoint="service_instances", query_params={"organization_guid": org_guid},
-                           log_msg="CF: get service instances (in org)")
-
 
 def cf_api_create_service_instance(instance_name, space_guid, service_plan_guid):
     """POST /v2/service_instances"""
@@ -208,6 +215,11 @@ def cf_api_create_service_instance(instance_name, space_guid, service_plan_guid)
         body={"name": instance_name, "space_guid": space_guid, "service_plan_guid": service_plan_guid},
         log_msg="CF: create service instance"
     )
+
+
+def cf_api_get_user_provided_service_instances():
+    """GET /v2/user_provided_service_instances"""
+    return __get_all_pages("user_provided_service_instances", log_msg="CF: get upsi")
 
 
 # ------------------------------------------------------- apps ------------------------------------------------------- #

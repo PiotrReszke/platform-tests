@@ -46,10 +46,11 @@ class Postgres(ApiTestCase):
         marketplace = ServiceType.api_get_list_from_marketplace(test_space.guid)
         psql = next(s for s in marketplace if s.label == cls.DB_SERVICE_LABEL)
         psql_instance = ServiceInstance.api_create(
-            name="psql_" + cls.NAME_PREFIX,
-            service_plan_guid=psql.service_plan_guids[0],
             org_guid=test_org.guid,
-            space_guid=test_space.guid
+            space_guid=test_space.guid,
+            service_label=cls.DB_SERVICE_LABEL,
+            name="psql_" + cls.NAME_PREFIX,
+            service_plan_guid=psql.service_plan_guids[0]
         )
         return psql_instance.name
 

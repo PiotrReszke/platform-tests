@@ -64,18 +64,29 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         cls.step("Create test organization and space")
 
     @classmethod
-    def _create_service_instances(cls, test_space):
+    def _create_service_instances(cls, org_guid, space_guid):
         cls.step("Create instances for kafka, zookeeper, hdfs")
-        marketplace = ServiceType.api_get_list_from_marketplace(test_space.guid)
-        kafka = next(s for s in marketplace if s.label == "kafka")
-        shared_plan_guid = next(s["guid"] for s in kafka.service_plans if s["name"] == "shared")
-        ServiceInstance.cf_api_create(test_space.guid, shared_plan_guid, name="kafka-inst")
-        zookeeper = next(s for s in marketplace if s.label == "zookeeper")
-        shared_plan_guid = next(s["guid"] for s in zookeeper.service_plans if s["name"] == "shared")
-        ServiceInstance.cf_api_create(test_space.guid, shared_plan_guid, name="zookeeper-inst")
-        hdfs = next(s for s in marketplace if s.label == "hdfs")
-        shared_plan_guid = next(s["guid"] for s in hdfs.service_plans if s["name"] == "shared")
-        ServiceInstance.cf_api_create(test_space.guid, shared_plan_guid, name="hdfs-inst")
+        ServiceInstance.api_create(
+            org_guid=org_guid,
+            space_guid=space_guid,
+            service_label="kafka",
+            name="kafka-inst",
+            service_plan_name="shared"
+        )
+        ServiceInstance.api_create(
+            org_guid=org_guid,
+            space_guid=space_guid,
+            service_label="zookeeper",
+            name="zookeeper-inst",
+            service_plan_name="shared"
+        )
+        ServiceInstance.api_create(
+            org_guid=org_guid,
+            space_guid=space_guid,
+            service_label="hdfs",
+            name="hdfs-inst",
+            service_plan_name="shared"
+        )
 
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
@@ -83,7 +94,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         cls._clone_and_compile_sources()
         test_org = Organization.api_create(space_names=("test-space",))
         cls.test_space = test_org.spaces[0]
-        cls._create_service_instances(cls.test_space)
+        cls._create_service_instances(test_org.guid, cls.test_space.guid)
         cls.step("Login to cf, targeting created org and space")
         cf.cf_login(test_org.name, cls.test_space.name)
         cls.ws_opts = {"cert_reqs": ssl.CERT_NONE}

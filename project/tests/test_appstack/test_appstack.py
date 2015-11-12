@@ -33,16 +33,16 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
         settings = yaml.load(settings_file)
         cls.step("Retrieve expected app, service, and broker names from the file")
         cls.expected_app_names = {app_info["name"] for app_info in settings["applications"]}
-        cls.expected_service_names = {app_info["name"] for app_info in settings["user_provided_service_instances"]}
+        cls.expected_upsi_names = {app_info["name"] for app_info in settings["user_provided_service_instances"]}
         cls.expected_broker_names = {app_info["name"] for app_info in settings["service_brokers"]}
         cls.step("Retrieve apps, services, and brokers present in cf")
         ref_space_guid = Organization.get_ref_org_and_space()[1].guid
         cls.cf_apps = Application.cf_api_get_list(ref_space_guid)
-        cls.cf_services = ServiceInstance.cf_api_get_list(ref_space_guid)
+        cls.cf_upsi = [s for s in ServiceInstance.cf_api_get_upsi() if s.space_guid == ref_space_guid]
         cls.cf_brokers = ServiceBroker.cf_api_get_list(ref_space_guid)
-        cls.step("Retrieve apps, and services on the Platform")
+        cls.step("Retrieve apps and services present on the Platform")
         cls.platform_apps = Application.api_get_list(ref_space_guid)
-        cls.platform_services = ServiceInstance.api_get_list(ref_space_guid)
+        cls.platform_instances = ServiceInstance.api_get_list(ref_space_guid)
 
     def test_all_required_apps_are_present_in_cf(self):
         self.step("Check that all expected apps are present in cf")
@@ -77,14 +77,14 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
 
     def test_all_required_service_instances_are_present_in_cf(self):
         self.step("Check that all expected services are present in cf")
-        cf_service_names = {s.name for s in self.cf_services}
-        missing_services = self.expected_service_names - cf_service_names
+        cf_service_names = {s.name for s in self.cf_upsi}
+        missing_services = self.expected_upsi_names - cf_service_names
         self.assertEqual(missing_services, set(), "Services missing in cf")
 
     def test_all_required_service_instances_are_present_on_platform(self):
         self.step("Check that all expected services are present on the Platform")
-        service_names = {s.name for s in self.platform_services}
-        missing_services = self.expected_service_names - service_names
+        service_names = {s.name for s in self.platform_instances}
+        missing_services = self.expected_upsi_names - service_names
         self.assertEqual(missing_services, set(), "Services missing on the Platform")
 
     def test_all_required_brokers_are_present_in_cf(self):

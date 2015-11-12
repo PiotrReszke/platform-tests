@@ -98,7 +98,14 @@ class Space(object):
         """Return tuple with list of Application and ServiceInstance objects."""
         response = cf.cf_api_space_summary(self.guid)
         apps = Application.from_cf_api_space_summary_response(response, self.guid)
-        service_instances = ServiceInstance.from_cf_api_space_summary_response(response, self.guid)
+        service_instances = []
+        for si_data in response["services"]:
+            try:
+                service_label = si_data["service_plan"]["service"]["label"]
+            except KeyError:
+                service_label = None
+            service_instances.append(ServiceInstance(guid=si_data["guid"], name=si_data["name"], space_guid=self.guid,
+                                     service_label=service_label))
         return apps, service_instances
 
     @classmethod

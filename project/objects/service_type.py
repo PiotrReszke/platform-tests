@@ -15,37 +15,51 @@
 #
 
 import functools
-import json
 
 from test_utils import platform_api_calls as api, cloud_foundry as cf
+
 
 __all__ = ["ServiceType"]
 
 
 @functools.total_ordering
 class ServiceType(object):
-    """Otherwise known as broker"""
 
-    COMPARABLE_ATTRIBUTES = ["guid", "label", "description", "tags", "space_guid", "is_active", "display_name"]
+    COMPARABLE_ATTRIBUTES = ["label", "guid", "description", "space_guid"]
 
-    def __init__(self, label, guid=None, description=None, tags=None, space_guid=None, is_active=None,
-                 display_name=None, service_plans=None):
-        self.guid, self.label, self.description, self.display_name = guid, label, description, display_name
-        self.tags, self.space_guid, self.is_active = tags, space_guid, is_active
-        self.service_plans = service_plans
-
-    def __repr__(self):
-        return "{0} (guid={1}, label={2})".format(self.__class__.__name__, self.guid, self.label)
+    def __init__(self, label, guid, description, space_guid, service_plans):
+        self.label = label
+        self.guid = guid
+        self.description = description
+        self.space_guid = space_guid
+        self.service_plans = service_plans  # service plan is a dict with keys "guid", and "name"
 
     def __eq__(self, other):
-        return all([getattr(self, attribute) == getattr(other, attribute) for attribute in self.COMPARABLE_ATTRIBUTES])
+        return all([getattr(self, ca) == getattr(other, ca) for ca in self.COMPARABLE_ATTRIBUTES])
 
     def __lt__(self, other):
         return self.guid < other.guid
 
+    def __hash__(self):
+        return hash(tuple([getattr(self, ca) for ca in self.COMPARABLE_ATTRIBUTES]))
+
+    def __repr__(self):
+        return "{} (label={}, guid={})".format(self.__class__.__name__, self.label, self.guid)
+
     @property
     def service_plan_guids(self):
         return [sp["guid"] for sp in self.service_plans]
+
+    @classmethod
+    def _from_details(cls, space_guid, details):
+        metadata = details["metadata"]
+        entity = details["entity"]
+        service_plans = entity.get("service_plans")
+        if service_plans is not None:  # in cf response there are no service plans, but an url
+            service_plans = [{"guid": sp["metadata"]["guid"], "name": sp["entity"]["name"]}
+                             for sp in entity["service_plans"]]
+        return cls(label=entity["label"], guid=metadata["guid"], description=entity["description"],
+                   space_guid=space_guid, service_plans=service_plans)
 
     @classmethod
     def api_get_list_from_marketplace(cls, space_guid, client=None):
@@ -57,28 +71,11 @@ class ServiceType(object):
         response = api.api_get_service(service_guid=service_guid, client=client)
         return cls._from_details(space_guid, response)
 
-    @classmethod
-    def _from_details(cls, space_guid, data):
-        metadata = data["metadata"]
-        entity = data["entity"]
-        display_name = None if entity["extra"] is None else json.loads(entity["extra"]).get("displayName")
-        if display_name is None:
-            display_name = entity["label"]
-        service_plans = None
-        if entity.get("service_plans") is not None:  # in cf response there are no service plans, but an url
-            service_plans = [{"guid": sp["metadata"]["guid"], "name": sp["entity"]["name"]}
-                             for sp in entity["service_plans"]]
-        return cls(guid=metadata["guid"], label=entity["label"], description=entity["description"],
-                   tags=entity["tags"], space_guid=space_guid, is_active=entity["active"],
-                   display_name=display_name, service_plans=service_plans)
-
-    @classmethod
-    def cf_api_get_list_from_marketplace(cls, space_guid):
-        cf_response = cf.cf_api_get_space_services(space_guid)
-        return [cls._from_details(space_guid, data) for data in cf_response["resources"]]
-
     def api_get_service_plans(self, client=None):
-        """Return a list of dicts with "guid" and "name" keys"""
+        """
+        Return a list of dicts with "guid" and "name" keys
+        retrieved from /rest/services/{service_type_label}/service_plans
+        """
         response = api.api_get_service_plans(self.label, client)
         service_plans = []
         for sp_data in response:
@@ -86,6 +83,12 @@ class ServiceType(object):
             guid = sp_data["metadata"]["guid"]
             service_plans.append({"name": name, "guid": guid})
         self.service_plans = service_plans
+
+    @classmethod
+    def cf_api_get_list_from_marketplace(cls, space_guid):
+        response = cf.cf_api_get_space_services(space_guid)
+        return [cls._from_details(space_guid, data) for data in response["resources"]]
+
 
 
 

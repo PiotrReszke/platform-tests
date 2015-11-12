@@ -27,8 +27,10 @@ class ServiceInstanceKey(object):
 
     COMPARABLE_ATTRIBUTES = ["guid", "name", "credentials", "service_instance_guid"]
 
-    def __init__(self, guid, name=None, credentials=None, service_instance_guid=None):
-        self.guid, self.name, self.credentials = guid, name, credentials or []
+    def __init__(self, guid, name, credentials, service_instance_guid):
+        self.guid = guid
+        self.name = name
+        self.credentials = credentials or []
         self.service_instance_guid = service_instance_guid
 
     def __repr__(self):
@@ -40,10 +42,14 @@ class ServiceInstanceKey(object):
     def __lt__(self, other):
         return self.guid < other.guid
 
+    def __hash__(self):
+        return hash((self.guid, self.name, self.credentias, self.service_instance_guid))
+
     @classmethod
     def cf_api_create(cls, service_instance_guid, service_key_name=None):
-        service_key_name = service_key_name or "test_key_" + datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        service_key_name = service_key_name or "test_key_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         response = cf.cf_api_create_service_key(service_instance_guid, service_key_name)
-        return cls(guid=response["metadata"]["guid"], name=response["entity"].get("name"),
-                   credentials=response["entity"].get("credentials"),
-                   service_instance_guid=response["entity"].get("service_instance_guid"))
+        return cls(guid=response["metadata"]["guid"], name=response["entity"]["name"],
+                   credentials=response["entity"]["credentials"],
+                   service_instance_guid=response["entity"]["service_instance_guid"])
+

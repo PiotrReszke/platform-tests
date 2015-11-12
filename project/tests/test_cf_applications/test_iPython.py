@@ -20,7 +20,7 @@ import unittest
 from retry import retry
 
 from test_utils import ApiTestCase, get_logger, iPython, cleanup_after_failed_setup, config
-from objects import Organization, ServiceInstance, ServiceType, Application
+from objects import Organization, ServiceInstance, Application
 
 
 logger = get_logger("iPython test")
@@ -47,8 +47,7 @@ class iPythonConsole(ApiTestCase):
         cls.test_space = cls.test_org.spaces[0]
         cls.step("Create instance of iPython service")
         cls.ipython = iPython(org_guid=cls.test_org.guid, space_guid=cls.test_space.guid)
-        ipython_instance = cls.ipython.create_instance()
-        cls._assert_ipython_instance_created(ipython_instance)
+        cls._assert_ipython_instance_created(cls.ipython.instance)
         cls.step("Login into iPython")
         cls.ipython.login()
 
@@ -57,8 +56,7 @@ class iPythonConsole(ApiTestCase):
     def _assert_ipython_instance_created(cls, instance):
         cls.step("Get list of service instances and check ipython is on the list")
         instances = ServiceInstance.api_get_list(space_guid=cls.test_space.guid)
-        instance = next((i for i in instances if i.name == instance.name), None)
-        if instance is None:
+        if instance not in instances:
             raise AssertionError("ipython instance is not on list")
         cls.step("Get credentials for the new ipython service instance")
         cls.ipython.get_credentials()
@@ -72,13 +70,8 @@ class iPythonConsole(ApiTestCase):
         self.assertIn("#", output[-1])
 
     def _create_atk_instance(self):
-        self.step("Get details of atk service")
-        marketplace = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
-        atk_service = next(s for s in marketplace if s.label == "atk")
         self.step("Create atk instance")
-        ServiceInstance.cf_api_create(space_guid=self.test_space.guid,
-                                      service_plan_guid=atk_service.service_plan_guids[0],
-                                      name_prefix="atk")
+        ServiceInstance.cf_api_create(space_guid=self.test_space.guid, service_label="atk", service_plan_name="simple")
         self.step("Check that atk application is created and started")
         atk_app = Application.ensure_started(space_guid=self.test_space.guid, application_name_prefix="atk")
         self.atk_url = atk_app.urls[0]

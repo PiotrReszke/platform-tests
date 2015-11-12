@@ -50,14 +50,6 @@ class TestMqtt(ApiTestCase):
         self.step("Compile the sources")
         app_source_utils.compile_mvn(self.APP_REPO_PATH)
 
-    def _create_service_instances(self, space):
-        self.step("Create service instances of {} and {}".format(self.INFLUX_LABEL, self.MQTT_LABEL))
-        services = ServiceType.api_get_list_from_marketplace(space.guid)
-        influx = next(s for s in services if s.label == self.INFLUX_LABEL)
-        ServiceInstance.cf_api_create(space.guid, influx.service_plan_guids[0], name=self.INFLUX_INSTANCE_NAME)
-        mqtt = next(s for s in services if s.label == self.MQTT_LABEL)
-        ServiceInstance.cf_api_create(space.guid, mqtt.service_plan_guids[0], name=self.MQTT_INSTANCE_NAME)
-
     def _push_app(self, org, space):
         self.step("Login to cf")
         cf.cf_login(org.name, space.name)
@@ -75,7 +67,21 @@ class TestMqtt(ApiTestCase):
         self.step("Create test organization and space")
         test_org = Organization.api_create(space_names=("test-space",))
         test_space = test_org.spaces[0]
-        self._create_service_instances(test_space)
+        self.step("Create service instances of {} and {}".format(self.INFLUX_LABEL, self.MQTT_LABEL))
+        ServiceInstance.api_create(
+            org_guid=test_org.guid,
+            space_guid=test_space.guid,
+            service_label=self.INFLUX_LABEL,
+            name=self.INFLUX_INSTANCE_NAME,
+            service_plan_name="free"
+        )
+        ServiceInstance.api_create(
+            org_guid=test_org.guid,
+            space_guid=test_space.guid,
+            service_label=self.MQTT_LABEL,
+            name=self.MQTT_INSTANCE_NAME,
+            service_plan_name="free"
+        )
         mqtt_demo_app = self._push_app(test_org, test_space)
         self.step("Retrieve credentials for mqtt service instance")
         self.credentials = mqtt_demo_app.get_credentials(service_name=self.MQTT_LABEL)

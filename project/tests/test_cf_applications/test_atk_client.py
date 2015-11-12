@@ -19,16 +19,16 @@ import shutil
 import tarfile
 import unittest
 
-from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, cloud_foundry as cf, ATKtools, \
+from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, cloud_foundry as cf, ATKtools,\
     AtkTestException
-from objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, Application, User
+from objects import Organization, Transfer, DataSet, AtkInstance, Application, User
 
 
 logger = get_logger("test ATK")
 
 
 @unittest.skip("DPNG-2758 atk-broker creates broken instances; Bad Gateway status for organization removal - DPNG-2424")
-class TestCreateAtkInstance(ApiTestCase):
+class Atk(ApiTestCase):
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     UAA_FILENAME = "pyclient.test"
     TEST_DATA_DIRECTORY = os.path.join("test_utils", "atk_test_scripts")
@@ -68,13 +68,8 @@ class TestCreateAtkInstance(ApiTestCase):
         cls.dataset.publish_in_hive()
 
         cls.step("Create atk service instance")
-        marketplace_services = ServiceType.api_get_list_from_marketplace(cls.test_space.guid)
-        atk_service = next((s for s in marketplace_services if s.label == cls.ATK_SERVICE_LABEL), None)
-        if atk_service is None:
-            raise AtkTestException("No atk service found in marketplace in {}".format(cls.test_space))
-        atk_service_instance = AtkInstance.cf_create(cls.test_space.guid, atk_service.guid)
-        if atk_service_instance is None:
-            raise AtkTestException("Atk instance is not found in {}".format(cls.test_space))
+        AtkInstance.api_create(org_guid=cls.test_org.guid, space_guid=cls.test_space.guid, service_label="atk",
+                               service_plan_name="simple")
 
         cls.step("With huge timeout, check that atk application is created")
         cls.atk_app = Application.ensure_started(space_guid=cls.test_space.guid, application_name_prefix="atk-")

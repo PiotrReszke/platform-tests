@@ -216,16 +216,16 @@ def api_get_service(service_guid, client=None):
     return client.request("GET", "rest/service/{}".format(service_guid), log_msg="PLATFORM: get service")
 
 
-def api_get_service_instances(space_guid=None, org_guid=None, service_label=None, service_guid=None, client=None):
+def api_get_service_instances(space_guid=None, service_guid=None, client=None):
     """GET /rest/service_instances"""
     client = client or PlatformApiClient.get_admin_client()
     query_params = {}
-    params = [space_guid, org_guid, service_label, service_guid]
-    request_keys = ["space", "org", "service", "broker"]
-    for param, request_key in zip(params, request_keys):
-        if param is not None:
-            query_params[request_key] = param
-    return client.request("GET", "rest/service_instances", params=query_params, log_msg="PLATFORM: get service instance list")
+    if space_guid is not None:
+        query_params["space"] = space_guid
+    if service_guid is not None:
+        query_params["broker"] = service_guid
+    return client.request("GET", "rest/service_instances", params=query_params,
+                          log_msg="PLATFORM: get service instance list")
 
 
 def api_create_service_instance(name, service_plan_guid, org_guid, space_guid, client=None):
@@ -335,11 +335,10 @@ def api_create_scoring_engine(atk_name, instance_name, space_guid, service_plan_
 # ================================================= service-exposer ================================================== #
 
 
-def api_tools_service_instances(org_guid, service_label, space_guid, client=None):
+def api_tools_service_instances(service_label, space_guid, client=None):
     """GET /rest/tools/service_instances"""
     client = client or PlatformApiClient.get_admin_client()
     params = {
-        "org": org_guid,
         "service": service_label,
         "space": space_guid
     }

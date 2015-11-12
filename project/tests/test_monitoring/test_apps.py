@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, PlatformApiClient, config
+from test_utils import ApiTestCase, PlatformApiClient
 from objects import Application, Organization
 
 

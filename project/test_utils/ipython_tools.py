@@ -15,17 +15,18 @@
 #
 
 import abc
-from datetime import datetime
+import datetime
 import json
 import os
 import ssl
 import uuid
 
 import requests
+from retry import retry
 import websocket
 
 from test_utils import get_logger, UnexpectedResponseError, log_http_request, log_http_response, config
-from objects import ServiceType, ServiceInstance
+from objects import ServiceInstance
 
 
 logger = get_logger("iPython")
@@ -159,9 +160,9 @@ class iPython(object):
     WS_TIMEOUT = 5  # (seconds) - timeout for unresponsive socket
 
     def __init__(self, org_guid, space_guid, instance_name=None):
-        self.org_guid = org_guid
-        self.space_guid = space_guid
-        self.instance_name = instance_name or "test-ipython-{}".format(datetime.now().strftime("%Y%m%d-%H%M"))
+        """Create iPython service instance"""
+        if instance_name is None:
+            instance_name = self.IPYTHON_SERVICE_LABEL + datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
         self.cookie = None
         self.password = None
         self.instance_url = None
@@ -171,6 +172,8 @@ class iPython(object):
         if not config.CONFIG["ssl_validation"]:
             self.http_session.verify = False
             self.ws_sslopt = {"cert_reqs": ssl.CERT_NONE}
+        self.instance = ServiceInstance.api_create(org_guid=org_guid, space_guid=space_guid, name=instance_name,
+                                                   service_label=self.IPYTHON_SERVICE_LABEL, service_plan_name="free")
 
     def __repr__(self):
         return "{} (instance_url={})".format(self.__class__.__name__, self.instance_url)
@@ -195,26 +198,11 @@ class iPython(object):
         except ValueError:
             return response.text
 
-    def create_instance(self):
-        """Return iPython instance"""
-        ipython_service = ServiceType(label=self.IPYTHON_SERVICE_LABEL)
-        ipython_service.api_get_service_plans()
-        instance = ServiceInstance.api_create(
-            name=self.instance_name,
-            org_guid=self.org_guid,
-            space_guid=self.space_guid,
-            service_plan_guid=ipython_service.service_plan_guids[0]
-        )
-        return instance
-
+    @retry(KeyError, tries=3, delay=2)
     def get_credentials(self):
-        instances = ServiceInstance.api_get_list_from_tools(org_guid=self.org_guid, space_guid=self.space_guid,
-                                                            service_label=self.IPYTHON_SERVICE_LABEL)
-        instance = next((i for i in instances if i.name == self.instance_name), None)
-        if instance is None:
-            raise AssertionError("tools did not return data for {}".format(self.instance_name))
-        self.password = instance.password
-        self.instance_url = instance.url
+        response = self.instance.api_get_credentials()
+        self.password = response["password"]
+        self.instance_url = response["hostname"]
 
     def login(self):
         self._request(

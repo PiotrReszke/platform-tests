@@ -15,8 +15,6 @@
 #
 import unittest
 
-from datetime import datetime
-
 from test_utils import ApiTestCase, cleanup_after_failed_setup
 from objects import Organization, ServiceType, ServiceInstance, ServiceInstanceKey
 
@@ -32,40 +30,42 @@ class ServiceInstanceKeys(ApiTestCase):
         cls.step("Get list of available services from Marketplace")
         cls.marketplace_services = ServiceType.api_get_list_from_marketplace(cls.test_org.spaces[0].guid)
 
-    def _assert_key_creation(self, service_label, plan_guid, test_org, test_space):
+    def _create_instance_and_key(self, service_label, plan_guid, test_org, test_space):
         self.step("Create test service instance")
-        service_instance_name = service_label + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-        instance = ServiceInstance.api_create(name=service_instance_name, service_plan_guid=plan_guid,
-                                              space_guid=test_space.guid, org_guid=test_org.guid)
-        self.step("Check if created service instance exist in summary")
-        summary = ServiceInstance.api_get_summary(test_space.guid)
-        self.assertInList(instance.guid, list(summary.keys()),
-                          "Instance {} not found in summary".format(instance))
-        self.step("Create key for created service instance and check its correctness")
+        instance = ServiceInstance.api_create(
+            org_guid=test_org.guid,
+            space_guid=test_space.guid,
+            service_label=service_label,
+            service_plan_guid=plan_guid
+        )
+        self.step("Check that the instance exists in summary and has no keys")
+        summary = ServiceInstance.api_get_keys(test_space.guid)
+        self.assertIn(instance, summary)
+        self.assertEqual(summary[instance], [])  # there are no keys for this instance
+        self.step("Create a key for the instance and check it's correct")
         instance_key = ServiceInstanceKey.cf_api_create(instance.guid)
-        summary = ServiceInstance.api_get_summary(test_space.guid)
-        summary_keys = summary.get(instance_key.service_instance_guid, [])
-        self.assertInList(instance_key, summary_keys, "Key {} not found in summary".format(instance_key))
+        summary = ServiceInstance.api_get_keys(test_space.guid)
+        self.assertEqual(summary[instance][0], instance_key)
 
     def test_get_service_instance_summary_from_empty_space(self):
-        self.step("Create test instance in first space")
-        service_type = next(iter(s for s in self.marketplace_services if s.label not in self.FAILING_SERVICES[0]))
-        service_instance_name = service_type.label + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-        ServiceInstance.api_create(name=service_instance_name, service_plan_guid=service_type.service_plans[0]["guid"],
-                                   space_guid=self.test_org.spaces[0].guid, org_guid=self.test_org.guid)
+        self.step("Create a service instance in one space")
+        service_type = next(iter([s for s in self.marketplace_services if s.label not in self.FAILING_SERVICES]))
+        ServiceInstance.api_create(org_guid=self.test_org.guid, space_guid=self.test_org.spaces[0].guid,
+                                   service_label=service_type.label,
+                                   service_plan_guid=service_type.service_plan_guids[0])
         test_space = self.test_org.spaces[1]
-        self.step("Get service instances summary from different space")
-        test_summary_list = ServiceInstance.api_get_summary(test_space.guid)
-        self.step("Check if service instance summary is empty in second space")
-        self.assertEqual(test_summary_list, {}, "Not empty summary was returned for newly created org")
+        self.step("Get service instance summary in another space")
+        summary = ServiceInstance.api_get_keys(test_space.guid)
+        self.step("Check that service instance summary is empty in the second space")
+        self.assertEqual(summary, {})
 
-    def test_working_creation_service_instance_keys(self):
+    def test_create_service_instance_keys(self):
         working_services = [s for s in self.marketplace_services if s.label not in self.FAILING_SERVICES]
         test_space = self.test_org.spaces[2]
         for service_type in working_services:
             for plan in service_type.service_plans:
                 with self.subTest(service=service_type.label, plan=plan["name"]):
-                    self._assert_key_creation(service_type.label, plan["guid"], self.test_org, test_space)
+                    self._create_instance_and_key(service_type.label, plan["guid"], self.test_org, test_space)
 
     @unittest.expectedFailure
     def test_create_yarn_service_instance_keys(self):
@@ -75,7 +75,7 @@ class ServiceInstanceKeys(ApiTestCase):
         test_space = self.test_org.spaces[2]
         for plan in yarn.service_plans:
             with self.subTest(service=label, plan=plan["name"]):
-                self._assert_key_creation(label, plan["guid"], self.test_org, test_space)
+                self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
 
     @unittest.expectedFailure
     def test_create_hdfs_service_instance_keys(self):
@@ -85,7 +85,7 @@ class ServiceInstanceKeys(ApiTestCase):
         test_space = self.test_org.spaces[2]
         for plan in hdfs.service_plans:
             with self.subTest(service=label, plan=plan["name"]):
-                self._assert_key_creation(label, plan["guid"], self.test_org, test_space)
+                self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
 
     @unittest.expectedFailure
     def test_create_hbase_service_instance_keys(self):
@@ -95,7 +95,7 @@ class ServiceInstanceKeys(ApiTestCase):
         test_space = self.test_org.spaces[2]
         for plan in hbase.service_plans:
             with self.subTest(service=label, plan=plan["name"]):
-                self._assert_key_creation(label, plan["guid"], self.test_org, test_space)
+                self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
 
     @unittest.skip
     @unittest.expectedFailure
@@ -106,4 +106,5 @@ class ServiceInstanceKeys(ApiTestCase):
         test_space = self.test_org.spaces[2]
         for plan in atk.service_plans:
             with self.subTest(service=label, plan=plan["name"]):
-                self._assert_key_creation(label, plan["guid"], self.test_org, test_space)
+                self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
+

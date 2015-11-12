@@ -36,14 +36,17 @@ class ServiceInstancesMonitoring(ApiTestCase):
         tested_service_types = [st for st in self.marketplace_services if st.label in self.TESTED_APP_NAMES]
         for service_type in tested_service_types:
             for plan in service_type.service_plans:
-                with self.subTest(service=service_type, plan=plan['name']):
+                with self.subTest(service=service_type.label, plan=plan["name"]):
                     self.step("Create instance of {} ({} plan). Check it exists.".format(service_type.label,
                                                                                          plan["name"]))
                     service_instance_name = service_type.label + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-                    instance = ServiceInstance.api_create(name=service_instance_name,
-                                                          service_plan_guid=plan['guid'],
-                                                          space_guid=service_type.space_guid,
-                                                          org_guid=self.test_organization.guid)
+                    instance = ServiceInstance.api_create(
+                        org_guid=self.test_organization.guid,
+                        space_guid=service_type.space_guid,
+                        service_label=service_type.label,
+                        name=service_instance_name,
+                        service_plan_guid=plan['guid']
+                    )
                     self.assertIsNotNone(instance, "{} instance was not created".format(service_type))
                     self.step("Delete the instance and check it no longer exists")
                     instance.api_delete()
