@@ -254,3 +254,15 @@ def cf_api_get_service_brokers(space_guid=None):
 def cf_api_delete_route(route_guid, async=True):
     """DELETE /v2/routes/{route_guid}"""
     __handle_delete_request(endpoint="routes/{}".format(route_guid), log_msg="CF: delete route", async=async)
+
+# -------------------------------------------------- service keys ---------------------------------------------------- #
+
+
+def cf_api_create_service_key(service_instance_guid, service_key_name):
+    """POST /v2/service_keys"""
+    return CfApiClient.get_client().request(
+        method="POST",
+        endpoint="service_keys",
+        body={"name": service_key_name, "service_instance_guid": service_instance_guid},
+        log_msg="CF: create service instance key"
+    )

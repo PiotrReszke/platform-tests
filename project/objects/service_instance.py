@@ -18,6 +18,7 @@ import functools
 import datetime
 
 from test_utils import platform_api_calls as api, cloud_foundry as cf
+from objects import ServiceInstanceKey
 
 
 __all__ = ["ServiceInstance", "AtkInstance"]
@@ -131,7 +132,17 @@ class ServiceInstance(object):
     def api_delete(self, client=None):
         api.api_delete_service_instance(self.guid, client=client)
 
-
+    @classmethod
+    def api_get_summary(cls, space_guid, service_keys=True, client=None):
+        summary_list = {}
+        response = api.api_get_service_instances_summary(space_guid, service_keys, client)
+        for summary in response:
+            for instance in summary.get("instances", []):
+                summary_list[instance['guid']] = [ServiceInstanceKey(guid=sk["guid"], name=sk["name"],
+                                                                     credentials=sk["credentials"],
+                                                                     service_instance_guid=sk["service_instance_guid"])
+                                                  for sk in instance["service_keys"]]
+        return summary_list
 
 
 class AtkInstance(ServiceInstance):

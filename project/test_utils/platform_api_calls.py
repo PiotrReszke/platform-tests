@@ -255,6 +255,18 @@ def api_get_service_plans(service_type_label, client):
                           log_msg="PLATFORM: get service plans")
 
 
+def api_get_service_instances_summary(space_guid=None, service_keys=True, client=None):
+    """GET /rest/service_instances/summary"""
+    client = client or PlatformApiClient.get_admin_client()
+    query_params = {}
+    if space_guid:
+        query_params["space"] = space_guid
+    if service_keys:
+        query_params["service_keys"] = service_keys
+    return client.request("GET", "rest/service_instances/summary", params=query_params,
+                          log_msg="PLATFORM: get service instances summary")
+
+
 # --------------------------------------------------- Applications --------------------------------------------------- #
 
 

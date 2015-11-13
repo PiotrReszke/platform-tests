@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+from .service_instance_key import ServiceInstanceKey
 from .application import Application, github_get_file_content
 from .service_instance import ServiceInstance, AtkInstance
 from .space import Space
