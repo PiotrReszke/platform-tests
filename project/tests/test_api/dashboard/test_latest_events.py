@@ -25,6 +25,7 @@ class DashboardLatestEvents(ApiTestCase):
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
+        """DPNG-3365 Transfer submission fails with 500 Internal Server Error right after deployment"""
         cls.step("Create test organization")
         cls.tested_org = Organization.api_create()
         cls.step("Produce an event in the tested organization - create a data set")

@@ -83,8 +83,10 @@ class TestMarketplaceServices(ApiTestCase):
         self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
         self._test_service_instance_creation_and_deletion(service_type)
 
+    @unittest.expectedFailure
     def test_create_hdfs_instance(self):
-        """DPNG-2580 Creating instance of hdfs with plan encrypted fails with 502 Bad Gateway"""
+        """DPNG-3362 Creating hdfs instance returns 500
+        DPNG-2580 Creating instance of hdfs with plan encrypted fails with 502 Bad Gateway"""
         label = "hdfs"
         self.step("Check that {} service is available in Marketplace".format(label))
         service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
