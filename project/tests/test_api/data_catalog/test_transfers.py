@@ -15,7 +15,6 @@
 #
 
 import time
-import unittest
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api, \
     generate_csv_file, tear_down_test_files
@@ -61,13 +60,13 @@ class SubmitTransfer(ApiTestCase):
         )
         self.assertTrue("token" not in response, "token field was returned in response")
 
-    @unittest.expectedFailure
-    def test_cannot_create_transfer_with_incorrect_category(self):
-        """DPNG-3035: It's possible to create transfer with unknown category"""
-        incorrect_category = "unknown_category"
-        self.step("Try to create a transfer with not existing category")
-        self.assertRaisesUnexpectedResponse(409, "???", Transfer.api_create, category=incorrect_category, org=self.org,
-                                            source=self.EXAMPLE_LINK)
+    def test_create_transfer_with_new_category(self):
+        new_category = "user_category"
+        self.step("Create a transfer with new category")
+        transfer = Transfer.api_create(category=new_category, org=self.org, source=self.EXAMPLE_LINK)
+        self.step("Get transfer and check it's category")
+        retrieved_transfer = Transfer.api_get(transfer.id)
+        self.assertEqual(retrieved_transfer.category, new_category, "Created transfer has different category")
 
 
 class TransferFromLocalFile(ApiTestCase):
