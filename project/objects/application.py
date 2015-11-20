@@ -23,7 +23,8 @@ import requests
 from retry import retry
 import yaml
 
-from test_utils import cloud_foundry as cf, platform_api_calls as api, config, get_logger, UnexpectedResponseError
+from test_utils import cloud_foundry as cf, platform_api_calls as api, config, get_logger, UnexpectedResponseError, \
+    log_http_request, log_http_response
 
 
 logger = get_logger("application")
@@ -109,19 +110,22 @@ class Application(object):
     def application_api_request(self, endpoint, method="GET", scheme="http", url=None, data=None, params=None):
         """Send a request to application api"""
         url = url or self.urls[0]
-        url = "{}://{}/{}".format(scheme, url, endpoint)
-        request_method = getattr(requests, method.lower())
-        response = request_method(
-            url=url,
-            data=data,
+        request = requests.Request(
+            method=method.upper(),
+            url="{}://{}/{}".format(scheme, url, endpoint),
             params=params
         )
-        logger.info("------------------------------ {} {} ------------------------------".format(method.upper(), url))
+        session = requests.session()
+        request = session.prepare_request(request)
+        log_http_request(request, "")
+        response = session.send(request)
+        log_http_response(response)
         if not response.ok:
-            raise Exception("Response code is {} {}".format(response.status_code, response.text))
-        if "DOCTYPE HTML" in response.text:
+            raise UnexpectedResponseError(response.status_code, response.text)
+        try:
+            return json.loads(response.text)
+        except ValueError:
             return response.text
-        return json.loads(response.text)
 
     @staticmethod
     def _get_details_from_response(response):

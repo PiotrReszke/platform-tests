@@ -17,6 +17,8 @@
 import time
 import ssl
 import unittest
+
+from retry import retry
 import websocket
 
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, app_source_utils, Topic, cloud_foundry \
@@ -37,6 +39,13 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
     @classmethod
     def tearDownClass(cls):
         Organization.cf_api_tear_down_test_orgs()
+
+    @retry(AssertionError, tries=5, delay=2)
+    def _assert_message_count_in_app_stats(self, app, expected_message_count):
+        self.step("Check that application api returns correct number of consumed messages")
+        msg_count = app.application_api_request(endpoint=self.ENDPOINT_APP_STATS)[0]["consumedMessages"]
+        self.assertEqual(msg_count, expected_message_count,
+                         "Sent {} messages, collected {}".format(expected_message_count, msg_count))
 
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
@@ -83,20 +92,19 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         self.step("Send messages from ws2kafka to kafka2hdfs")
         self.expected_messages = self._send_ws_messages("{}/{}".format(self.app_ws2kafka.urls[0],
                                                                        self.app_ws2kafka.topic))
-        app_stats_message_count = self._get_message_count_from_app_api(self.ENDPOINT_APP_STATS)
-        self.assertEqual(app_stats_message_count, self.MESSAGE_COUNT,
-                         "Sent {0} messages, collected {1}".format(self.MESSAGE_COUNT, app_stats_message_count))
+        self._assert_message_count_in_app_stats(self.app_kafka2hdfs, self.MESSAGE_COUNT)
 
     @ApiTestCase.mark_prerequisite()
+    @unittest.expectedFailure
     def test_cf_app_step_3_check_messages_in_hdfs(self):
+        """DPNG-3439 Fix ssh connection to hdfs in CFApp_ws2kafka_kafka2hdfs"""
         self.step("Check hdfs topic messages")
         broker_guid = self.app_kafka2hdfs.cf_api_env()["VCAP_SERVICES"]["hdfs"][0]["credentials"]["uri"].split("/")[-2]
         topic_messages = self._get_messages_from_topic(node_name="ip-10-10-10-236", broker_instance_guid=broker_guid,
                                                        topic_catalog="from_kafka", topic_name=self.app_ws2kafka.topic)
         self.assertEqual(len(topic_messages), self.MESSAGE_COUNT,
                          "Sent {0} messages, hdfs topic message count {1}".format(
-                         self.MESSAGE_COUNT, len(topic_messages))
-                        )
+                         self.MESSAGE_COUNT, len(topic_messages)))
         self.assertUnorderedListEqual(topic_messages, self.expected_messages)
 
     @unittest.skip
@@ -107,14 +115,12 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         app_kafka2hdfs = self._push_kafka2hdfs(app_name="kafka2hdfs-gp-out", topic_name="topic-gp-out",
                                                consumer_group_name="group-{}".format(postfix))
         expected_messages = self._send_ws_messages("{}/{}".format(app_ws2kafka.urls[0], app_ws2kafka.topic))
-        app_stats_message_count = self._get_message_count_from_app_api(self.ENDPOINT_APP_STATS)
+        self._assert_message_count_in_app_stats(self.app_kafka2hdfs, self.MESSAGE_COUNT)
         broker_guid = app_kafka2hdfs.cf_api_env()["VCAP_SERVICES"]["hdfs"][0]["credentials"]["uri"].split("/")[-2]
         topic_messages = self._get_messages_from_topic(node_name="ip-10-10-10-236", broker_instance_guid=broker_guid,
                                                        topic_catalog="from_kafka", topic_name=app_ws2kafka.topic)
-        self.assertTrue(len(topic_messages) == self.MESSAGE_COUNT and app_stats_message_count == self.MESSAGE_COUNT,
-                        "hdfs topic message count: {0}, cf stats message count: {1}, should both be {2}".format(
-                            len(topic_messages), app_stats_message_count, self.MESSAGE_COUNT)
-                        )
+        self.step("Check that message count on hdfs is as expected")
+        self.assertTrue(len(topic_messages) == self.MESSAGE_COUNT)
         self.assertUnorderedListEqual(topic_messages, expected_messages)
 
     def _push_ws2kafka(self, app_name, topic_name):
@@ -143,10 +149,6 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
             messages.append(message)
         logger.info("Send messages to {}".format(connection_string))
         return messages
-
-    def _get_message_count_from_app_api(self, endpoint):
-        cf_status_stats = self.app_kafka2hdfs.application_api_request(endpoint=endpoint)
-        return cf_status_stats[0]["consumedMessages"]
 
     def _get_messages_from_topic(self, node_name, broker_instance_guid, topic_catalog, topic_name):
         topic = Topic(node_name=node_name, broker_instance_guid=broker_instance_guid, topic_catalog=topic_catalog,
