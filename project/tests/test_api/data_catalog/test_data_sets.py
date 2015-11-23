@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import unittest
-
 from retry import retry
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup
@@ -192,10 +190,11 @@ class UpdateDeleteDataSet(ApiTestCase):
         self.step("Check if dataset category was changed")
         self.assertEqual(updated_dataset.category, new_category, "Dataset category was not updated.")
 
-    @unittest.expectedFailure
-    def test_cannot_update_dataset_to_incorrect_category(self):
-        """DPNG-3036: It's possible to update dataset with unknown category"""
-        incorrect_category = "unknown_category"
+    def test_update_dataset_to_non_existing_category(self):
+        new_category = "user_category"
         dataset = self._create_dataset(self.org, EXAMPLE_LINK)
-        self.step("Try to update a transfer with not existing category")
-        self.assertRaisesUnexpectedResponse(409, "???", dataset.api_update, category=incorrect_category)
+        self.step("Update dataset with new category")
+        dataset.api_update(category=new_category)
+        updated_dataset = self._get_updated_dataset(dataset)
+        self.step("Check if dataset category was changed")
+        self.assertEqual(updated_dataset.category, new_category, "Dataset category was not updated.")
