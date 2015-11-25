@@ -440,7 +440,7 @@ def api_update_space_user_roles(space_guid, user_guid, new_roles=None, client=No
     client = client or PlatformApiClient.get_admin_client()
     body = {}
     if new_roles is not None:
-        body["roles"] = new_roles
+        body["roles"] = list(new_roles)
     return client.request("POST", "rest/spaces/{}/users/{}".format(space_guid, user_guid), body=body,
                           log_msg="PLATFORM: update user roles in space")
 

@@ -38,6 +38,11 @@ class User(object):
         "auditor": {"auditors"},
         "billing_manager": {"billing_managers"}
     }
+    SPACE_ROLES = {
+        "manager": {"managers"},
+        "auditor": {"auditors"},
+        "developer": {"developers"}
+    }
     TEST_USERS = []
 
     def __init__(self, guid=None, username=None, password=None, org_roles=None, space_roles=None):
@@ -134,7 +139,7 @@ class User(object):
 
     @classmethod
     def api_create_by_adding_to_space(cls, org_guid, space_guid, username=None, password="testPassw0rd",
-                                      roles=("managers",), inviting_client=None):
+                                      roles=SPACE_ROLES["manager"], inviting_client=None):
         username = username or cls.get_default_username()
         api.api_add_space_user(org_guid, space_guid, username, roles, inviting_client)
         code = gmail_api.get_invitation_code_for_user(username)
@@ -176,7 +181,7 @@ class User(object):
         api.api_add_organization_user(org_guid, self.username, roles, client=client)
         self.org_roles[org_guid] = list(set(self.org_roles.get(org_guid, set())) | set(roles))
 
-    def api_add_to_space(self, space_guid, org_guid, roles=("managers",), client=None):
+    def api_add_to_space(self, space_guid, org_guid, roles=SPACE_ROLES["manager"], client=None):
         api.api_add_space_user(org_guid=org_guid, space_guid=space_guid, username=self.username,
                                roles=roles, client=client)
         self.space_roles[space_guid] = list(roles)
