@@ -39,12 +39,22 @@ if __name__ == "__main__":
         logger.info("{}={}".format(key, config.CONFIG[key]))
 
     # select group of tests to run
-    if args.test is None:
-        test_dir = "tests"
-    else:
+    loader = unittest.TestLoader()
+    loaded_tests = None
+    if args.test_to_run is not None:
+        loader.testMethodPrefix = args.test_to_run
+    test_dir = "tests"
+    if args.test is not None:
         test_dir = os.path.join("tests", args.test)
-        if not os.path.exists(test_dir):
-            raise NotADirectoryError("Directory {} doesn't exists".format(args.test))
+    if os.path.isfile(test_dir):
+        test_dir, file_name = os.path.split(test_dir)
+        loaded_tests = loader.discover(test_dir, file_name)
+    elif os.path.isdir(test_dir):
+        loaded_tests = loader.discover(test_dir)
+    else:
+        raise NotADirectoryError("Directory {} doesn't exists".format(args.test))
+    if loaded_tests is not None and loaded_tests.countTestCases() is 0:
+        raise Exception("No tests found.")
 
     # check if environment is up and running
     try:
@@ -63,7 +73,6 @@ if __name__ == "__main__":
         runner = TeamcityTestRunner()
     else:
         runner = unittest.TextTestRunner(verbosity=3)
-    loader = unittest.TestLoader()
     suite = unittest.TestSuite()
-    suite.addTests(loader.discover(test_dir))
+    suite.addTests(loaded_tests)
     runner.run(suite)

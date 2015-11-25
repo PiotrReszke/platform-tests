@@ -118,4 +118,7 @@ def parse_arguments():
     parser.add_argument("-l", "--logging-level",
                         choices=["DEBUG", "INFO", "WARNING"],
                         default="DEBUG")
+    parser.add_argument("-r", "--test-to-run",
+                        default=None,
+                        help="chose one test to run")
     return parser.parse_args()
