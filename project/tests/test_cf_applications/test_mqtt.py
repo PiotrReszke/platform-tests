@@ -56,9 +56,6 @@ class TestMqtt(ApiTestCase):
         self.step("Login to cf")
         cf.cf_login(test_org.name, test_space.name)
 
-    def tearDown(self):
-        Organization.cf_api_tear_down_test_orgs()
-
     @unittest.expectedFailure
     def test_connection(self):
         """DPNG-3213 Cannot push mqtt-demo due to lacking atkscoringengine service"""

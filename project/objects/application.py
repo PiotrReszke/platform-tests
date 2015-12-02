@@ -59,10 +59,11 @@ class Application(object):
         self.instances, self.memory, self.disk = instances, memory, disk
         self.service_names, self.urls = tuple(service_names), tuple(urls)
         self.topic = topic
+        self.request_session = requests.session()
         self._state = state
         self._local_path = self._local_jar = local_path
         if self._local_path is not None:
-            self.manifest_path = os.path.join(local_path, self.MANIFEST_NAME)
+            self.manifest_path = os.path.normpath(os.path.join(local_path, self.MANIFEST_NAME))
             with open(self.manifest_path) as f:
                 self.manifest = yaml.load(f.read())
             if "path" in self.manifest["applications"][0]:
@@ -101,24 +102,28 @@ class Application(object):
         self.manifest["applications"][0]["env"]["CONSUMER_GROUP"] = new_consumer_group
         self.__save_manifest()
 
+    def change_bound_services_in_manifest(self, service_names):
+        self.manifest["applications"][0]["services"] = list(service_names)
+        self.__save_manifest()
+
     def add_env_in_manifest(self, variable_name, value):
         envs = self.manifest["applications"][0]["env"]
         envs.update({variable_name: value})
         self.manifest["applications"][0]["env"] = envs
         self.__save_manifest()
 
-    def application_api_request(self, endpoint, method="GET", scheme="http", url=None, data=None, params=None):
+    def api_request(self, path, method="GET", scheme="http", hostname=None, data=None, params=None, body=None):
         """Send a request to application api"""
-        url = url or self.urls[0]
-        request = requests.Request(
+        hostname = hostname or self.urls[0]
+        request = self.request_session.prepare_request(requests.Request(
             method=method.upper(),
-            url="{}://{}/{}".format(scheme, url, endpoint),
-            params=params
-        )
-        session = requests.session()
-        request = session.prepare_request(request)
+            url="{}://{}/{}".format(scheme, hostname, path),
+            params=params,
+            data=data,
+            json=body
+        ))
         log_http_request(request, "")
-        response = session.send(request)
+        response = self.request_session.send(request)
         log_http_response(response)
         if not response.ok:
             raise UnexpectedResponseError(response.status_code, response.text)
@@ -254,7 +259,7 @@ class Application(object):
     # -------------------------------- cf cli -------------------------------- #
 
     def cf_push(self):
-        output = cf.cf_push(self._local_path, self._local_jar)
+        cf.cf_push(self._local_path, self._local_jar)
         self.guid, self.urls, self._state = next((app.guid, app.urls, app._state)
                                                  for app in Application.api_get_list(self.space_guid)
                                                  if app.name == self.name)

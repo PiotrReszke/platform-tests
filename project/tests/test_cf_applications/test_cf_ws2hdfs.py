@@ -43,7 +43,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
     @retry(AssertionError, tries=5, delay=2)
     def _assert_message_count_in_app_stats(self, app, expected_message_count):
         self.step("Check that application api returns correct number of consumed messages")
-        msg_count = app.application_api_request(endpoint=self.ENDPOINT_APP_STATS)[0]["consumedMessages"]
+        msg_count = app.api_request(path=self.ENDPOINT_APP_STATS)[0]["consumedMessages"]
         self.assertEqual(msg_count, expected_message_count,
                          "Sent {} messages, collected {}".format(expected_message_count, msg_count))
 
