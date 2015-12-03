@@ -73,6 +73,7 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         tr.Transfer.api_teardown_test_transfers()
         org.Organization.cf_api_tear_down_test_orgs()
         usr.User.cf_api_tear_down_test_users()
+        usr.User.api_tear_down_test_invitations()
 
     @classmethod
     def step(cls, message):

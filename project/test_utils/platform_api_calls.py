@@ -448,10 +448,22 @@ def api_update_space_user_roles(space_guid, user_guid, new_roles=None, client=No
                           log_msg="PLATFORM: update user roles in space")
 
 
+def api_get_invitations(client=None):
+    """GET /rest/invitations"""
+    client = client or PlatformApiClient.get_admin_client()
+    return client.request("GET", "rest/invitations", log_msg="PLATFORM: get list of all invitations")
+
+
 def api_invite_user(email, client=None):
     """POST /rest/invitations"""
     client = client or PlatformApiClient.get_admin_client()
     return client.request("POST", "rest/invitations", body={"email": email}, log_msg="PLATFORM: invite new platform user")
+
+
+def api_delete_invitation(email, client=None):
+    """DELETE /rest/invitations/{invitation}"""
+    client = client or PlatformApiClient.get_admin_client()
+    client.request("DELETE", "rest/invitations/{}".format(email), log_msg="PLATFORM: delete invitation")
 
 
 def api_register_new_user(code, password=None, org_name=None, client=None):

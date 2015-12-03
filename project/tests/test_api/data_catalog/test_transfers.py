@@ -77,7 +77,7 @@ class SubmitTransfer(SubmitTransferBase):
         self.step("Create new transfer and check that 'token' field was not returned in response")
         response = api.api_create_transfer(
             source=self.EXAMPLE_LINK,
-            title="test-transfer-{}".format(time.time()),
+            title=Transfer.get_default_name(),
             is_public=False,
             org_guid=self.org.guid,
             category="other"

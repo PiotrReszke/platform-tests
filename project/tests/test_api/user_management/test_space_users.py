@@ -28,6 +28,7 @@ USER = None
 
 def tearDownModule():
     User.cf_api_tear_down_test_users()
+    User.api_tear_down_test_invitations()
     Organization.cf_api_tear_down_test_orgs()
 
 

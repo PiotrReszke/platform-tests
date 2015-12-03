@@ -44,6 +44,7 @@ class User(object):
         "developer": {"developers"}
     }
     TEST_USERS = []
+    TEST_INVITED_EMAILS = []
 
     def __init__(self, guid=None, username=None, password=None, org_roles=None, space_roles=None):
         self.guid, self.username, self.password = guid, username, password
@@ -79,6 +80,7 @@ class User(object):
         if username is None:
             username = User.get_default_username()
         api.api_invite_user(username, client=inviting_client)
+        cls.TEST_INVITED_EMAILS.append(username)
         return username
 
     @classmethod
@@ -171,6 +173,10 @@ class User(object):
             users.append(user)
         return users
 
+    @classmethod
+    def api_get_pending_invitations(cls, client=None):
+        return api.api_get_invitations(client=client)
+
     def login(self):
         """Return a logged-in API client for this user."""
         client = PlatformApiClient.get_client(self.username)
@@ -200,6 +206,10 @@ class User(object):
 
     def api_delete_from_space(self, space_guid, client=None):
         api.api_delete_space_user(space_guid, self.guid, client=client)
+
+    @staticmethod
+    def api_delete_user_invitation(username, client=None):
+        api.api_delete_invitation(username, client=client)
 
     @classmethod
     def get_admin(cls):
@@ -241,3 +251,13 @@ class User(object):
                 test_user.cf_api_delete()
             except UnexpectedResponseError as e:
                 logger.warning("Failed to delete {}: {}".format(test_user, e.error_message))
+
+    @classmethod
+    def api_tear_down_test_invitations(cls):
+        """Use this method in tearDown and tearDownClass."""
+        while len(cls.TEST_INVITED_EMAILS) > 0:
+            test_invited = cls.TEST_INVITED_EMAILS.pop()
+            try:
+                User.api_delete_user_invitation(test_invited)
+            except UnexpectedResponseError as e:
+                logger.warning("Failed to delete {}: {}".format(test_invited, e.error_message))
