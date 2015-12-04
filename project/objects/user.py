@@ -230,6 +230,7 @@ class User(object):
 
     def cf_api_delete(self):
         cf.cf_api_delete_user(self.guid)
+        cf.uaa_api_user_delete(self.guid)
 
     @classmethod
     def cf_api_tear_down_test_users(cls):

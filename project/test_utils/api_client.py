@@ -24,7 +24,7 @@ from . import config, log_http_request, log_http_response
 
 
 __all__ = ["UnexpectedResponseError", "PlatformApiClient", "ConsoleClient",
-           "AppClient", "CfApiClient"]
+           "AppClient", "CfApiClient", "UaaApiClient"]
 
 
 class UnexpectedResponseError(AssertionError):
@@ -215,3 +215,56 @@ class CfApiClient(AppClient):
             admin_password = config.CONFIG["admin_password"]
             cls._CF_API_CLIENT = cls(admin_username, admin_password)
         return cls._CF_API_CLIENT
+
+
+class UaaApiClient(PlatformApiClient):
+
+    UAA_API_CLIENT = None
+
+    def __init__(self, platform_username, platform_password):
+        super().__init__(platform_username, platform_password)
+        self._token = None
+        self._token_retrieval_time = 0
+        self._token_expiry_time = 0
+        self._get_token()
+
+    @property
+    def url(self):
+        return "http://uaa.{}/".format(self._domain)
+
+    @classmethod
+    def get_client(cls):
+        if cls.UAA_API_CLIENT is None:
+            admin_username = config.CONFIG["admin_username"]
+            admin_password = config.CONFIG["admin_password"]
+            cls.UAA_API_CLIENT = cls(admin_username, admin_password)
+        return cls.UAA_API_CLIENT
+
+    def _get_token(self):
+        path = "http://uaa.{}/oauth/token".format(config.CONFIG["domain"])
+        headers = {
+            "Authorization": config.CONFIG["uaa_admin_token"],
+            "Accept": "application/json"
+        }
+        data = {"grant_type": "client_credentials"}
+        request = requests.Request("POST", path, data=data, headers=headers)
+        request = self._session.prepare_request(request)
+        self._token_retrieval_time = time.time()
+        log_http_request(request, self._username, self._password, "Retrieve uaa token")
+        response = self._session.send(request)
+        log_http_response(response)
+        if not response.ok:
+            raise UnexpectedResponseError(response.status_code, response.text)
+        resp_json = response.json()
+        self._token = "Bearer {}".format(resp_json["access_token"])
+        # Token expiry time with 5s buffer
+        self._token_expiry_time = resp_json["expires_in"] - 5
+
+    def request(self, method, endpoint, headers=None, files=None, params=None, data=None, body=None, log_msg="",
+                app_name=None):
+        # check whether token has expired
+        if (self._token is not None) and (time.time() - self._token_retrieval_time > self._token_expiry_time):
+            self._get_token()
+        headers = {} if headers is None else headers
+        headers["Authorization"] = self._token
+        return super().request(method, endpoint, headers, files, params, data, body, log_msg)

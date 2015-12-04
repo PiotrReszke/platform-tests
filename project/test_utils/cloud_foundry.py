@@ -17,7 +17,7 @@
 import functools
 import subprocess
 
-from . import CfApiClient, get_logger, log_command, config
+from . import CfApiClient, get_logger, log_command, config, UaaApiClient
 
 
 __all__ = ["cf_login", "cf_push", "cf_create_service", "cf_delete", "cf_env", "cf_delete_service",
@@ -25,7 +25,7 @@ __all__ = ["cf_login", "cf_push", "cf_create_service", "cf_delete", "cf_env", "c
            "cf_api_delete_route", "cf_api_delete_space", "cf_api_delete_user", "cf_api_get_app_env",
            "cf_api_get_org_spaces", "cf_api_get_org_users", "cf_api_get_orgs", "cf_api_get_service_brokers",
            "cf_api_get_service_instances", "cf_api_get_space_routes", "cf_api_get_space_services",
-           "cf_api_space_summary", "cf_api_get_spaces", "cf_api_get_users"]
+           "cf_api_space_summary", "cf_api_get_spaces", "cf_api_get_users", "uaa_api_user_delete"]
 
 
 # ====================================================== cf cli ====================================================== #
@@ -85,6 +85,13 @@ def cf_delete_service(service):
     command = ["cf", "delete-service", service, "-f"]
     log_command(command)
     return subprocess.check_call(command)
+
+
+# ====================================================== uaa api ===================================================== #
+
+def uaa_api_user_delete(user_id):
+    """DELETE /Users/{id}"""
+    UaaApiClient.get_client().request("DELETE", endpoint="Users/{}".format(user_id), log_msg="UAA: delete user")
 
 
 # ====================================================== cf api ====================================================== #
