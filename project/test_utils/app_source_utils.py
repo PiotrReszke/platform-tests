@@ -29,6 +29,7 @@ logger = get_logger("source utils")
 # Build gradle has problem with dependency and artifact
 url = "\"http://nexus.sclab.intel.com:8080/content/groups/public\""
 
+
 def clone_repository(repository_name, target_directory, owner="intel-data"):
     API_URL = "https://{2}:{3}@github.com/{0}/{1}.git".format(owner, repository_name, *config.CONFIG["github_auth"])
     logger.info("Clone from {} to {}".format(API_URL, target_directory))
@@ -50,14 +51,15 @@ def compile_mvn(directory):
 
 
 def compile_gradle(directory):
-     logger.info("Compile gradle project {}".format(directory))
-     current_path = os.getcwd()
-     os.chdir(directory)
-     command = ["./gradlew", "assemble"]
-     log_command(command)
-     subprocess.call(command)
-     os.chdir(current_path)
-     logger.info("Compiled gradle project {}".format(directory))
+    logger.info("Compile gradle project {}".format(directory))
+    current_path = os.getcwd()
+    os.chdir(directory)
+    command = ["./gradlew", "assemble"]
+    log_command(command)
+    subprocess.call(command)
+    os.chdir(current_path)
+    logger.info("Compiled gradle project {}".format(directory))
+
 
 def set_dependency_url(application_path, filename):
     """Set url with dependency to can build deplayable jar"""
