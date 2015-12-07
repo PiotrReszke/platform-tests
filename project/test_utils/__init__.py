@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+from .exceptions import *
 from .logger import *
 from .config import *
 from .gmail_api import *
@@ -24,8 +25,7 @@ from .hdfs import *
 from .hdfs_topic import Topic
 from .atk_tools import ATKtools
 from .app_source_utils import *
+from .cloud_foundry import *
 from .platform_api_calls import *
 from .ipython_tools import iPython
-from .cloud_foundry import *
-
 from .file_utils import *

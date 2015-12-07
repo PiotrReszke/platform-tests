@@ -20,19 +20,11 @@ import time
 
 import requests
 
-from . import config, log_http_request, log_http_response
+from . import config, log_http_request, log_http_response, UnexpectedResponseError
 
 
-__all__ = ["UnexpectedResponseError", "PlatformApiClient", "ConsoleClient",
-           "AppClient", "CfApiClient", "UaaApiClient"]
+__all__ = ["PlatformApiClient", "ConsoleClient", "AppClient", "CfApiClient", "UaaApiClient"]
 
-
-class UnexpectedResponseError(AssertionError):
-    def __init__(self, status, error_message, message=None):
-        message = message or "{} {}".format(status, error_message)
-        super(UnexpectedResponseError, self).__init__(message)
-        self.status = status
-        self.error_message = error_message
 
 
 class PlatformApiClient(metaclass=abc.ABCMeta):

@@ -17,7 +17,7 @@
 import functools
 import subprocess
 
-from . import CfApiClient, get_logger, log_command, config, UaaApiClient
+from . import CfApiClient, get_logger, log_command, CONFIG, UaaApiClient, YouMustBeJokingException
 
 
 __all__ = ["cf_login", "cf_push", "cf_create_service", "cf_delete", "cf_env", "cf_delete_service",
@@ -25,7 +25,8 @@ __all__ = ["cf_login", "cf_push", "cf_create_service", "cf_delete", "cf_env", "c
            "cf_api_delete_route", "cf_api_delete_space", "cf_api_delete_user", "cf_api_get_app_env",
            "cf_api_get_org_spaces", "cf_api_get_org_users", "cf_api_get_orgs", "cf_api_get_service_brokers",
            "cf_api_get_service_instances", "cf_api_get_space_routes", "cf_api_get_space_services",
-           "cf_api_space_summary", "cf_api_get_spaces", "cf_api_get_users", "uaa_api_user_delete"]
+           "cf_api_space_summary", "cf_api_get_spaces", "cf_api_get_users", "uaa_api_user_delete",
+           "cf_get_ref_org_and_space_guids"]
 
 
 # ====================================================== cf cli ====================================================== #
@@ -44,11 +45,11 @@ def log_output_on_error(func):
 
 
 def cf_login(organization_name, space_name):
-    api_url = "api.{}".format(config.CONFIG["domain"])
-    username = config.CONFIG["admin_username"]
-    password = config.CONFIG["admin_password"]
+    api_url = "api.{}".format(CONFIG["domain"])
+    username = CONFIG["admin_username"]
+    password = CONFIG["admin_password"]
     command = ["cf", "login", "-a", api_url, "-u", username, "-p", password, "-o", organization_name, "-s", space_name]
-    if not config.CONFIG["ssl_validation"]:
+    if not CONFIG["ssl_validation"]:
         command.append("--skip-ssl-validation")
     log_command(command, replace=(password, "[SECRET]"))
     subprocess.check_call(command)
@@ -122,6 +123,9 @@ def cf_api_get_orgs():
 
 def cf_api_delete_org(org_guid):
     """DELETE /v2/organizations/{org_guid}"""
+    ref_org_guid, _ = cf_get_ref_org_and_space_guids()
+    if org_guid == ref_org_guid:
+        raise YouMustBeJokingException("You're trying to delete {}".format(CONFIG["ref_org_name"]))
     CfApiClient.get_client().request("DELETE", endpoint="organizations/{}".format(org_guid),
                                      params={"recursive": "true", "async": "false"}, log_msg="CF: delete organization")
 
@@ -155,6 +159,9 @@ def cf_api_space_summary(space_guid):
 
 def cf_api_delete_space(space_guid):
     """DELETE /v2/spaces/{space_guid}"""
+    _, ref_space_guid = cf_get_ref_org_and_space_guids()
+    if space_guid == ref_space_guid:
+        raise YouMustBeJokingException("You're trying to delete {}".format(CONFIG["ref_space_name"]))
     CfApiClient.get_client().request("DELETE", endpoint="spaces/{}".format(space_guid),
                                      params={"recursive": "true", "async": "false"}, log_msg="CF: delete space")
 
@@ -249,3 +256,17 @@ def cf_api_create_service_key(service_instance_guid, service_key_name):
         body={"name": service_key_name, "service_instance_guid": service_instance_guid},
         log_msg="CF: create service instance key"
     )
+
+# -------------------------------------------------------------------------------------------------------------------- #
+
+def cf_get_ref_org_and_space_guids():
+    """Return tuple or org_guid and space_guid for reference org and space (e.g. seedorg, seedspace)."""
+    if CONFIG.get("ref_org_guid") is None or CONFIG.get("ref_space_guid") is None:
+        org_name = CONFIG["ref_org_name"]
+        orgs = cf_api_get_orgs()
+        CONFIG["ref_org_guid"] = next(o["metadata"]["guid"] for o in orgs if o["entity"]["name"] == org_name)
+        space_name = CONFIG["ref_space_name"]
+        spaces = cf_api_get_org_spaces(CONFIG["ref_org_guid"])
+        CONFIG["ref_space_guid"] = next(s["metadata"]["guid"] for s in spaces if s["entity"]["name"] == space_name)
+    return CONFIG["ref_org_guid"], CONFIG["ref_space_guid"]
+

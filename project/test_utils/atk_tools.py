@@ -20,16 +20,13 @@ import pexpect
 import time
 
 from . import log_command, get_logger, log_http_request, log_http_response, UnexpectedResponseError, config, \
-    platform_api_calls as api
+    platform_api_calls as api, AtkScriptException
 
 __all__ = ["ATKtools"]
 
 
 logger = get_logger("ATKtools")
 
-
-class AtkScriptException(AssertionError):
-    pass
 
 
 class ATKtools(object):

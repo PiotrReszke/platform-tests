@@ -33,20 +33,19 @@ __CONFIG.read_string("""
         admin_username = trusted.analytics.tester@gmail.com
         login.do_scheme = http
         ssl_validation = False
-        reference_org = seedorg
-        reference_space = seedspace
+        ref_org_name = seedorg
+        ref_space_name = seedspace
     [gotapaas.eu]
         login.do_scheme = https
         ssl_validation = True
     [demo-gotapaas.com]
         ssl_validation = True
     [52.20.52.106.xip.io]
-        reference_org = sato
-        reference_space = dev
+        ref_org_name = sato
+        ref_space_name = dev
     [10.239.165.208.xip.io]
-        reference_org = sh.intel.com
-        reference_space = dp2
-        ssl_validation = False
+        ref_org_name = sh.intel.com
+        ref_space_name = dp2
 """)
 
 
@@ -73,8 +72,8 @@ def update_test_config(domain=None, proxy=None, client_type=None, logged_respons
         CONFIG["login.do_scheme"] = __CONFIG.get(domain, "login.do_scheme", fallback=defaults["login.do_scheme"])
         CONFIG["ssl_validation"] = __CONFIG.getboolean(domain, "ssl_validation",
                                                        fallback=__CONFIG.getboolean("DEFAULT", "ssl_validation"))
-        CONFIG["reference_org"] = __CONFIG.get(domain, "reference_org", fallback=defaults["reference_org"])
-        CONFIG["reference_space"] = __CONFIG.get(domain, "reference_space", fallback=defaults["reference_space"])
+        CONFIG["ref_org_name"] = __CONFIG.get(domain, "ref_org_name", fallback=defaults["ref_org_name"])
+        CONFIG["ref_space_name"] = __CONFIG.get(domain, "ref_space_name", fallback=defaults["ref_space_name"])
     CONFIG["proxy"] = proxy
     if logged_response_body_length is not None:
         logger.LOGGED_RESPONSE_BODY_LENGTH = logged_response_body_length

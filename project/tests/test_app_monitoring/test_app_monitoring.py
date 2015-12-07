@@ -24,8 +24,7 @@ class AppMonitoring(ApiTestCase):
 
     @classmethod
     def setUpClass(cls):
-        ref_space_guid = Organization.get_org_and_space_by_name(config.CONFIG["reference_org"],
-                                                                config.CONFIG["reference_space"])[1].guid
+        ref_space_guid = Organization.get_ref_org_and_space()[1].guid
         cls.platform_apps = Application.api_get_list(ref_space_guid)
 
     def test_all_required_apps_are_present_on_platform(self):

@@ -17,18 +17,14 @@
 import os
 import shutil
 import tarfile
-import time
 import unittest
 
-from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, cloud_foundry as cf, ATKtools
+from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, cloud_foundry as cf, ATKtools, \
+    AtkTestException
 from objects import Organization, Transfer, DataSet, AtkInstance, ServiceType, Application, User
 
 
 logger = get_logger("test ATK")
-
-
-class AtkTestException(AssertionError):
-    pass
 
 
 @unittest.skip("DPNG-2758 atk-broker creates broken instances; Bad Gateway status for organization removal - DPNG-2424")

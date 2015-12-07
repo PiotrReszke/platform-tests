@@ -26,9 +26,8 @@ expected_metrics_keys = ["appsDown", "appsRunning", "datasetCount", "domainsUsag
 class Metrics(ApiTestCase):
     @classmethod
     def setUpClass(cls):
-        reference_org_name = config.CONFIG["reference_org"]
-        cls.step("Retrieve metrics for {}".format(reference_org_name))
-        cls.ref_org = Organization.get_org_and_space_by_name(org_name=reference_org_name)[0]
+        cls.step("Retrieve metrics for {}".format(config.CONFIG["ref_org_name"]))
+        cls.ref_org, _ = Organization.get_ref_org_and_space()
         cls.ref_org.api_get_metrics()
 
     def test_metrics_contains_all_keys(self):

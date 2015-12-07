@@ -17,7 +17,7 @@
 import json
 import os
 
-from . import PlatformApiClient
+from . import PlatformApiClient, cloud_foundry as cf, YouMustBeJokingException
 
 
 # =============================================== app-launcher-helper ================================================ #
@@ -365,6 +365,9 @@ def api_create_organization(name, client=None):
 
 def api_delete_organization(org_guid, client=None):
     """DELETE /rest/orgs/{organization_guid}"""
+    ref_org_guid, _ = cf.cf_get_ref_org_and_space_guids()
+    if org_guid == ref_org_guid:
+        raise YouMustBeJokingException("You're trying to delete the reference org")
     client = client or PlatformApiClient.get_admin_client()
     return client.request("DELETE", "rest/orgs/{}".format(org_guid), log_msg="PLATFORM: delete org")
 
@@ -489,5 +492,8 @@ def api_create_space(org_guid, name, client=None):
 
 def api_delete_space(space_guid, client=None):
     """DELETE /rest/spaces/{space}"""
+    _, ref_space_guid = cf.cf_get_ref_org_and_space_guids()
+    if space_guid == ref_space_guid:
+        raise YouMustBeJokingException("You're trying to delete the reference space")
     client = client or PlatformApiClient.get_admin_client()
     client.request("DELETE", "rest/spaces/{}".format(space_guid), log_msg="PLATFORM: delete space")

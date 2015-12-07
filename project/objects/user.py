@@ -89,7 +89,7 @@ class User(object):
         client = PlatformApiClient.get_client(username)
         api.api_register_new_user(code, password, org_name, client=client)
         # need to obtain org guid (DPNG-2149)
-        new_org = Organization.get_org_and_space_by_name(org_name=org_name)[0]
+        new_org = next(o for o in Organization.api_get_list() if o.name == org_name)
         Organization.TEST_ORGS.append(new_org)
         # need to obtain user's guid (DPNG-2149)
         org_users = cls.api_get_list_via_organization(org_guid=new_org.guid)

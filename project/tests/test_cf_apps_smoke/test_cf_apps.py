@@ -35,8 +35,7 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
         cls.expected_service_names = {app_info["name"] for app_info in settings["user_provided_service_instances"]}
         cls.expected_broker_names = {app_info["name"] for app_info in settings["service_brokers"]}
         cls.step("Retrieve apps, services, and brokers present in cf")
-        ref_space_guid = Organization.get_org_and_space_by_name(config.CONFIG["reference_org"],
-                                                                config.CONFIG["reference_space"])[1].guid
+        ref_space_guid = Organization.get_ref_org_and_space()[1].guid
         cls.cf_apps = Application.cf_api_get_list(ref_space_guid)
         cls.cf_services = ServiceInstance.cf_api_get_list(ref_space_guid)
         cls.cf_brokers = ServiceBroker.cf_api_get_list(ref_space_guid)

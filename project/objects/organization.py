@@ -18,7 +18,8 @@ import functools
 from datetime import datetime
 
 from . import Space
-from test_utils import get_logger, UnexpectedResponseError, platform_api_calls as api, cloud_foundry as cf
+from test_utils import get_logger, UnexpectedResponseError, platform_api_calls as api, cloud_foundry as cf, CONFIG
+
 
 __all__ = ["Organization"]
 
@@ -75,16 +76,12 @@ class Organization(object):
         return organizations
 
     @classmethod
-    def get_org_and_space_by_name(cls, org_name, space_name=None, client=None):
-        """Return organization and space objects for existing org and space"""
-        response = api.api_get_organizations(client=client)
-        org_details = next(org for org in response if org["name"] == org_name)
-        organization = cls(name=org_details["name"], guid=org_details["guid"])
-        space = None
-        if space_name is not None:
-            space_details = next(space for space in org_details["spaces"] if space["name"] == space_name)
-            space = Space(name=space_details["name"], guid=space_details["guid"])
-        return organization, space
+    def get_ref_org_and_space(cls):
+        """Return org and space objects for reference org and space (e.g. seedorg, seedspace)"""
+        ref_org_guid, ref_space_guid = cf.cf_get_ref_org_and_space_guids()
+        org = Organization(name=CONFIG["ref_org_name"], guid=ref_org_guid)
+        space = Space(name=CONFIG["ref_space_name"], guid=ref_space_guid)
+        return org, space
 
     def rename(self, new_name, client=None):
         self.name = new_name
