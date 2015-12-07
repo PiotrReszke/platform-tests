@@ -16,7 +16,7 @@
 
 import paramiko
 
-from logger import log_command
+from test_utils import log_command
 
 
 class SshClient(object):
@@ -36,11 +36,11 @@ class SshClient(object):
             target_port = 1234
             target_username = via_username
             target_key_path = via_path_to_key
-            proxy = paramiko.SSHClient()
-            proxy.set_missing_host_key_policy(paramiko.client.WarningPolicy())
-            proxy.connect(via_hostname, port=via_port, username=username, key_filename=path_to_key)
-            proxy_transport = proxy.get_transport()
-            channel = proxy_transport.open_channel("direct-tcpip", via_hostname, (target_hostname, target_port))
+            self.proxy = paramiko.SSHClient()
+            self.proxy.set_missing_host_key_policy(paramiko.client.WarningPolicy())
+            self.proxy.connect(via_hostname, port=via_port, username=username, key_filename=path_to_key)
+            proxy_transport = self.proxy.get_transport()
+            channel = proxy_transport.open_channel("direct-tcpip", (hostname, port), (target_hostname, target_port))
         self.client = paramiko.SSHClient()
         self.client.set_missing_host_key_policy(paramiko.client.WarningPolicy())
         self.client.connect(

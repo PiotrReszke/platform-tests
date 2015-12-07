@@ -19,6 +19,7 @@ from .config import *
 from .gmail_api import *
 from .api_client import *
 from .api_test_case import *
+from .ssh_client import *
 from .hdfs import *
 from .hdfs_topic import Topic
 from .atk_tools import ATKtools
