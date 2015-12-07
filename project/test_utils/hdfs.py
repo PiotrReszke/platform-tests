@@ -14,11 +14,10 @@
 # limitations under the License.
 #
 
+import os
 import re
 
-import spur
-
-from . import get_logger, log_command, config
+from . import get_logger, config, SshClient, HdfsException
 
 
 __all__ = ["Hdfs"]
@@ -29,33 +28,27 @@ logger = get_logger("hdfs")
 
 class Hdfs(object):
 
-    def __init__(self, node_name, username="ec2-user"):
-        test_environment = config.CONFIG["domain"]
-        self.hostname = "cdh.{}".format(test_environment)
-        self.username = username
-        logger.info("Accessing HDFS on {}@{}".format(self.username, self.hostname))
-        self.node_name = "hdfs://{}/".format(node_name)
-        self.hadoop_fs = ["hadoop", "fs", "-fs", self.node_name]
-        if test_environment == "gotapaas.eu":  # due to problems with hadoop config on cdh.gotapaas.eu
-            self._switch_user("hdfs")
+    def __init__(self):
+        hostname = "cdh-master-0"
+        username = "ec2-user"
+        path_to_key = os.path.expanduser(os.path.join("~", ".ssh", "auto-deploy-virginia.pem"))
+
+        via_hostname = "cdh.{}".format(config.CONFIG["domain"])
+        self.ssh_client = SshClient(hostname=hostname, username=username, path_to_key=path_to_key,
+                                    via_hostname=via_hostname, via_username=username, via_path_to_key=path_to_key)
+        logger.info("Accessing HDFS on {} via {}".format(hostname, via_hostname))
+        self.hadoop_fs = ["hadoop", "fs"]
 
     def _execute(self, command):
-        log_command(command)
-        with spur.SshShell(hostname=self.hostname,
-                           username=self.username,
-                           password=config.CONFIG["ssh_key_passphrase"]) as shell:
-            result = shell.run(command)
-        if result.return_code != 0:
-            raise result.to_error()
-        return result
-
-    def _switch_user(self, user):
-        self._execute(["sudo", "su", "-", user])
+        stdout, stderr = self.ssh_client.exec_command(command)
+        if stderr != "":
+            raise HdfsException(stderr)
+        return stdout
 
     def ls(self, directory_path):
         """Execute ls on a directory in hdfs. Return a list of file paths."""
         command = self.hadoop_fs + ["-ls", directory_path]
-        output = self._execute(command).output.decode()
+        output = self._execute(command)
         paths = []
         for line in [line for line in output.split("\n")[1:-1]]:
             r = re.search("\/.*$", line)
@@ -64,12 +57,7 @@ class Hdfs(object):
 
     def cat(self, file_path):
         command = self.hadoop_fs + ["-cat", file_path]
-        output = self._execute(command).output.decode()
+        output = self._execute(command)
         return output
 
-    def test_file(self, filepath):
-        command = self.hadoop_fs + ["-test", "-e", filepath]
-        log_command(command)
-        with spur.SshShell(hostname=self.hostname, username=self.username) as shell:
-            return shell.run(command).return_code
 

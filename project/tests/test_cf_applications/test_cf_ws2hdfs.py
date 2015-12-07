@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
 
 import time
 import ssl
@@ -21,8 +22,8 @@ import unittest
 from retry import retry
 import websocket
 
-from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, app_source_utils, Topic, cloud_foundry \
-    as cf, config
+from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, app_source_utils, cloud_foundry \
+    as cf, config, Hdfs
 from objects import Application, Organization
 
 
@@ -67,6 +68,10 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         cf.cf_create_service("zookeeper", "shared", "zookeeper-inst")
         cls.step("Create instance hdfs-inst service hdfs")
         cf.cf_create_service("hdfs", "shared", "hdfs-inst")
+        cls.messages = []
+        for n in range(cls.MESSAGE_COUNT):
+            message = "Test-{}".format(n)
+            cls.messages.append(message)
         cls.ws_opts = {"cert_reqs": ssl.CERT_NONE}
         cls.ws_protocol = "ws://"
         if config.CONFIG["ssl_validation"]:
@@ -90,22 +95,22 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
     @ApiTestCase.mark_prerequisite()
     def test_cf_app_step_2_send_from_ws2kafka_to_kafka2hdfs(self):
         self.step("Send messages from ws2kafka to kafka2hdfs")
-        self.expected_messages = self._send_ws_messages("{}/{}".format(self.app_ws2kafka.urls[0],
-                                                                       self.app_ws2kafka.topic))
+        self._send_ws_messages("{}/{}".format(self.app_ws2kafka.urls[0], self.app_ws2kafka.topic))
         self._assert_message_count_in_app_stats(self.app_kafka2hdfs, self.MESSAGE_COUNT)
 
     @ApiTestCase.mark_prerequisite()
-    @unittest.expectedFailure
     def test_cf_app_step_3_check_messages_in_hdfs(self):
         """DPNG-3439 Fix ssh connection to hdfs in CFApp_ws2kafka_kafka2hdfs"""
+        self.step("Get details of broker guid")
+        broker_guid = "/{}".format(self.app_kafka2hdfs.cf_api_env()["VCAP_SERVICES"]["hdfs"][0]["credentials"]["uri"].
+                                   split("/", 3)[3])
+        self.step("Get details of topic messages")
+        topic_messages = self._get_messages_from_topic(broker_instance_guid=broker_guid, topic_catalog="from_kafka",
+                                                       topic_name=self.app_ws2kafka.topic)
         self.step("Check hdfs topic messages")
-        broker_guid = self.app_kafka2hdfs.cf_api_env()["VCAP_SERVICES"]["hdfs"][0]["credentials"]["uri"].split("/")[-2]
-        topic_messages = self._get_messages_from_topic(node_name="ip-10-10-10-236", broker_instance_guid=broker_guid,
-                                                       topic_catalog="from_kafka", topic_name=self.app_ws2kafka.topic)
-        self.assertEqual(len(topic_messages), self.MESSAGE_COUNT,
-                         "Sent {0} messages, hdfs topic message count {1}".format(
-                         self.MESSAGE_COUNT, len(topic_messages)))
-        self.assertUnorderedListEqual(topic_messages, self.expected_messages)
+        self.assertEqual(len(topic_messages), self.MESSAGE_COUNT, "Sent {0} messages, hdfs topic message count {1}".
+                         format(self.MESSAGE_COUNT, len(topic_messages)))
+        self.assertUnorderedListEqual(topic_messages, self.messages)
 
     @unittest.skip
     def test_cf_app_ws2kafka_gearpump_kafka2hdfs(self):
@@ -116,12 +121,13 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
                                                consumer_group_name="group-{}".format(postfix))
         expected_messages = self._send_ws_messages("{}/{}".format(app_ws2kafka.urls[0], app_ws2kafka.topic))
         self._assert_message_count_in_app_stats(self.app_kafka2hdfs, self.MESSAGE_COUNT)
-        broker_guid = app_kafka2hdfs.cf_api_env()["VCAP_SERVICES"]["hdfs"][0]["credentials"]["uri"].split("/")[-2]
-        topic_messages = self._get_messages_from_topic(node_name="ip-10-10-10-236", broker_instance_guid=broker_guid,
-                                                       topic_catalog="from_kafka", topic_name=app_ws2kafka.topic)
+        broker_guid = "/{}".format(self.app_kafka2hdfs.cf_api_env()["VCAP_SERVICES"]["hdfs"][0]["credentials"]["uri"].
+                                   split("/", 3)[3])
+        topic_messages = self._get_messages_from_topic(broker_instance_guid=broker_guid,topic_catalog="from_kafka",
+                                                       topic_name=app_ws2kafka.topic)
         self.step("Check that message count on hdfs is as expected")
         self.assertTrue(len(topic_messages) == self.MESSAGE_COUNT)
-        self.assertUnorderedListEqual(topic_messages, expected_messages)
+        self.assertUnorderedListEqual(topic_messages, self.messages)
 
     def _push_ws2kafka(self, app_name, topic_name):
         app_ws2kafka = Application(local_path=self.WS2KAFKA_PATH, name=app_name, topic=topic_name,
@@ -141,16 +147,21 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         return app_kafka2hdfs
 
     def _send_ws_messages(self, connection_string):
-        ws = websocket.create_connection("{}{}".format(self.ws_protocol,connection_string), sslopt=self.ws_opts)
-        messages = []
-        for n in range(self.MESSAGE_COUNT):
-            message = "Test-{}".format(n)
+        ws = websocket.create_connection("{}{}".format(self.ws_protocol, connection_string), sslopt=self.ws_opts)
+        for message in self.messages:
             ws.send(message)
-            messages.append(message)
         logger.info("Send messages to {}".format(connection_string))
-        return messages
 
-    def _get_messages_from_topic(self, node_name, broker_instance_guid, topic_catalog, topic_name):
-        topic = Topic(node_name=node_name, broker_instance_guid=broker_instance_guid, topic_catalog=topic_catalog,
-                      topic_name=topic_name)
-        return topic.get_messages()
+    def _get_messages_from_topic(self, broker_instance_guid, topic_catalog, topic_name):
+        self.hdfs = Hdfs()
+        self.name = topic_catalog
+        self.path = os.path.join(broker_instance_guid, topic_catalog, topic_name)
+        topic_content = self._get_messages()
+        return topic_content
+
+    def _get_messages(self):
+        topic_content = self.hdfs.cat(self.path)
+        return [message for message in topic_content.split("\n")[:-1]]
+
+    def _get_message_count(self):
+        return len(self._get_messages())

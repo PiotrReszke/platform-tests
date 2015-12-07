@@ -16,7 +16,9 @@
 
 import paramiko
 
-from test_utils import log_command
+from . import log_command
+
+__all__ = ["SshClient"]
 
 
 class SshClient(object):
@@ -29,7 +31,7 @@ class SshClient(object):
             target_port = port
             target_username = username
             target_key_path = path_to_key
-            channel=None
+            channel = None
         else:
             # connect with port forwarding
             target_hostname = "127.0.0.1"
@@ -52,9 +54,8 @@ class SshClient(object):
         )
 
     def exec_command(self, command):
-        log_command([command])
+        log_command(command)
+        command = " ".join(command)
         _, stdout, stderr = self.client.exec_command(command)
         return stdout.read().decode(), stderr.read().decode()
-
-
 

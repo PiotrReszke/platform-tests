@@ -22,7 +22,6 @@ from .api_client import *
 from .api_test_case import *
 from .ssh_client import *
 from .hdfs import *
-from .hdfs_topic import Topic
 from .atk_tools import ATKtools
 from .app_source_utils import *
 from .cloud_foundry import *

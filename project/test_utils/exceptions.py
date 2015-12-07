@@ -31,5 +31,9 @@ class UnexpectedResponseError(AssertionError):
         self.error_message = error_message
 
 
+class HdfsException(Exception):
+    pass
+
+
 class YouMustBeJokingException(Exception):
     pass
