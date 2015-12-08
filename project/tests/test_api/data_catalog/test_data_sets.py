@@ -20,7 +20,7 @@ import unittest
 from retry import retry
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, generate_csv_file, get_csv_record_count, \
-    tear_down_test_files, get_csv_data, config, download_file
+    tear_down_test_files, get_csv_data, download_file
 from objects import Organization, Transfer, DataSet, User, Application
 
 
@@ -28,11 +28,19 @@ EXAMPLE_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
 
 
 class GetDataSets(ApiTestCase):
+    @classmethod
+    def _get_source(cls):
+        return EXAMPLE_LINK
+
+    @classmethod
+    def _create_transfer(cls, org, category, is_public, source):
+        return Transfer.api_create(category, is_public, org=org, source=source)
 
     @classmethod
     @cleanup_after_failed_setup(DataSet.api_teardown_test_datasets, Transfer.api_teardown_test_transfers,
                                 Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
+        cls.source = cls._get_source()
         cls.step("Create test organization")
         cls.org = Organization.api_create()
         cls.step("Add admin to the organization")
@@ -42,12 +50,17 @@ class GetDataSets(ApiTestCase):
         is_public = True
         for category in DataSet.CATEGORIES:
             is_public = not is_public  # half of the transfers will be created as public, half - as private
-            cls.transfers.append(Transfer.api_create(category, is_public, org=cls.org, source=EXAMPLE_LINK))
+            cls.transfers.append(cls._create_transfer(cls.org, category, is_public, cls.source))
         cls.step("Ensure that transfers are finished")
         for transfer in cls.transfers:
             transfer.ensure_finished()
         cls.step("Get all data sets in the test org")
         cls.datasets = DataSet.api_get_list(org_list=[cls.org])
+
+    @classmethod
+    def tearDownClass(cls):
+        tear_down_test_files()
+        super(GetDataSets, cls).tearDownClass()
 
     def test_match_dataset_to_transfer(self):
         self.step("Check if a data set was created for each transfer")
@@ -127,16 +140,35 @@ class GetDataSets(ApiTestCase):
         self.assertUnorderedListEqual(self.missing_public_ds, [], "Not all public data sets from another org returned")
 
 
+class GetDataSetsFromFile(GetDataSets):
+    @classmethod
+    def _get_source(cls):
+        return generate_csv_file(column_count=10, row_count=10)
+
+    @classmethod
+    def _create_transfer(cls, org, category, is_public, source):
+        return Transfer.api_create_by_file_upload(org, source, category, is_public)
+
+
 class UpdateDeleteDataSet(ApiTestCase):
+    @classmethod
+    def _get_source(cls):
+        return EXAMPLE_LINK
 
     @classmethod
     @cleanup_after_failed_setup(DataSet.api_teardown_test_datasets, Transfer.api_teardown_test_transfers,
                                 Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
+        cls.source = cls._get_source()
         cls.step("Create test organization")
         cls.org = Organization.api_create()
         cls.step("Add admin to the organization")
         User.get_admin().api_add_to_organization(org_guid=cls.org.guid)
+
+    @classmethod
+    def tearDownClass(cls):
+        tear_down_test_files()
+        super(UpdateDeleteDataSet, cls).tearDownClass()
 
     def _create_dataset(self, org, source, is_public=False, category=DataSet.CATEGORIES[0]):
         self.step("Create new transfer")
@@ -155,7 +187,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         return updated_dataset
 
     def test_delete_dataset(self):
-        dataset = self._create_dataset(self.org, EXAMPLE_LINK)
+        dataset = self._create_dataset(self.org, self.source)
         self.step("Delete the dataset")
         dataset.api_delete()
         self.step("Get dataset list and check the deleted one is not on it")
@@ -163,14 +195,14 @@ class UpdateDeleteDataSet(ApiTestCase):
         self.assertNotInList(dataset, dataset_list)
 
     def test_cannot_delete_not_existing_dataset(self):
-        dataset = self._create_dataset(self.org, EXAMPLE_LINK)
+        dataset = self._create_dataset(self.org, self.source)
         self.step("Delete dataset")
         dataset.api_delete()
         self.step("Try to delete the dataset again")
         self.assertRaisesUnexpectedResponse(404, "null", dataset.api_delete)
 
     def test_change_private_dataset_to_public(self):
-        dataset = self._create_dataset(self.org, EXAMPLE_LINK)
+        dataset = self._create_dataset(self.org, self.source)
         self.step("Update dataset from private to public")
         dataset.api_update(is_public=True)
         updated_dataset = self._get_updated_dataset(dataset)
@@ -178,7 +210,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         self.assertTrue(updated_dataset.is_public, "Dataset was not changed to public.")
 
     def test_change_public_dataset_to_private(self):
-        dataset = self._create_dataset(self.org, EXAMPLE_LINK, is_public=True)
+        dataset = self._create_dataset(self.org, self.source, is_public=True)
         self.step("Update dataset from public to private")
         dataset.api_update(is_public=False)
         updated_dataset = self._get_updated_dataset(dataset)
@@ -188,7 +220,7 @@ class UpdateDeleteDataSet(ApiTestCase):
     def test_update_dataset_category(self):
         old_category = DataSet.CATEGORIES[0]
         new_category = DataSet.CATEGORIES[1]
-        dataset = self._create_dataset(self.org, EXAMPLE_LINK, category=old_category)
+        dataset = self._create_dataset(self.org, self.source, category=old_category)
         self.step("Update dataset, change category")
         dataset.api_update(category=new_category)
         updated_dataset = self._get_updated_dataset(dataset)
@@ -197,7 +229,7 @@ class UpdateDeleteDataSet(ApiTestCase):
 
     def test_update_dataset_to_non_existing_category(self):
         new_category = "user_category"
-        dataset = self._create_dataset(self.org, EXAMPLE_LINK)
+        dataset = self._create_dataset(self.org, self.source)
         self.step("Update dataset with new category")
         dataset.api_update(category=new_category)
         updated_dataset = self._get_updated_dataset(dataset)
@@ -205,15 +237,38 @@ class UpdateDeleteDataSet(ApiTestCase):
         self.assertEqual(updated_dataset.category, new_category, "Dataset category was not updated.")
 
 
+class UpdateDeleteDataSetFromFile(UpdateDeleteDataSet):
+    @classmethod
+    def _get_source(cls):
+        return generate_csv_file(column_count=10, row_count=10)
+
+    def _create_dataset(self, org, file_path, is_public=False, category=DataSet.CATEGORIES[0]):
+        self.step("Create new transfer")
+        transfer = Transfer.api_create_by_file_upload(org=org, file_path=file_path, category=category,
+                                                      is_public=is_public)
+        self.step("Wait for transfer to finish")
+        transfer.ensure_finished()
+        self.step("Get data set matching to transfer")
+        return DataSet.api_get_matching_to_transfer([self.org], transfer.title)
+
+
 class CreateDatasets(ApiTestCase):
     DETAILS_TO_COMPARE = {"accessibility", "title", "category", "sourceUri", "size", "orgUUID", "targetUri", "format",
                           "dataSample", "isPublic", "creationTime"}
     ACCESSIBILITIES = {True: "PUBLIC", False: "PRIVATE"}
+    FROM_FILE = False
+
+    @classmethod
+    def _get_source_and_filepath(cls):
+        source = EXAMPLE_LINK
+        file_path = download_file(source)
+        return source, file_path
 
     @classmethod
     @cleanup_after_failed_setup(DataSet.api_teardown_test_datasets, Transfer.api_teardown_test_transfers,
                                 Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
+        cls.source, cls.file_path = cls._get_source_and_filepath()
         cls.step("Create test organization")
         cls.org = Organization.api_create()
         cls.step("Add admin to the organization")
@@ -223,8 +278,10 @@ class CreateDatasets(ApiTestCase):
         hdfs = next(app for app in Application.cf_api_get_list(ref_space.guid) if "hdfs-downloader" in app.name)
         cls.target_uri = hdfs.cf_api_env()['VCAP_SERVICES']['hdfs'][0]['credentials']['uri']
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         tear_down_test_files()
+        super(CreateDatasets, cls).tearDownClass()
 
     def _get_expected_dataset_details(self, org_uuid, format, is_public, file_path, transfer, from_file=False):
         return {'accessibility': self.ACCESSIBILITIES[is_public], 'title': transfer.title,
@@ -236,26 +293,21 @@ class CreateDatasets(ApiTestCase):
                 'creationTime': datetime.datetime.utcfromtimestamp(transfer.timestamps["FINISHED"]).strftime(
                     "%Y-%m-%dT%H:%M")}
 
-    def _get_transfer_and_dataset(self, file_source, is_public, is_file_local=True):
-        if is_file_local:
-            self.step("Create transfer by uploading a csv file")
-            transfer = Transfer.api_create_by_file_upload(self.org, file_source, DataSet.CATEGORIES[0], is_public)
-        else:
-            self.step("Create transfer by providing a csv from url")
-            transfer = Transfer.api_create(DataSet.CATEGORIES[0], is_public, self.org, file_source)
+    def _get_transfer_and_dataset(self, file_source, is_public):
+        self.step("Create transfer by providing a csv from url")
+        transfer = Transfer.api_create(DataSet.CATEGORIES[0], is_public, self.org, file_source)
         transfer.ensure_finished()
         self.step("Get data set matching to transfer {}".format(transfer.title))
         data_set = DataSet.api_get_matching_to_transfer([self.org], transfer.title)
         return transfer, data_set
 
-    def test_create_dataset_from_file(self):
+    def test_create_dataset(self):
         """DPNG-3156 DAS can't be found by uploader sometimes"""
-        self.step("Generate sample csv file")
-        file_path = generate_csv_file(column_count=10, row_count=10)
         for is_public, access in self.ACCESSIBILITIES.items():
-            transfer, dataset = self._get_transfer_and_dataset(file_path, is_public)
+            transfer, dataset = self._get_transfer_and_dataset(self.source, is_public)
             self.step("Generate expected dataset summary and get real dataset summary")
-            expected_details = self._get_expected_dataset_details(self.org.guid, "CSV", is_public, file_path, transfer, True)
+            expected_details = self._get_expected_dataset_details(self.org.guid, "CSV", is_public, self.file_path,
+                                                                  transfer, from_file=self.FROM_FILE)
             ds_details = dataset.get_details()
             self.step("Compare dataset details with expected values")
             for key in self.DETAILS_TO_COMPARE:
@@ -263,37 +315,27 @@ class CreateDatasets(ApiTestCase):
                     self.assertEqual(expected_details[key], ds_details[key])
 
     @unittest.expectedFailure
-    def test_create_dataset_from_file_recordcount(self):
+    def test_create_dataset_recordcount(self):
         """DPNG-3656 Wrong record count for csv file in dataset details"""
         label = "recordCount"
-        self.step("Generate sample csv file")
-        file_path = generate_csv_file(column_count=10, row_count=10)
         for is_public, access in self.ACCESSIBILITIES.items():
-            transfer, dataset = self._get_transfer_and_dataset(file_path, is_public)
+            transfer, dataset = self._get_transfer_and_dataset(self.source, is_public)
             with self.subTest(accessibility=access, detail=label):
-                self.assertEqual(dataset.record_count, get_csv_record_count(file_path))
+                self.assertEqual(dataset.record_count, get_csv_record_count(self.file_path))
 
-    def test_create_dataset_from_url(self):
-        """DPNG-3156 DAS can't be found by uploader sometimes"""
-        self.step("Download sample csv file")
-        file_path = download_file(EXAMPLE_LINK)
-        for is_public, access in self.ACCESSIBILITIES.items():
-            transfer, dataset = self._get_transfer_and_dataset(EXAMPLE_LINK, is_public, is_file_local=False)
-            self.step("Generate expected dataset summary and get real dataset summary")
-            expected_details = self._get_expected_dataset_details(self.org.guid, "CSV", is_public, file_path, transfer)
-            ds_details = dataset.get_details()
-            self.step("Compare dataset details with expected values")
-            for key in self.DETAILS_TO_COMPARE:
-                with self.subTest(accessibility=access, detail=key):
-                    self.assertEqual(expected_details[key], ds_details[key])
 
-    @unittest.expectedFailure
-    def test_create_dataset_from_url_recordcount(self):
-        """DPNG-3656 Wrong record count for csv file in dataset details"""
-        label = "recordCount"
-        self.step("Download sample csv file")
-        file_path = download_file(EXAMPLE_LINK)
-        for is_public, access in self.ACCESSIBILITIES.items():
-            transfer, dataset = self._get_transfer_and_dataset(EXAMPLE_LINK, is_public, is_file_local=False)
-            with self.subTest(accessibility=access, detail=label):
-                self.assertEqual(dataset.record_count, get_csv_record_count(file_path))
+class CreateDatasetsFromFile(CreateDatasets):
+    FROM_FILE = True
+
+    @classmethod
+    def _get_source_and_filepath(cls):
+        source = generate_csv_file(column_count=10, row_count=10)
+        return source, source
+
+    def _get_transfer_and_dataset(self, file_source, is_public):
+        self.step("Create transfer by uploading a csv file")
+        transfer = Transfer.api_create_by_file_upload(self.org, file_source, DataSet.CATEGORIES[0], is_public)
+        transfer.ensure_finished()
+        self.step("Get data set matching to transfer {}".format(transfer.title))
+        data_set = DataSet.api_get_matching_to_transfer([self.org], transfer.title)
+        return transfer, data_set
