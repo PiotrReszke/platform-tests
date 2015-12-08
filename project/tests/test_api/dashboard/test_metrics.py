@@ -49,17 +49,17 @@ class Metrics(ApiTestCase):
             apps, _ = space.cf_api_get_space_summary()
             for app in apps:
                 if app.is_started:
-                    cf_apps_up.append(app)
+                    cf_apps_up.append(app.name)
                 else:
-                    cf_apps_down.append(app)
+                    cf_apps_down.append(app.name)
         dashboard_apps_running = self.ref_org.metrics["appsRunning"]
         dashboard_apps_down = self.ref_org.metrics["appsDown"]
         metrics_are_equal = (len(cf_apps_up) == dashboard_apps_running and len(cf_apps_down) == dashboard_apps_down)
         self.assertTrue(metrics_are_equal,
-                        "\nApps running: {} - expected: {}\nApps down: {} - expected: {}".format(dashboard_apps_running,
-                                                                                                 len(cf_apps_up),
-                                                                                                 dashboard_apps_down,
-                                                                                                 len(cf_apps_down)))
+                        "\nApps running: {} - expected: {}\n({})"
+                        "\nApps down: {} - expected: {}\n({})".format(dashboard_apps_running, len(cf_apps_up),
+                                                                      cf_apps_up, dashboard_apps_down,
+                                                                      len(cf_apps_down), cf_apps_down))
 
     def test_user_count(self):
         self.step("Get org users from cf and check that totalUsers metrics is correct")
