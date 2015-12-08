@@ -120,4 +120,4 @@ class DataSet(object):
                     recordCount=self.record_count, sourceUri=self.source_uri, size=self.size, orgUUID=self.org_guid,
                     targetUri=self.target_uri, format=self.format, dataSample=self.data_sample, isPublic=self.is_public,
                     creationTime=datetime.datetime.strptime(self.creation_time, "%Y-%m-%dT%H:%M:%S.%f")
-                    .strftime("%Y-%m-%dT%H:%M:%S"))
+                    .strftime("%Y-%m-%dT%H:%M"))

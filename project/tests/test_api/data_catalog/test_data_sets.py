@@ -219,9 +219,8 @@ class CreateDatasets(ApiTestCase):
         cls.step("Add admin to the organization")
         User.get_admin().api_add_to_organization(org_guid=cls.org.guid)
         cls.step("Get target uri from hdfs instance")
-        ref_space_guid = Organization.get_org_and_space_by_name(config.CONFIG["reference_org"],
-                                                                config.CONFIG["reference_space"])[1].guid
-        hdfs = next(app for app in Application.cf_api_get_list(ref_space_guid) if "hdfs-downloader" in app.name)
+        _, ref_space = Organization.get_ref_org_and_space()
+        hdfs = next(app for app in Application.cf_api_get_list(ref_space.guid) if "hdfs-downloader" in app.name)
         cls.target_uri = hdfs.cf_api_env()['VCAP_SERVICES']['hdfs'][0]['credentials']['uri']
 
     def tearDown(self):
@@ -235,7 +234,7 @@ class CreateDatasets(ApiTestCase):
                 'targetUri': self.target_uri + "{}".format(transfer.id_in_object_store), 'format': format,
                 'dataSample': ",".join(get_csv_data(file_path)), 'isPublic': is_public,
                 'creationTime': datetime.datetime.utcfromtimestamp(transfer.timestamps["FINISHED"]).strftime(
-                    "%Y-%m-%dT%H:%M:%S")}
+                    "%Y-%m-%dT%H:%M")}
 
     def _get_transfer_and_dataset(self, file_source, is_public, is_file_local=True):
         if is_file_local:
