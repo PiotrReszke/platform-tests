@@ -65,6 +65,7 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
     SUB_TEST_NO = 0
     PREREQUISITE_FAILED = False
     FAILS_AND_ERRORS = 0
+    maxDiff = None
 
     @classmethod
     def tearDownClass(cls):

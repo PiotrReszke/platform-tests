@@ -13,10 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
+import datetime
+import unittest
+
 from retry import retry
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup
-from objects import Organization, Transfer, DataSet, User
+from test_utils import ApiTestCase, cleanup_after_failed_setup, generate_csv_file, get_csv_record_count, \
+    tear_down_test_files, get_csv_data, config, download_file
+from objects import Organization, Transfer, DataSet, User, Application
 
 
 EXAMPLE_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
@@ -198,3 +203,98 @@ class UpdateDeleteDataSet(ApiTestCase):
         updated_dataset = self._get_updated_dataset(dataset)
         self.step("Check if dataset category was changed")
         self.assertEqual(updated_dataset.category, new_category, "Dataset category was not updated.")
+
+
+class CreateDatasets(ApiTestCase):
+    DETAILS_TO_COMPARE = {"accessibility", "title", "category", "sourceUri", "size", "orgUUID", "targetUri", "format",
+                          "dataSample", "isPublic", "creationTime"}
+    ACCESSIBILITIES = {True: "PUBLIC", False: "PRIVATE"}
+
+    @classmethod
+    @cleanup_after_failed_setup(DataSet.api_teardown_test_datasets, Transfer.api_teardown_test_transfers,
+                                Organization.cf_api_tear_down_test_orgs)
+    def setUpClass(cls):
+        cls.step("Create test organization")
+        cls.org = Organization.api_create()
+        cls.step("Add admin to the organization")
+        User.get_admin().api_add_to_organization(org_guid=cls.org.guid)
+        cls.step("Get target uri from hdfs instance")
+        ref_space_guid = Organization.get_org_and_space_by_name(config.CONFIG["reference_org"],
+                                                                config.CONFIG["reference_space"])[1].guid
+        hdfs = next(app for app in Application.cf_api_get_list(ref_space_guid) if "hdfs-downloader" in app.name)
+        cls.target_uri = hdfs.cf_api_env()['VCAP_SERVICES']['hdfs'][0]['credentials']['uri']
+
+    def tearDown(self):
+        tear_down_test_files()
+
+    def _get_expected_dataset_details(self, org_uuid, format, is_public, file_path, transfer, from_file=False):
+        return {'accessibility': self.ACCESSIBILITIES[is_public], 'title': transfer.title,
+                'category': transfer.category, 'recordCount': get_csv_record_count(file_path),
+                'sourceUri': os.path.split(file_path)[1] if from_file else EXAMPLE_LINK,
+                'size': os.path.getsize(file_path), 'orgUUID': org_uuid,
+                'targetUri': self.target_uri + "{}".format(transfer.id_in_object_store), 'format': format,
+                'dataSample': ",".join(get_csv_data(file_path)), 'isPublic': is_public,
+                'creationTime': datetime.datetime.utcfromtimestamp(transfer.timestamps["FINISHED"]).strftime(
+                    "%Y-%m-%dT%H:%M:%S")}
+
+    def _get_transfer_and_dataset(self, file_source, is_public, is_file_local=True):
+        if is_file_local:
+            self.step("Create transfer by uploading a csv file")
+            transfer = Transfer.api_create_by_file_upload(self.org, file_source, DataSet.CATEGORIES[0], is_public)
+        else:
+            self.step("Create transfer by providing a csv from url")
+            transfer = Transfer.api_create(DataSet.CATEGORIES[0], is_public, self.org, file_source)
+        transfer.ensure_finished()
+        self.step("Get data set matching to transfer {}".format(transfer.title))
+        data_set = DataSet.api_get_matching_to_transfer([self.org], transfer.title)
+        return transfer, data_set
+
+    def test_create_dataset_from_file(self):
+        """DPNG-3156 DAS can't be found by uploader sometimes"""
+        self.step("Generate sample csv file")
+        file_path = generate_csv_file(column_count=10, row_count=10)
+        for is_public, access in self.ACCESSIBILITIES.items():
+            transfer, dataset = self._get_transfer_and_dataset(file_path, is_public)
+            self.step("Generate expected dataset summary and get real dataset summary")
+            expected_details = self._get_expected_dataset_details(self.org.guid, "CSV", is_public, file_path, transfer, True)
+            ds_details = dataset.get_details()
+            self.step("Compare dataset details with expected values")
+            for key in self.DETAILS_TO_COMPARE:
+                with self.subTest(accessibility=access, detail=key):
+                    self.assertEqual(expected_details[key], ds_details[key])
+
+    @unittest.expectedFailure
+    def test_create_dataset_from_file_recordcount(self):
+        """DPNG-3656 Wrong record count for csv file in dataset details"""
+        label = "recordCount"
+        self.step("Generate sample csv file")
+        file_path = generate_csv_file(column_count=10, row_count=10)
+        for is_public, access in self.ACCESSIBILITIES.items():
+            transfer, dataset = self._get_transfer_and_dataset(file_path, is_public)
+            with self.subTest(accessibility=access, detail=label):
+                self.assertEqual(dataset.record_count, get_csv_record_count(file_path))
+
+    def test_create_dataset_from_url(self):
+        """DPNG-3156 DAS can't be found by uploader sometimes"""
+        self.step("Download sample csv file")
+        file_path = download_file(EXAMPLE_LINK)
+        for is_public, access in self.ACCESSIBILITIES.items():
+            transfer, dataset = self._get_transfer_and_dataset(EXAMPLE_LINK, is_public, is_file_local=False)
+            self.step("Generate expected dataset summary and get real dataset summary")
+            expected_details = self._get_expected_dataset_details(self.org.guid, "CSV", is_public, file_path, transfer)
+            ds_details = dataset.get_details()
+            self.step("Compare dataset details with expected values")
+            for key in self.DETAILS_TO_COMPARE:
+                with self.subTest(accessibility=access, detail=key):
+                    self.assertEqual(expected_details[key], ds_details[key])
+
+    @unittest.expectedFailure
+    def test_create_dataset_from_url_recordcount(self):
+        """DPNG-3656 Wrong record count for csv file in dataset details"""
+        label = "recordCount"
+        self.step("Download sample csv file")
+        file_path = download_file(EXAMPLE_LINK)
+        for is_public, access in self.ACCESSIBILITIES.items():
+            transfer, dataset = self._get_transfer_and_dataset(EXAMPLE_LINK, is_public, is_file_local=False)
+            with self.subTest(accessibility=access, detail=label):
+                self.assertEqual(dataset.record_count, get_csv_record_count(file_path))

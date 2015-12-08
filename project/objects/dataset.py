@@ -15,6 +15,7 @@
 #
 
 import functools
+import datetime
 
 from retry import retry
 
@@ -113,3 +114,10 @@ class DataSet(object):
                 ds.api_delete()
             except UnexpectedResponseError:
                 logger.warning("Failed to delete: {}".format(ds))
+
+    def get_details(self):
+        return dict(accessibility="PUBLIC" if self.is_public else "PRIVATE", title=self.title, category=self.category,
+                    recordCount=self.record_count, sourceUri=self.source_uri, size=self.size, orgUUID=self.org_guid,
+                    targetUri=self.target_uri, format=self.format, dataSample=self.data_sample, isPublic=self.is_public,
+                    creationTime=datetime.datetime.strptime(self.creation_time, "%Y-%m-%dT%H:%M:%S.%f")
+                    .strftime("%Y-%m-%dT%H:%M:%S"))

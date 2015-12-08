@@ -124,6 +124,8 @@ class Transfer(object):
     def ensure_finished(self, timeout=120):
         transfer = self.get_until_finished(self.id, timeout)
         self.state = transfer.state
+        self.id_in_object_store = transfer.id_in_object_store
+        self.timestamps = transfer.timestamps
         if self.state != self.finished_status:
             raise AssertionError("Transfer did not finish in {}s".format(timeout))
 
