@@ -19,7 +19,7 @@ from urllib.parse import urlparse
 
 import requests
 
-from test_utils import platform_api_calls as api, get_logger, UnexpectedResponseError
+from test_utils import platform_api_calls as api, get_logger, UnexpectedResponseError, CONFIG
 
 
 logger = get_logger("external_tools")
@@ -32,6 +32,8 @@ class ExternalTools(object):
         self.name = name
         self.url = url
         self.available = available
+        self._session = requests.session()
+        self._session.verify = CONFIG["ssl_validation"]
 
     def __eq__(self, other):
         return self.name == other.name and self.url == other.url and self.available == other.available
@@ -61,8 +63,8 @@ class ExternalTools(object):
         if not (parsed_url.scheme and parsed_url.hostname):
             raise AssertionError("{} url is invalid: {}".format(self, self.url))
         url = "{}://{}".format(parsed_url.scheme, parsed_url.hostname)
-        request = getattr(requests, method.lower())
-        response = request(url=url)
+        request = self._session.prepare_request(requests.Request(method=method.upper(), url=url))
+        response = self._session.send(request)
         if not response.ok:
             raise UnexpectedResponseError(response.status_code, response.text)
         return response.text

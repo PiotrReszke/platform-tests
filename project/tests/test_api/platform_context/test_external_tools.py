@@ -25,7 +25,7 @@ logger = get_logger("test_external_tools")
 
 class TestExternalTools(ApiTestCase):
 
-    @unittest.expectedFailure
+    # @unittest.expectedFailure
     def test_check_status_code_of_external_tools(self):
         """DPNG-3366 Make Hue available from outside CF network"""
         self.step("Get list of external tools")
