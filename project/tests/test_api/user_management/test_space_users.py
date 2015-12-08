@@ -329,29 +329,10 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                                                         User.api_create_by_adding_to_space, TEST_ORG.guid,
                                                         TEST_SPACE.guid, inviting_client=USERS_CLIENTS[client])
 
-    @unittest.expectedFailure
-    def test_update_role_as_space_and_org_manager(self):
-        """DPNG-3364 space and org managers can't change user space roles - http status 403"""
-        client_permission = ["org_manager", "space_manager_in_org"]
-        new_roles = User.SPACE_ROLES["auditor"]
-        for client in client_permission:
-            with self.subTest(userType=client):
-                test_user = User.api_create_by_adding_to_space(TEST_ORG.guid, TEST_SPACE.guid,
-                                                               roles=User.SPACE_ROLES["developer"])
-                test_user.api_update_space_roles(TEST_SPACE.guid, new_roles=new_roles,
-                                                 client=USERS_CLIENTS[client])
-                self._assert_user_in_space_with_roles(test_user, TEST_SPACE.guid)
-
     def test_update_role(self):
-        client_permission = {
-            "admin": True,
-            "org_user": False,
-            "other_org_manager": False,
-            "other_user": False
-        }
         new_roles = User.SPACE_ROLES["auditor"]
         self.step("Try to change user space role using every client type.")
-        for client, is_authorized in client_permission.items():
+        for client, is_authorized in self.client_permission.items():
             with self.subTest(userType=client):
                 test_user = User.api_create_by_adding_to_space(TEST_ORG.guid, TEST_SPACE.guid,
                                                                roles=User.SPACE_ROLES["developer"])
