@@ -27,7 +27,7 @@ class TestExternalTools(ApiTestCase):
 
     @unittest.expectedFailure
     def test_check_status_code_of_external_tools(self):
-        """DPNG-3366 Make Hue available from outside CF network"""
+        """DPNG-2306 Availability of Arcadia and Hue should be discovered automatically"""
         self.step("Get list of external tools")
         tools_list = ExternalTools.api_get_external_tools()
         self.assertGreater(len(tools_list), 0)
