@@ -123,8 +123,9 @@ class ServiceInstance(object):
                    service_plan_guid=service_plan_guid)
 
     @classmethod
-    def cf_api_create(cls, space_guid, service_plan_guid, name_prefix):
-        name = "{}_{}".format(name_prefix, datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
+    def cf_api_create(cls, space_guid, service_plan_guid, name=None, name_prefix=None):
+        if name is None:
+            name = "{}_{}".format(name_prefix, datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
         response = cf.cf_api_create_service_instance(name, space_guid, service_plan_guid)
         return cls(guid=response["metadata"]["guid"], name=name, space_guid=space_guid,
                    service_plan_guid=service_plan_guid)

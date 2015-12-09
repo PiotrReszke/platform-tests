@@ -54,17 +54,6 @@ class Postgres(ApiTestCase):
         return psql_instance.name
 
     @classmethod
-    def _push_psql_app(cls, test_space, postgres_instance_name):
-        cls.step("Update app name and service name in manifest")
-        psql_app = Application(name="psql_ex" + cls.NAME_PREFIX, space_guid=test_space.guid,
-                               local_path=cls.PSQL_APP_DIR)
-        psql_app.change_name_in_manifest(psql_app.name)
-        psql_app.change_bound_services_in_manifest((postgres_instance_name,))
-        cls.step("Push postgres app to cf")
-        psql_app.cf_push()
-        return psql_app
-
-    @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
         cls.step("Clone {}".format(cls.APP_REPO_NAME))
@@ -75,7 +64,13 @@ class Postgres(ApiTestCase):
         cls.step("Login to the new organization")
         cf.cf_login(test_org.name, test_space.name)
         postgres_instance_name = cls._create_postgres_instance(test_org, test_space)
-        cls.psql_app = cls._push_psql_app(test_space, postgres_instance_name)
+        cls.step("Push psql api app to cf")
+        cls.psql_app = Application.push(
+            space_guid=test_space.guid,
+            source_directory=cls.PSQL_APP_DIR,
+            name="psql_ex" + cls.NAME_PREFIX,
+            bound_services=(postgres_instance_name,)
+        )
 
     @classmethod
     def tearDownClass(cls):

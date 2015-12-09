@@ -14,36 +14,21 @@
 # limitations under the License.
 #
 
-import base64
 import json
 import os
-import re
 
 import requests
 from retry import retry
 import yaml
 
-from test_utils import cloud_foundry as cf, platform_api_calls as api, config, get_logger, UnexpectedResponseError, \
+from test_utils import cloud_foundry as cf, platform_api_calls as api, get_logger, UnexpectedResponseError, \
     log_http_request, log_http_response
 
 
 logger = get_logger("application")
 
 
-__all__ = ["Application", "github_get_file_content"]
-
-
-def github_get_file_content(repository, path, owner="intel-data"):
-    """intel-data repository chosen as it contains data to be tested which then will go to trustedanalytics repo"""
-    endpoint = "https://api.github.com/repos/{}/{}/contents/{}".format(owner, repository, path)
-    logger.info("Retrieving content of {}/{}/{}".format(owner, repository, path))
-    auth = config.CONFIG["github_auth"]
-    response = requests.get(endpoint, auth=auth)
-    if response.status_code != 200:
-        raise Exception("Github API response is {} {}".format(response.status_code, response.text))
-    encoding = response.encoding
-    response_content = response.content.decode(encoding)
-    return base64.b64decode(json.loads(response_content)["content"])
+__all__ = ["Application"]
 
 
 class Application(object):
@@ -52,22 +37,15 @@ class Application(object):
 
     MANIFEST_NAME = "manifest.yml"
 
-    def __init__(self, name, space_guid=None, guid=None, local_path=None, state=None, instances=None,
-                 memory=None, service_names=(), disk=None, urls=(), topic=None):
+    def __init__(self, name, guid, space_guid, state, instances, urls):
         """local_path - directory where application manifest is located"""
-        self.name, self.guid, self.space_guid = name, guid, space_guid
-        self.instances, self.memory, self.disk = instances, memory, disk
-        self.service_names, self.urls = tuple(service_names), tuple(urls)
-        self.topic = topic
-        self.request_session = requests.session()
+        self.name = name
+        self.guid = guid
+        self.space_guid = space_guid
         self._state = state
-        self._local_path = self._local_jar = local_path
-        if self._local_path is not None:
-            self.manifest_path = os.path.normpath(os.path.join(local_path, self.MANIFEST_NAME))
-            with open(self.manifest_path) as f:
-                self.manifest = yaml.load(f.read())
-            if "path" in self.manifest["applications"][0]:
-                self._local_jar += ("/" + self.manifest["applications"][0]["path"])
+        self.instances = instances
+        self.urls = tuple(urls)
+        self.request_session = requests.session()
 
     def __repr__(self):
         return "{0} (name={1}, guid={2})".format(self.__class__.__name__, self.name, self.guid)
@@ -86,31 +64,41 @@ class Application(object):
             return None
         return self.instances[0] > 0
 
-    def __save_manifest(self):
-        with open(self.manifest_path, "w") as f:
-            f.write(yaml.dump(self.manifest))
+    @classmethod
+    def push(cls, space_guid, source_directory, name, bound_services=None, env=None):
+        """
+        Application which will later be pushed to cf.
+        source_directory -- where manifest.yml is located
+        name -- name of pushed app (will be changed in manifest)
+        bound_services -- iterable with bound service names to be included in manifest
+        env -- dict with app's env values to be added to manifest
+        """
+        # read manifest
+        manifest_path = os.path.normpath(os.path.join(source_directory, cls.MANIFEST_NAME))
+        jar_path = source_directory
+        with open(manifest_path) as f:
+            manifest = yaml.load(f.read())
+        if "path" in manifest["applications"][0]:
+            jar_path = os.path.join(jar_path, manifest["applications"][0]["path"])
 
-    def change_name_in_manifest(self, new_name):
-        self.manifest["applications"][0]["name"] = new_name
-        self.__save_manifest()
+        # change manifest values
+        manifest["applications"][0]["name"] = name
+        if bound_services is not None:
+            manifest["applications"][0]["services"] = list(bound_services)
+        if env is not None:
+            for env_name, env_val in env.items():
+                manifest["applications"][0]["env"][env_name] = env_val
+        with open(manifest_path, "w") as f:
+            f.write(yaml.dump(manifest))
 
-    def change_topic_in_manifest(self, new_topic):
-        self.manifest["applications"][0]["env"]["TOPICS"] = new_topic
-        self.__save_manifest()
+        # push application
+        cf.cf_push(source_directory, jar_path)
 
-    def change_consumer_group_in_manifest(self, new_consumer_group):
-        self.manifest["applications"][0]["env"]["CONSUMER_GROUP"] = new_consumer_group
-        self.__save_manifest()
-
-    def change_bound_services_in_manifest(self, service_names):
-        self.manifest["applications"][0]["services"] = list(service_names)
-        self.__save_manifest()
-
-    def add_env_in_manifest(self, variable_name, value):
-        envs = self.manifest["applications"][0]["env"]
-        envs.update({variable_name: value})
-        self.manifest["applications"][0]["env"] = envs
-        self.__save_manifest()
+        # retrieve the application - check that push succeeded
+        application = next((app for app in Application.api_get_list(space_guid) if app.name == name), None)
+        if application is None:
+            raise AssertionError("App {} has not been created on the Platform".format(name))
+        return application
 
     def api_request(self, path, method="GET", scheme="http", hostname=None, data=None, params=None, body=None):
         """Send a request to application api"""
@@ -156,8 +144,7 @@ class Application(object):
         applications = []
         for app in response:
             application = cls(name=app["name"], space_guid=space_guid, guid=app["guid"], state=app["state"],
-                              urls=app["urls"], service_names=app["service_names"],
-                              instances=(app["running_instances"],))
+                              urls=app["urls"], instances=(app["running_instances"],))
             applications.append(application)
         return applications
 
@@ -168,47 +155,24 @@ class Application(object):
     def api_delete(self, cascade=True, client=None):
         api.api_delete_app(self.guid, cascade=cascade, client=client)
 
-    def api_get_orphan_services(self, client=None):
-        response = api.api_get_app_orphan_services(self.guid, client=client)
-        # TODO should probably return a list of ServiceInstance objects initialized from response
-
-    def api_restage_app(self, client=None):
+    def api_restage(self, client=None):
         api.api_change_app_status(self.guid, self.STATUS["restage"], client=client)
 
-    def api_start_app(self, client=None):
+    def api_start(self, client=None):
         api.api_change_app_status(self.guid, self.STATUS["start"], client=client)
 
-    def api_stop_app(self, client=None):
+    def api_stop(self, client=None):
         api.api_change_app_status(self.guid, self.STATUS["stop"], client=client)
-
-    def api_get_service_bindings(self, client=None):
-        # TODO
-        response = api.api_get_app_bindings(self.guid, client=client)
-        bindings = []
-        for data in response:
-            bindings.append({
-                "guid": data["metadata"]["guid"],
-                "app_guid": self.guid,
-                "service_instance_guid": data["entity"]["service_instance_guid"]
-            })
-        return bindings
-
-    def api_create_service_binding(self, service_instance_guid, client=None):
-        # TODO
-        api.api_create_service_binding(self.guid, service_instance_guid, client=client)
-
-    @staticmethod
-    def api_delete_service_binding(binding_guid, client=None):
-        # TODO
-        api.api_delete_service_binding(binding_guid, client=client)
 
     @classmethod
     @retry(AssertionError, tries=180, delay=5)
     def ensure_started(cls, space_guid, application_name_prefix):
         applications = cls.api_get_list(space_guid)
         application = next((app for app in applications if app.name.startswith(application_name_prefix)), None)
-        if application is None or application._state != cls.STATUS["start"]:
-            raise AssertionError("{} app does not exist or is not started".format(application_name_prefix))
+        if application is None:
+            raise AssertionError("{} app does not exist".format(application_name_prefix))
+        if not application.is_started:
+            raise AssertionError("{} is not started".format(application))
         return application
 
     # -------------------------------- cf api -------------------------------- #
@@ -217,9 +181,8 @@ class Application(object):
     def from_cf_api_space_summary_response(cls, response, space_guid):
         applications = []
         for app_data in response["apps"]:
-            app = cls(name=app_data["name"], space_guid=space_guid, state=app_data["state"], memory=app_data["memory"],
-                      disk=app_data["disk_quota"], instances=(app_data["running_instances"], app_data["instances"]),
-                      urls=tuple(app_data["urls"]), guid=app_data["guid"])
+            app = cls(name=app_data["name"], space_guid=space_guid, state=app_data["state"], guid=app_data["guid"],
+                      instances=(app_data["running_instances"], app_data["instances"]), urls=tuple(app_data["urls"]))
             applications.append(app)
         return applications
 
@@ -247,27 +210,9 @@ class Application(object):
             "VCAP_APPLICATION": response["application_env_json"]["VCAP_APPLICATION"]
         }
 
-    def cf_api_delete(self):
-        try:
-            cf.cf_api_delete_app(self.guid)
-        except UnexpectedResponseError as e:
-            if "CF-AppNotFound" in e.error_message:
-                logger.warning("Application {} was not found".format(self.guid))
-            else:
-                raise
+    def get_credentials(self, service_name, i=0):
+        env = self.cf_api_env()
+        return env["VCAP_SERVICES"][service_name][i]["credentials"]
 
-    # -------------------------------- cf cli -------------------------------- #
-
-    def cf_push(self):
-        cf.cf_push(self._local_path, self._local_jar)
-        self.guid, self.urls, self._state = next((app.guid, app.urls, app._state)
-                                                 for app in Application.api_get_list(self.space_guid)
-                                                 if app.name == self.name)
-
-    def cf_env(self):
-        output = cf.cf_env(self.name)
-        start = re.search("^\{$", output, re.MULTILINE).start()
-        end = re.search("^\}$", output, re.MULTILINE).end()
-        return json.loads(output[start:end])
 
 

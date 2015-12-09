@@ -15,7 +15,7 @@
 #
 
 from .service_instance_key import ServiceInstanceKey
-from .application import Application, github_get_file_content
+from .application import Application
 from .service_instance import ServiceInstance, AtkInstance
 from .space import Space
 from .organization import Organization

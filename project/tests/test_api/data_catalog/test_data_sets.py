@@ -199,7 +199,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         self.step("Delete dataset")
         dataset.api_delete()
         self.step("Try to delete the dataset again")
-        self.assertRaisesUnexpectedResponse(404, "null", dataset.api_delete)
+        self.assertRaisesUnexpectedResponse(404, "", dataset.api_delete)
 
     def test_change_private_dataset_to_public(self):
         dataset = self._create_dataset(self.org, self.source)

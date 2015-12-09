@@ -16,8 +16,8 @@
 
 import yaml
 
-from test_utils import ApiTestCase, get_logger, config
-from objects import Application, ServiceInstance, ServiceBroker, Organization, github_get_file_content
+from test_utils import ApiTestCase, get_logger, config, github_get_file_content
+from objects import Application, ServiceInstance, ServiceBroker, Organization
 
 
 logger = get_logger(__name__)

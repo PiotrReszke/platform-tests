@@ -25,7 +25,7 @@ import paho.mqtt.client as mqtt
 
 from test_utils import ApiTestCase, get_logger, config, app_source_utils, cloud_foundry as cf, \
     cleanup_after_failed_setup
-from objects import Application, Organization
+from objects import Application, Organization, ServiceType, ServiceInstance
 
 
 logger = get_logger("test_mqtt")
@@ -33,10 +33,10 @@ logger = get_logger("test_mqtt")
 
 class TestMqtt(ApiTestCase):
 
-    DB_SERVICE_NAME = "influxdb088"
-    DB_SERVICE_INSTANCE_NAME = "mqtt-demo-db"
-    MQTT_SERVICE_NAME = "mosquitto14"
-    MQTT_SERVICE_INSTANCE_NAME = "mqtt-demo-messages"
+    INFLUX_LABEL = "influxdb088"
+    INFLUX_INSTANCE_NAME = "mqtt-demo-db"
+    MQTT_LABEL = "mosquitto14"
+    MQTT_INSTANCE_NAME = "mqtt-demo-messages"
     APP_REPO_PATH = "../../mqtt-demo"
     TEST_DATA_FILE = os.path.join(os.path.dirname(__file__), "shuttle_scale_cut_val.csv")
     APP_NAME = "mqtt-demo"
@@ -44,46 +44,66 @@ class TestMqtt(ApiTestCase):
     SERVER_CERTIFICATE = os.path.join(os.path.dirname(__file__), "mosquitto_demo_cert.pem")
     MQTT_TOPIC_NAME = "space-shuttle/test-data"
 
-    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
-    def setUp(self):
+    def _compile_mqtt_demo(self):
         self.step("Clone repository mqtt-demo")
         app_source_utils.clone_repository("mqtt-demo", self.APP_REPO_PATH)
         self.step("Compile the sources")
         app_source_utils.compile_mvn(self.APP_REPO_PATH)
+
+    def _create_service_instances(self, space):
+        self.step("Create service instances of {} and {}".format(self.INFLUX_LABEL, self.MQTT_LABEL))
+        services = ServiceType.api_get_list_from_marketplace(space.guid)
+        influx = next(s for s in services if s.label == self.INFLUX_LABEL)
+        ServiceInstance.cf_api_create(space.guid, influx.service_plan_guids[0], name=self.INFLUX_INSTANCE_NAME)
+        mqtt = next(s for s in services if s.label == self.MQTT_LABEL)
+        ServiceInstance.cf_api_create(space.guid, mqtt.service_plan_guids[0], name=self.MQTT_INSTANCE_NAME)
+
+    def _push_app(self, org, space):
+        self.step("Login to cf")
+        cf.cf_login(org.name, space.name)
+        self.step("Push mqtt app to cf")
+        app = Application.push(
+            source_directory=self.APP_REPO_PATH,
+            name=self.APP_NAME,
+            space_guid=space.guid
+        )
+        return app
+
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
+    def setUp(self):
+        self._compile_mqtt_demo()
         self.step("Create test organization and space")
         test_org = Organization.api_create(space_names=("test-space",))
         test_space = test_org.spaces[0]
-        self.step("Login to cf")
-        cf.cf_login(test_org.name, test_space.name)
+        self._create_service_instances(test_space)
+        mqtt_demo_app = self._push_app(test_org, test_space)
+        self.step("Retrieve credentials for mqtt service instance")
+        self.credentials = mqtt_demo_app.get_credentials(service_name=self.MQTT_LABEL)
 
     @unittest.expectedFailure
     def test_connection(self):
-        """DPNG-3213 Cannot push mqtt-demo due to lacking atkscoringengine service"""
-        self.step("Create service instances of {} and {}".format(self.DB_SERVICE_NAME, self.MQTT_SERVICE_NAME))
-        cf.cf_create_service(self.DB_SERVICE_NAME, "free", self.DB_SERVICE_INSTANCE_NAME)
-        cf.cf_create_service(self.MQTT_SERVICE_NAME, "free", self.MQTT_SERVICE_INSTANCE_NAME)
+        """DPNG-3929 Mosquitto crendentials support"""
+        mqtt_port = self.credentials.get("port")
+        self.assertIsNotNone(mqtt_port)
+        mqtt_username = self.credentials.get("username")
+        self.assertIsNotNone(mqtt_username)
+        mqtt_pwd = self.credentials.get("password")
+        self.assertIsNotNone(mqtt_pwd)
 
-        self.step("Push {} application to cf".format(self.APP_NAME))
-        application = Application(local_path=self.APP_REPO_PATH, name=self.APP_NAME)
-        application.cf_push()
-        self.step("Retrieve credentials for {} service instance".format(self.MQTT_SERVICE_NAME))
-        credentials = application.cf_api_env()["VCAP_SERVICES"][self.MQTT_SERVICE_NAME][0]["credentials"]
-        port_mosquitto = credentials["port"]
+        self.step("Connect to {} with mqtt client".format(self.MQTT_SERVER))
+        mqtt_client = mqtt.Client()
+        mqtt_client.username_pw_set(mqtt_username, mqtt_pwd)
+        mqtt_client.tls_set(self.SERVER_CERTIFICATE, tls_version=ssl.PROTOCOL_TLSv1_2)
+        mqtt_client.connect(self.MQTT_SERVER, int(mqtt_port), 20)
+        with open(self.TEST_DATA_FILE) as f:
+            expected_data = f.read().split("\n")
 
         self.step("Start reading logs")
         logs = subprocess.Popen(["cf", "logs", "mqtt-demo"], stdout=subprocess.PIPE)
         time.sleep(5)
 
-        self.step("Connect to {} with an mqtt client".format(self.MQTT_SERVER))
-        mqtt_client = mqtt.Client()
-        mqtt_client.username_pw_set(credentials["username"], credentials["password"])
-        mqtt_client.tls_set(self.SERVER_CERTIFICATE, tls_version=ssl.PROTOCOL_TLSv1_2)
-        mqtt_client.connect(self.MQTT_SERVER, int(port_mosquitto), 20)
-        with open(self.TEST_DATA_FILE) as f:
-            expected_data = f.read().split("\n")
-
         self.step("Send {0} data vectors to {1}:{2} on topic {3}".format(len(expected_data), self.MQTT_SERVER,
-                                                                         port_mosquitto, self.MQTT_TOPIC_NAME))
+                                                                         mqtt_port, self.MQTT_TOPIC_NAME))
         for line in expected_data:
             mqtt_client.publish(self.MQTT_TOPIC_NAME, line)
 

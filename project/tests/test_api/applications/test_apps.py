@@ -40,25 +40,21 @@ class Apps(ApiTestCase):
         self.test_space = self.test_org.spaces[0]
         self.step("Login to cf targeting test org and test space")
         cf.cf_login(self.test_org.name, self.test_space.name)
-        self.test_app = self._push_app(self.test_org, self.test_space)
+        self.test_app = Application.push(
+            space_guid=self.test_space.guid,
+            source_directory=self.APP_REPO_PATH,
+            name=self.APP_NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        )
         self.step("Check the application is running")
         self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
-
-    def _push_app(self, org, space):
-        self.step("Push the example application to cf")
-        name = self.APP_NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-        application = Application(local_path=self.APP_REPO_PATH, name=name, space_guid=self.test_space.guid)
-        application.change_name_in_manifest(name)
-        application.cf_push()
-        return application
 
     def test_api_push_stop_start_delete(self):
         """DPNG-3037 when stopping application app name changes name to \"STOPPED\" """
         self.step("Stop the application and check that it is stopped")
-        self.test_app.api_stop_app()
+        self.test_app.api_stop()
         self.assertEqualWithinTimeout(120, False, self.test_app.cf_api_app_is_running)
         self.step("Start the application and check that it has started")
-        self.test_app.api_start_app()
+        self.test_app.api_start()
         self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
         self.step("Delete the application and check that it doesn't exist")
         self.test_app.api_delete()
@@ -66,7 +62,7 @@ class Apps(ApiTestCase):
 
     def test_api_push_restage_delete(self):
         self.step("Restage the application and check that it is running")
-        self.test_app.api_restage_app()
+        self.test_app.api_restage()
         self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
         self.step("Delete the application and check that it doesn't exist")
         self.test_app.api_delete()
