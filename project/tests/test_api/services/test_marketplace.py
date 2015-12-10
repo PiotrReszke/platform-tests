@@ -38,21 +38,18 @@ class TestMarketplaceServices(ApiTestCase):
     def tearDownClass(cls):
         Organization.cf_api_tear_down_test_orgs()
 
-    def _test_service_instance_creation_and_deletion(self, service_type):
-        for plan in service_type.service_plans:
-            with self.subTest(service=service_type, plan=plan['name']):
-                self.step("Create instance of {} ({} plan). Check it exists.".format(service_type.label, plan["name"]))
-                service_instance_name = service_type.label + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-                instance = ServiceInstance.api_create(name=service_instance_name,
-                                                      service_plan_guid=plan['guid'],
-                                                      space_guid=service_type.space_guid,
-                                                      org_guid=self.test_organization.guid)
-                self.assertIsNotNone(instance, "{} instance was not created".format(service_type))
-                self.step("Delete the instance and check it no longer exists")
-                instance.api_delete()
-                instances = ServiceInstance.api_get_list(space_guid=service_type.space_guid,
-                                                         service_type_guid=service_type.guid)
-                self.assertNotInList(instance, instances, "{} instance was not deleted".format(service_type))
+    def _test_service_instance_creation_and_deletion(self, service_type, plan_guid):
+        service_instance_name = service_type.label + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        instance = ServiceInstance.api_create(name=service_instance_name,
+                                              service_plan_guid=plan_guid,
+                                              space_guid=service_type.space_guid,
+                                              org_guid=self.test_organization.guid)
+        self.assertIsNotNone(instance, "{} instance was not created".format(service_type))
+        self.step("Delete the instance and check it no longer exists")
+        instance.api_delete()
+        instances = ServiceInstance.api_get_list(space_guid=service_type.space_guid,
+                                                 service_type_guid=service_type.guid)
+        self.assertNotInList(instance, instances, "{} instance was not deleted".format(service_type))
 
     def test_check_marketplace_services_list_vs_cloudfoundry(self):
         self.step("Check that services in cf are the same as in Marketplace")
@@ -65,23 +62,9 @@ class TestMarketplaceServices(ApiTestCase):
         self.step("Check that {} service is available in Marketplace".format(label))
         service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
         self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
-        self._test_service_instance_creation_and_deletion(service_type)
-
-    def test_create_zookeeper_instance(self):
-        """DPNG-2130 Cannot create zookeeper instance on Ireland - Bad Gateway"""
-        label = "zookeeper"
-        self.step("Check that {} service is available in Marketplace".format(label))
-        service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
-        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
-        self._test_service_instance_creation_and_deletion(service_type)
-
-    def test_create_hbase_instance(self):
-        """DPNG-2299 Error when creating hbase service instance in Marketplace"""
-        label = "hbase"
-        self.step("Check that {} service is available in Marketplace".format(label))
-        service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
-        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
-        self._test_service_instance_creation_and_deletion(service_type)
+        for plan in service_type.service_plans:
+            with self.subTest(service=service_type.label, plan=plan['name']):
+                self._test_service_instance_creation_and_deletion(service_type, plan["guid"])
 
     def test_create_hdfs_instance(self):
         """DPNG-2580 Creating instance of hdfs with plan encrypted fails with 502 Bad Gateway"""
@@ -89,21 +72,28 @@ class TestMarketplaceServices(ApiTestCase):
         self.step("Check that {} service is available in Marketplace".format(label))
         service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
         self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
-        self._test_service_instance_creation_and_deletion(service_type)
+        for plan in service_type.service_plans:
+            with self.subTest(service=service_type.label, plan=plan['name']):
+                self._test_service_instance_creation_and_deletion(service_type, plan["guid"])
 
-    def test_create_memcached14_instance(self):
-        """DPNG-2476 Cannot create memcached14 1Gb instance on Ireland - Bad Gateway"""
-        label = "memcached14"
+    @unittest.expectedFailure
+    def test_create_atk_instance(self):
+        """DPNG-3788 502 bad gateway while creating ATK instance"""
+        label = "atk"
         self.step("Check that {} service is available in Marketplace".format(label))
         service_type = next((st for st in self.platform_marketplace_services if st.label == label), None)
         self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
-        self._test_service_instance_creation_and_deletion(service_type)
+        for plan in service_type.service_plans:
+            with self.subTest(service=service_type.label, plan=plan['name']):
+                self._test_service_instance_creation_and_deletion(service_type, plan["guid"])
 
     def test_create_instance_of_other_services(self):
         # excluded services are tested elsewhere or are not to be tested
-        excluded_services = ("atk", "gateway", "h2oUC", "h2oUC-docker", "hbase", "hdfs", "hello", "simple-hello-env",
-                             "zookeeper", "pg-test-pz", "hdfs-oauth", "hdfs-alpha", "memcached14")
+        excluded_services = ("atk", "gateway", "hdfs")
         tested_service_types = [st for st in self.platform_marketplace_services if st.label not in excluded_services]
         for service_type in tested_service_types:
-            self._test_service_instance_creation_and_deletion(service_type)
+            for plan in service_type.service_plans:
+                with self.subTest(service=service_type.label, plan=plan['name']):
+                    self.step("Create instance of {} ({} plan). Check it exists.".format(service_type.label, plan["name"]))
+                    self._test_service_instance_creation_and_deletion(service_type, plan["guid"])
 
