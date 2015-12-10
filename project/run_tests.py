@@ -34,25 +34,26 @@ if __name__ == "__main__":
                               domain=args.environment,
                               proxy=args.proxy,
                               logged_response_body_length=args.logged_response_body_length,
-                              logging_level=args.logging_level)
-    for key in ["domain", "admin_username", "client_type", "proxy", "ssl_validation"]:
-        logger.info("{}={}".format(key, config.CONFIG[key]))
+                              logging_level=args.logging_level,
+                              platform_version=args.platform_version)
+    for key in ["domain", "admin_username", "client_type", "proxy", "ssl_validation", "platfom_version"]:
+        logger.info("{}={}".format(key, config.CONFIG.get(key)))
 
     # select group of tests to run
     loader = unittest.TestLoader()
     loaded_tests = None
-    if args.test_to_run is not None:
-        loader.testMethodPrefix = args.test_to_run
-    test_dir = "tests"
     if args.test is not None:
-        test_dir = os.path.join("tests", args.test)
+        loader.testMethodPrefix = args.test
+    test_dir = "tests"
+    if args.suite is not None:
+        test_dir = os.path.join("tests", args.suite)
     if os.path.isfile(test_dir):
         test_dir, file_name = os.path.split(test_dir)
         loaded_tests = loader.discover(test_dir, file_name)
     elif os.path.isdir(test_dir):
         loaded_tests = loader.discover(test_dir)
     else:
-        raise NotADirectoryError("Directory {} doesn't exists".format(args.test))
+        raise NotADirectoryError("Directory {} doesn't exists".format(args.suite))
     if loaded_tests is not None and loaded_tests.countTestCases() is 0:
         raise Exception("No tests found.")
 

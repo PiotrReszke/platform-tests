@@ -40,12 +40,6 @@ __CONFIG.read_string("""
         ssl_validation = True
     [demo-gotapaas.com]
         ssl_validation = True
-    [52.20.52.106.xip.io]
-        ref_org_name = sato
-        ref_space_name = dev
-    [10.239.165.208.xip.io]
-        ref_org_name = sh.intel.com
-        ref_space_name = dp2
 """)
 
 
@@ -58,9 +52,10 @@ CONFIG = {
 
 
 def update_test_config(domain=None, proxy=None, client_type=None, logged_response_body_length=None,
-                       logging_level=None):
+                       logging_level=None, platform_version="master"):
     defaults = __CONFIG.defaults()
     defaults.update(__SECRETS.defaults())
+    CONFIG["platform_version"] = platform_version
     if domain is not None:
         CONFIG["domain"] = domain
         CONFIG["admin_username"] = __CONFIG.get(domain, "admin_username", fallback=defaults["admin_username"])
@@ -93,7 +88,8 @@ update_test_config(domain="daily.gotapaas.com",
 update_test_config(domain=os.environ.get("TEST_ENVIRONMENT"),
                    proxy=os.environ.get("TEST_PROXY"),
                    client_type=os.environ.get("TEST_CLIENT_TYPE"),
-                   logged_response_body_length=os.environ.get("LOGGED_RESPONSE_BODY_LENGTH"))
+                   logged_response_body_length=os.environ.get("LOGGED_RESPONSE_BODY_LENGTH"),
+                   platform_version=os.environ.get("PLATFORM_VERSION", "master"))
 
 
 def parse_arguments():
@@ -101,24 +97,26 @@ def parse_arguments():
     parser.add_argument("-e", "--environment",
                         help="environment where tests are to be run, e.g. gotapaas.eu",
                         required=True)
+    parser.add_argument("-s", "--suite",
+                        default=None,
+                        help="a group of tests to execute (directory or file path)")
+    parser.add_argument("-t", "--test",
+                        default=None,
+                        help="pass single test name")
+    parser.add_argument("-v", "--platform-version",
+                        default="master",
+                        help="Platform version tag name")
     parser.add_argument("--proxy",
                         default=None,
                         help="set proxy for api client")
-    parser.add_argument("-t", "--test",
-                        default=None,
-                        help="a group of tests to execute")
     parser.add_argument("--client-type",
                         default="console",
                         choices=["console", "app"],
                         help="choose a client type for tests")
-    parser.add_argument("-u", help="obsolete argument")
     parser.add_argument("--logged-response-body-length",
                         default=1024,
                         help="Limit response body length that is logged. Set to -1 to log full body.")
     parser.add_argument("-l", "--logging-level",
                         choices=["DEBUG", "INFO", "WARNING"],
                         default="DEBUG")
-    parser.add_argument("-r", "--test-to-run",
-                        default=None,
-                        help="chose one test to run")
     return parser.parse_args()

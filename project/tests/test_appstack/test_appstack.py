@@ -16,7 +16,7 @@
 
 import yaml
 
-from test_utils import ApiTestCase, get_logger, config, github_get_file_content
+from test_utils import ApiTestCase, get_logger, CONFIG, github_get_file_content
 from objects import Application, ServiceInstance, ServiceBroker, Organization
 
 
@@ -28,7 +28,8 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
     @classmethod
     def setUpClass(cls):
         cls.step("Retrieve content of appstack.yml file")
-        settings_file = github_get_file_content(repository="platform-appstack", path="appstack.yml")
+        settings_file = github_get_file_content(repository="platform-appstack", file_path="appstack.yml",
+                                                ref=CONFIG["platform_version"])
         settings = yaml.load(settings_file)
         cls.step("Retrieve expected app, service, and broker names from the file")
         cls.expected_app_names = {app_info["name"] for app_info in settings["applications"]}

@@ -24,21 +24,23 @@ import subprocess
 from git import Repo
 import requests
 
-from . import config, log_command, get_logger
+from . import config, log_command, get_logger, log_http_request, log_http_response
 
 
-logger = get_logger("source utils")
+logger = get_logger(__name__)
 
 # Build gradle has problem with dependency and artifact
 url = "\"http://nexus.sclab.intel.com:8080/content/groups/public\""
 
 
-def github_get_file_content(repository, path, owner="intel-data"):
-    """intel-data repository chosen as it contains data to be tested which then will go to trustedanalytics repo"""
-    endpoint = "https://api.github.com/repos/{}/{}/contents/{}".format(owner, repository, path)
-    logger.info("Retrieving content of {}/{}/{}".format(owner, repository, path))
-    auth = config.CONFIG["github_auth"]
-    response = requests.get(endpoint, auth=auth)
+def github_get_file_content(repository, file_path, owner="intel-data", ref=None):
+    url = "https://api.github.com/repos/{}/{}/contents/{}".format(owner, repository, file_path)
+    session = requests.session()
+    request = session.prepare_request(requests.Request(method="GET", url=url, params={"ref": ref},
+                                                       auth=config.CONFIG["github_auth"]))
+    log_http_request(request, "")
+    response = session.send(request)
+    log_http_response(response)
     if response.status_code != 200:
         raise Exception("Github API response is {} {}".format(response.status_code, response.text))
     encoding = response.encoding
