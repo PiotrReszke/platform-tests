@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-from datetime import datetime
 import functools
 import time
 import unittest
@@ -29,9 +28,9 @@ __all__ = ["ApiTestCase", "cleanup_after_failed_setup"]
 
 logger = get_logger(__name__)
 
+
 FUNCTIONS_TO_LOG = ('setUp', 'tearDown', 'setUpClass', 'tearDownClass')
 SEPARATOR = "****************************** {} {} {} ******************************"
-
 
 def log_fixture_separator(func):
     func_is_classmethod = type(func) is classmethod
@@ -98,10 +97,6 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         self.__class__.STEP_NO = self.__class__.SUB_TEST_NO = 0
         logger.debug("\n{0}\n\n{1}\n\n{0}\n".format(separator, test_name))
         return super().run(result=result)
-
-    @staticmethod
-    def get_timestamp():
-        return datetime.now().strftime("%Y%m%d-%H%M%S%f")
 
     def assertInList(self, member, container, msg=None):
         """Modeled after TestCase.assertIn(), but testing for equality, not identity."""

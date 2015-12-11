@@ -14,10 +14,9 @@
 # limitations under the License.
 #
 
-import datetime
 import functools
 
-from test_utils import platform_api_calls as api, cloud_foundry as cf
+from test_utils import platform_api_calls as api, cloud_foundry as cf, get_test_name
 from objects import ServiceInstanceKey
 
 
@@ -48,10 +47,6 @@ class ServiceInstance(object):
     def __hash__(self):
         return hash(tuple(getattr(self, a) for a in self.COMPARABLE_ATTRS))
 
-    @staticmethod
-    def get_default_name(prefix):
-        return "{}_{}".format(prefix, datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
-
     # ----------------------------------------- Platform API ----------------------------------------- #
 
     @classmethod
@@ -62,7 +57,7 @@ class ServiceInstance(object):
         - service_plan_guid - one api call is used, or
         - service_label and service_plan_name - an additional call is made to retrieve service_plan_guid
         """
-        name = name or cls.get_default_name(service_label)
+        name = get_test_name() if name is None else name
         if all([x is None for x in (service_label, service_plan_name, service_plan_guid)]):
             raise ValueError("service_plan_guid, or service_label and service_plan_name have to be supplied")
         if service_plan_guid is None:
@@ -128,7 +123,7 @@ class ServiceInstance(object):
         - service_plan_guid - one api call is used, or
         - service_label and service_plan_name - 2 additional calls are made to retrieve service_plan_guid
         """
-        name = name or cls.get_default_name(service_label)
+        name = get_test_name() if name is None else name
         if all([x is None for x in (service_label, service_plan_name, service_plan_guid)]):
             raise ValueError("service_plan_guid, or service_label and service_plan_name have to be supplied")
         if service_plan_guid is None:

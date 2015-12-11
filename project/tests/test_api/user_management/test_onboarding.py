@@ -2,7 +2,7 @@ import unittest
 import re
 import time
 
-from test_utils import config, gmail_api, get_logger, ApiTestCase, platform_api_calls as api
+from test_utils import config, gmail_api, get_logger, ApiTestCase, platform_api_calls as api, get_test_name
 from objects import User, Organization
 
 
@@ -91,14 +91,14 @@ class Onboarding(ApiTestCase):
         non_admin_user = User.api_create_by_adding_to_organization(org_guid=self.test_org.guid)
         non_admin_user_client = non_admin_user.login()
         self.step("Check an error is returned when non-admin tries to onboard another user")
-        username = User.get_default_username()
+        username = get_test_name(email=True)
         self.assertRaisesUnexpectedResponse(403, "Access is denied", User.api_invite, username,
                                             inviting_client=non_admin_user_client)
         self._assert_user_received_messages(username, 0)
 
     def test_cannot_create_an_account_with_invalid_code(self):
         self.step("An error is returned when user registers with invalid code")
-        username = User.get_default_username()
+        username = get_test_name(email=True)
         self.assertRaisesUnexpectedResponse(403, "", User.api_register_after_onboarding,
                                             "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", username)
 
@@ -124,7 +124,7 @@ class Onboarding(ApiTestCase):
         code = gmail_api.get_invitation_code_for_user(username)
         self.step("Check that an error is returned when the user tries to register without a password")
         self.assertRaisesUnexpectedResponse(400, "Password cannot be empty", api.api_register_new_user, code=code,
-                                            org_name=Organization.get_default_name())
+                                            org_name=get_test_name())
         self.step("Check that the user was not created")
         username_list = [user.username for user in User.cf_api_get_all_users()]
         self.assertNotInList(username, username_list, "User was created")

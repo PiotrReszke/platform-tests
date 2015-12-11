@@ -17,7 +17,8 @@
 import unittest
 import time
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, PlatformApiClient, platform_api_calls as api
+from test_utils import ApiTestCase, cleanup_after_failed_setup, PlatformApiClient, platform_api_calls as api, \
+    get_test_name
 from objects import User, Organization, Space
 
 USERS_CLIENTS = {}
@@ -40,7 +41,7 @@ def setUpModule():
     other_test_org = Organization.api_create()
     TEST_SPACE = TEST_ORG.spaces[0]
 
-    USERS_CLIENTS['admin'] = PlatformApiClient.get_admin_client()
+    USERS_CLIENTS["admin"] = PlatformApiClient.get_admin_client()
     USERS_CLIENTS["org_manager"] = User.api_create_by_adding_to_organization(TEST_ORG.guid).login()
     USERS_CLIENTS["space_manager_in_org"] = User.api_create_by_adding_to_space(TEST_ORG.guid, TEST_SPACE.guid).login()
     USERS_CLIENTS["org_user"] = User.api_create_by_adding_to_organization(TEST_ORG.guid,
@@ -57,8 +58,7 @@ class BaseSpaceUserClass(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # way to silent tearDownClass method inherited from ApiTestCase class
-        # it has to be silented due to user reuse (user created in setUpModule can't be deleted
+        # silence tearDownClass method inherited from ApiTestCase class, so users are not deleted before tearDownModule
         pass
 
     def _assert_user_in_space_with_roles(self, expected_user, space_guid):
@@ -123,14 +123,16 @@ class AddNewUserToSpace(BaseSpaceUserClass):
                                             username=test_user.username)
 
     def test_cannot_create_user_with_special_characters_username(self):
-        test_username = User.TEST_EMAIL_FORM.format(str(time.time()) + "\n\t\"")
+        test_username = get_test_name(email=True)
+        test_username = test_username.replace("@", "\n\t@")
         self.assertRaisesUnexpectedResponse(409, "That email address is not valid", User.api_create_by_adding_to_space,
                                             TEST_ORG.guid, TEST_SPACE.guid, username=test_username)
 
     @unittest.expectedFailure
     def test_cannot_create_user_with_non_ascii_characters_username(self):
         """DPNG-3583 Http 500 when email contains non ascii characters"""
-        test_username = User.TEST_EMAIL_FORM.format(str(time.time()) + "ąśćżźł")
+        test_username = get_test_name(email=True)
+        test_username = test_username.replace("@", "ąśćżźł@")
         self.assertRaisesUnexpectedResponse(400, "Bad Request", User.api_create_by_adding_to_space, TEST_ORG.guid,
                                             TEST_SPACE.guid, username=test_username)
 
@@ -144,8 +146,8 @@ class AddNewUserToSpace(BaseSpaceUserClass):
         space_users = User.api_get_list_via_space(TEST_SPACE.guid)
         roles = ["i-don't-exist"]
         self.step("Check that error is raised when trying to add user using incorrect roles")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", User.api_create_by_adding_to_space, TEST_ORG.guid, TEST_SPACE.guid,
-                                            roles=roles)
+        self.assertRaisesUnexpectedResponse(400, "Bad Request", User.api_create_by_adding_to_space, TEST_ORG.guid,
+                                            TEST_SPACE.guid, roles=roles)
         self.step("Assert user list did not change")
         self.assertListEqual(User.api_get_list_via_space(TEST_SPACE.guid), space_users,
                              "User with incorrect roles was added to space")

@@ -48,8 +48,7 @@ class BaseOrgUserClass(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # way to silent tearDownClass method inherited from ApiTestCase class
-        # it has to be silented due to user reuse (user created in setUpModule can't be deleted
+        # silence tearDownClass method inherited from ApiTestCase class, so users are not deleted before tearDownModule
         pass
 
     def _assert_user_not_in_org(self, user, org_guid):

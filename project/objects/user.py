@@ -15,10 +15,8 @@
 #
 
 import functools
-import time
-
 from test_utils import config, PlatformApiClient, platform_api_calls as api, cloud_foundry as cf, gmail_api, \
-    get_logger, UnexpectedResponseError
+    get_logger, UnexpectedResponseError, get_test_name
 from . import Organization
 
 
@@ -30,8 +28,6 @@ logger = get_logger("user")
 @functools.total_ordering
 class User(object):
 
-    TEST_EMAIL = config.CONFIG["test_user_email"]
-    TEST_EMAIL_FORM = TEST_EMAIL.replace('@', '+{}@')
     __ADMIN = None
     ORG_ROLES = {
         "manager": {"managers"},
@@ -64,10 +60,6 @@ class User(object):
         return hash((self.guid, self.username))
 
     @classmethod
-    def get_default_username(cls):
-        return cls.TEST_EMAIL_FORM.format(time.time())
-
-    @classmethod
     def api_onboard(cls, username=None, password="testPassw0rd", org_name=None, inviting_client=None):
         """Onboarding of a new user. Return new User and Organization objects."""
         username = cls.api_invite(username, inviting_client)
@@ -77,8 +69,7 @@ class User(object):
     @classmethod
     def api_invite(cls, username=None, inviting_client=None):
         """Send invitation to a new user using inviting_client."""
-        if username is None:
-            username = User.get_default_username()
+        username = get_test_name(email=True) if username is None else username
         api.api_invite_user(username, client=inviting_client)
         cls.TEST_INVITED_EMAILS.append(username)
         return username
@@ -86,8 +77,7 @@ class User(object):
     @classmethod
     def api_register_after_onboarding(cls, code, username, password="testPassw0rd", org_name=None):
         """Set password for new user and select name for their organization. Return objects for new user and org"""
-        if org_name is None:
-            org_name = Organization.get_default_name()
+        org_name = get_test_name() if org_name is None else org_name
         client = PlatformApiClient.get_client(username)
         api.api_register_new_user(code, password, org_name, client=client)
         # need to obtain org guid (DPNG-2149)
@@ -104,7 +94,7 @@ class User(object):
     @classmethod
     def api_create_by_adding_to_organization(cls, org_guid, username=None, password="testPassw0rd",
                                              roles=ORG_ROLES["manager"], inviting_client=None):
-        username = username or cls.get_default_username()
+        username = get_test_name(email=True) if username is None else username
         api.api_add_organization_user(org_guid, username, roles, client=inviting_client)
         code = gmail_api.get_invitation_code_for_user(username)
         client = PlatformApiClient.get_client(username)
@@ -119,12 +109,10 @@ class User(object):
 
     @classmethod
     def api_create_users_for_tests(cls, number, password="testPassw0rd"):
-        usernames = []
         roles = cls.ORG_ROLES["manager"]
         org = Organization.api_create()
-        for i in range(number):
-            username = cls.get_default_username()
-            usernames.append(username)
+        usernames = [get_test_name(email=True) for _ in range(number)]
+        for username in usernames:
             api.api_add_organization_user(org.guid, username, roles)
         codes = gmail_api.get_invitation_codes_for_list(usernames)
         for username in usernames:
@@ -142,7 +130,7 @@ class User(object):
     @classmethod
     def api_create_by_adding_to_space(cls, org_guid, space_guid, username=None, password="testPassw0rd",
                                       roles=SPACE_ROLES["manager"], inviting_client=None):
-        username = username or cls.get_default_username()
+        username = get_test_name(email=True) if username is None else username
         api.api_add_space_user(org_guid, space_guid, username, roles, inviting_client)
         code = gmail_api.get_invitation_code_for_user(username)
         client = PlatformApiClient.get_client(username)

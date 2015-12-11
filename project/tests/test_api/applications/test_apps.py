@@ -42,8 +42,7 @@ class Apps(ApiTestCase):
         cf.cf_login(self.test_org.name, self.test_space.name)
         self.test_app = Application.push(
             space_guid=self.test_space.guid,
-            source_directory=self.APP_REPO_PATH,
-            name=self.APP_NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+            source_directory=self.APP_REPO_PATH
         )
         self.step("Check the application is running")
         self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)

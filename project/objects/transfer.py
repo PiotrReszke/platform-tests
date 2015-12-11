@@ -15,10 +15,9 @@
 #
 
 import functools
-from datetime import datetime
 import time
 
-from test_utils import get_logger, platform_api_calls as api, UnexpectedResponseError
+from test_utils import get_logger, platform_api_calls as api, UnexpectedResponseError, get_test_name
 from objects import DataSet
 
 
@@ -56,10 +55,6 @@ class Transfer(object):
     def __repr__(self):
         return "{0} (id={1}, title={2}, state={3})".format(self.__class__.__name__, self.id, self.title, self.state)
 
-    @staticmethod
-    def get_default_name():
-        return "test_transfer_{}".format(datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
-
     @classmethod
     def _from_api_response(cls, api_response):
         return cls(category=api_response["category"], id=api_response["id"],
@@ -70,7 +65,7 @@ class Transfer(object):
     @classmethod
     def api_create(cls, category="other", is_public=False, org=None, source=None, title=None, user_id=0,
                    client=None, from_local_file=False):
-        title = title or cls.get_default_name()
+        title = get_test_name() if title is None else title
         if not from_local_file:
             response = api.api_create_transfer(category=category, is_public=is_public, org_guid=getattr(org, "guid", None),
                                                source=source, title=title, client=client)
@@ -90,7 +85,7 @@ class Transfer(object):
 
     @classmethod
     def api_create_by_file_upload(cls, org, file_path, category="other", is_public=False, title=None, client=None):
-        title = title or cls.get_default_name()
+        title = get_test_name() if title is None else title
         api.api_create_transfer_by_file_upload(org.guid, source=file_path, category=category, is_public=is_public,
                                                title=title, client=client)
         new_transfer = cls.api_get_transfer_by_title([org], title)

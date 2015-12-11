@@ -69,7 +69,6 @@ class Postgres(ApiTestCase):
         cls.psql_app = Application.push(
             space_guid=test_space.guid,
             source_directory=cls.PSQL_APP_DIR,
-            name="psql_ex" + cls.NAME_PREFIX,
             bound_services=(postgres_instance_name,)
         )
 

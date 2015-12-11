@@ -15,10 +15,10 @@
 #
 
 import functools
-from datetime import datetime
 
 from . import Space
-from test_utils import get_logger, UnexpectedResponseError, platform_api_calls as api, cloud_foundry as cf, CONFIG
+from test_utils import get_logger, UnexpectedResponseError, platform_api_calls as api, cloud_foundry as cf, CONFIG, \
+    get_test_name
 
 
 __all__ = ["Organization"]
@@ -47,16 +47,12 @@ class Organization(object):
     def __lt__(self, other):
         return self.guid < other.guid
 
-    @staticmethod
-    def get_default_name():
-        return "test_org_{}".format(datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
-
     # -------------------------------- platform api -------------------------------- #
 
     @classmethod
     def api_create(cls, name=None, space_names=(), client=None):
         """If you pass a tuple of space names, spaces with those names are created in the organization."""
-        name = name or cls.get_default_name()
+        name = get_test_name() if name is None else name
         response = api.api_create_organization(name, client=client)
         org = cls(name=name, guid=response)
         cls.TEST_ORGS.append(org)

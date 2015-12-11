@@ -22,7 +22,7 @@ from retry import retry
 import yaml
 
 from test_utils import cloud_foundry as cf, platform_api_calls as api, get_logger, UnexpectedResponseError, \
-    log_http_request, log_http_response
+    log_http_request, log_http_response, get_test_name
 
 
 logger = get_logger("application")
@@ -65,7 +65,7 @@ class Application(object):
         return self.instances[0] > 0
 
     @classmethod
-    def push(cls, space_guid, source_directory, name, bound_services=None, env=None):
+    def push(cls, space_guid, source_directory, name=None, bound_services=None, env=None):
         """
         Application which will later be pushed to cf.
         source_directory -- where manifest.yml is located
@@ -82,6 +82,7 @@ class Application(object):
             jar_path = os.path.join(jar_path, manifest["applications"][0]["path"])
 
         # change manifest values
+        name = get_test_name(short=True) if name is None else name
         manifest["applications"][0]["name"] = name
         if bound_services is not None:
             manifest["applications"][0]["services"] = list(bound_services)

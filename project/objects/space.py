@@ -14,11 +14,11 @@
 # limitations under the License.
 #
 
-from datetime import datetime
 import functools
 
 from . import Application, ServiceInstance
-from test_utils import platform_api_calls as api, cloud_foundry as cf, UnexpectedResponseError, get_logger
+from test_utils import platform_api_calls as api, cloud_foundry as cf, UnexpectedResponseError, get_logger, \
+    get_test_name
 
 
 __all__ = ["Space"]
@@ -48,8 +48,7 @@ class Space(object):
 
     @classmethod
     def api_create(cls, org=None, name=None, client=None):
-        if name is None:
-            name = cls.NAME_PREFIX + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        name = get_test_name() if name is None else name
         response = api.api_create_space(org.guid, name, client=client)
         space = cls(name=name, guid=response, org_guid=org.guid)
         org.spaces.append(space)

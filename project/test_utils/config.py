@@ -16,12 +16,33 @@
 
 import argparse
 import configparser
+from datetime import datetime
 import os
+import re
+import socket
 
 from . import logger
 
 
-__all__ = ["update_test_config", "parse_arguments", "CONFIG"]
+__all__ = ["update_test_config", "parse_arguments", "CONFIG", "is_test_object_name", "get_test_name"]
+
+
+def is_test_object_name(name):
+    """Return True if object's name matches pattern for test names, False otherwise."""
+    if name is None:
+        return False  # there are users with username=None
+    test_name_regex = "^.+[0-9]{8}_[0-9]{6}_{0,1}[0-9]{0,6}(@gmail.com){0,1}$"
+    return re.match(test_name_regex, name) is not None
+
+
+def get_test_name(email=False, short=False):
+    """Return string with hostname and date for use as name of test org, user, transfer, etc."""
+    str_format = "%Y%m%d_%H%M%S" if short else "%Y%m%d_%H%M%S_%f"
+    hostname = socket.gethostname().replace("-", "_")
+    now = datetime.now().strftime(str_format)
+    name_format = CONFIG["test_user_email"].replace('@', '+{}_{}@') if email else "{}_{}"
+    return name_format.format(hostname, now)
+
 
 # secrets config
 __SECRETS = configparser.ConfigParser()

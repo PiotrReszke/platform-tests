@@ -18,7 +18,7 @@ import time
 import unittest
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api, \
-    generate_csv_file, tear_down_test_files
+    generate_csv_file, tear_down_test_files, get_test_name
 from objects import Organization, Transfer, DataSet, User
 
 
@@ -77,7 +77,7 @@ class SubmitTransfer(SubmitTransferBase):
         self.step("Create new transfer and check that 'token' field was not returned in response")
         response = api.api_create_transfer(
             source=self.EXAMPLE_LINK,
-            title=Transfer.get_default_name(),
+            title=get_test_name(),
             is_public=False,
             org_guid=self.org.guid,
             category="other"
