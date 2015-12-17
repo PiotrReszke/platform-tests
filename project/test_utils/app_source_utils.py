@@ -91,3 +91,11 @@ def set_dependency_url(application_path, filename):
     file_content = file_content[:ins_str] + str + file_content[ins_str:]
     with open(file_path, "w") as f:
         f.write(file_content)
+
+
+def checkout_branch_pointing_to_commit(repo_path, commit_id):
+    """Create branch which points to chosen commit and switch to it"""
+    repo = Repo(repo_path)
+    branch_name = "branch_{}".format(commit_id)
+    logger.info("Create branch {} and switch to it".format(branch_name))
+    repo.git.checkout(commit_id, b=branch_name)
