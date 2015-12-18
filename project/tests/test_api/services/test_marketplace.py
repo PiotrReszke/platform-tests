@@ -25,7 +25,7 @@ logger = get_logger("test marketplace")
 
 class TestMarketplaceServices(ApiTestCase):
 
-    SERVICES_TESTED_SEPARATELY = ("atk", "gateway", "hdfs")
+    SERVICES_TESTED_SEPARATELY = ("atk", "gateway", "hdfs", "scoring-engine")
 
     @classmethod
     def setUpClass(cls):

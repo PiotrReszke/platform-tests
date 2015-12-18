@@ -32,7 +32,8 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
                                                 ref=CONFIG["platform_version"])
         settings = yaml.load(settings_file)
         cls.step("Retrieve expected app, service, and broker names from the file")
-        cls.expected_app_names = {app_info["name"] for app_info in settings["applications"]}
+        cls.expected_app_names = {app_info["name"] for app_info in settings["applications"] if
+                                  app_info["env"].get("push_argument") != "--no-start"}
         cls.expected_upsi_names = {app_info["name"] for app_info in settings["user_provided_service_instances"]}
         cls.expected_broker_names = {app_info["name"] for app_info in settings["service_brokers"]}
         cls.step("Retrieve apps, services, and brokers present in cf")
@@ -51,8 +52,10 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
         self.assertEqual(missing_apps, set(), "Apps missing in cf")
 
     def test_all_required_apps_are_running_in_cf(self):
+        excluded_names = {"atk"}
         self.step("Check that all expected apps have running instances in cf")
-        apps_not_running = {a.name for a in self.cf_apps if a.name in self.expected_app_names and not a.is_running}
+        apps_not_running = {a.name for a in self.cf_apps
+                            if a.name in self.expected_app_names - excluded_names and not a.is_running}
         self.assertEqual(apps_not_running, set(), "Apps with no running instances in cf")
 
     def test_all_required_apps_are_present_on_platform(self):
@@ -62,8 +65,10 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
         self.assertEqual(missing_apps, set(), "Apps missing on the Platform")
 
     def test_all_required_apps_are_running_on_platform(self):
+        excluded_names = {"atk"}
         self.step("Check that all expected apps have running instances on the Platform")
-        apps_not_running = {a.name for a in self.platform_apps if a.name in self.expected_app_names and not a.is_running}
+        apps_not_running = {a.name for a in self.platform_apps
+                            if a.name in self.expected_app_names - excluded_names and not a.is_running}
         self.assertEqual(apps_not_running, set(), "Apps with no running instances on the Platform")
 
     def test_apps_have_the_same_details_in_cf_and_on_platform(self):
@@ -77,14 +82,14 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
 
     def test_all_required_service_instances_are_present_in_cf(self):
         self.step("Check that all expected services are present in cf")
-        cf_service_names = {s.name for s in self.cf_upsi}
-        missing_services = self.expected_upsi_names - cf_service_names
+        excluded_names = {s.name for s in self.cf_upsi + self.cf_apps}
+        missing_services = self.expected_upsi_names - excluded_names
         self.assertEqual(missing_services, set(), "Services missing in cf")
 
     def test_all_required_service_instances_are_present_on_platform(self):
         self.step("Check that all expected services are present on the Platform")
-        service_names = {s.name for s in self.platform_instances}
-        missing_services = self.expected_upsi_names - service_names
+        excluded_names = {s.name for s in self.platform_instances + self.platform_apps}
+        missing_services = self.expected_upsi_names - excluded_names
         self.assertEqual(missing_services, set(), "Services missing on the Platform")
 
     def test_all_required_brokers_are_present_in_cf(self):

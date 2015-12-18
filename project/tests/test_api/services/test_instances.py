@@ -20,7 +20,7 @@ from objects import Organization, ServiceType, ServiceInstance, ServiceInstanceK
 
 
 class ServiceInstanceKeys(ApiTestCase):
-    FAILING_SERVICES = ['yarn', 'hdfs', 'hbase', 'atk']
+    SERVICES_TESTED_SEPARATELY = ['yarn', 'hdfs', 'hbase', 'atk', "scoring-engine"]
 
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
@@ -49,7 +49,8 @@ class ServiceInstanceKeys(ApiTestCase):
 
     def test_get_service_instance_summary_from_empty_space(self):
         self.step("Create a service instance in one space")
-        service_type = next(iter([s for s in self.marketplace_services if s.label not in self.FAILING_SERVICES]))
+        service_type = next(iter([s for s in self.marketplace_services
+                                  if s.label not in self.SERVICES_TESTED_SEPARATELY]))
         ServiceInstance.api_create(org_guid=self.test_org.guid, space_guid=self.test_org.spaces[0].guid,
                                    service_label=service_type.label,
                                    service_plan_guid=service_type.service_plan_guids[0])
@@ -60,7 +61,7 @@ class ServiceInstanceKeys(ApiTestCase):
         self.assertEqual(summary, {})
 
     def test_create_service_instance_keys(self):
-        working_services = [s for s in self.marketplace_services if s.label not in self.FAILING_SERVICES]
+        working_services = [s for s in self.marketplace_services if s.label not in self.SERVICES_TESTED_SEPARATELY]
         test_space = self.test_org.spaces[2]
         for service_type in working_services:
             for plan in service_type.service_plans:
