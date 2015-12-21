@@ -38,7 +38,7 @@ def is_test_object_name(name):
 def get_test_name(email=False, short=False):
     """Return string with hostname and date for use as name of test org, user, transfer, etc."""
     str_format = "%Y%m%d_%H%M%S" if short else "%Y%m%d_%H%M%S_%f"
-    hostname = socket.gethostname().replace("-", "_")
+    hostname = socket.gethostname().replace("-", "_").lower()
     now = datetime.now().strftime(str_format)
     name_format = CONFIG["test_user_email"].replace('@', '+{}_{}@') if email else "{}_{}"
     return name_format.format(hostname, now)
