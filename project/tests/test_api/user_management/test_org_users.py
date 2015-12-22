@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import time
+import unittest
 
 from test_utils import ApiTestCase, get_logger, platform_api_calls as api, cleanup_after_failed_setup
 from objects import Organization, User
@@ -420,6 +421,17 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                                             org_guid=org.guid, new_roles=self.NON_MANAGER_ROLES)
         self.assert_user_in_org_and_roles(first_user, org.guid, self.NON_MANAGER_ROLES)
         self.assert_user_in_org_and_roles(second_user, org.guid, manager_role)
+
+    @unittest.expectedFailure
+    def test_send_org_role_update_request_with_empty_body(self):
+        """DPNG-4279 sending space role update request with empty body deletes user roles and returns http 500"""
+        expected_roles = User.ORG_ROLES["manager"]
+        self.step("Create new platform user by adding to org")
+        test_user = User.api_create_by_adding_to_organization(org_guid=TEST_ORG.guid, roles=expected_roles)
+        self.step("Send request with empty body")
+        self.assertRaisesUnexpectedResponse("400", "Bad Request", api.api_update_org_user_roles, TEST_ORG.guid,
+                                            test_user.guid)
+        self.assert_user_in_org_and_roles(test_user, TEST_ORG.guid, expected_roles)
 
 
 class DeleteOrganizationUser(BaseOrgUserClass):

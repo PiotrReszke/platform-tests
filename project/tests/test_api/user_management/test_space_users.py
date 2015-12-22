@@ -255,6 +255,16 @@ class UpdateSpaceUser(BaseSpaceUserClass):
         self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_space_user_roles,
                                             invalid_guid, USER.guid, roles)
 
+    @unittest.expectedFailure
+    def test_send_space_role_update_request_with_empty_body(self):
+        """DPNG-4278 sending space role update request with empty body deletes user roles and returns http 500"""
+        self.step("Create new platform user by adding to the space")
+        test_user = User.api_create_by_adding_to_space(org_guid=TEST_ORG.guid, space_guid=self.test_space.guid)
+        self.step("Send request with empty body")
+        self.assertRaisesUnexpectedResponse("400", "Bad Request", api.api_update_space_user_roles, self.test_space.guid,
+                                            test_user.guid)
+        self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
+
 
 class DeleteSpaceUser(BaseSpaceUserClass):
     def setUp(self):
