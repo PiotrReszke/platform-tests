@@ -16,7 +16,7 @@
 
 import yaml
 
-from test_utils import ApiTestCase, get_logger, CONFIG, github_get_file_content
+from test_utils import ApiTestCase, get_logger, CONFIG, github_get_file_content, AppClient, UnexpectedResponseError
 from objects import Application, ServiceInstance, ServiceBroker, Organization
 
 
@@ -28,14 +28,14 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
     @classmethod
     def setUpClass(cls):
         cls.step("Retrieve content of appstack.yml file")
-        settings_file = github_get_file_content(repository="platform-appstack", file_path="appstack.yml",
+        appstack_file = github_get_file_content(repository="platform-appstack", file_path="appstack.yml",
                                                 ref=CONFIG["platform_version"])
-        settings = yaml.load(settings_file)
+        appstack_yml = yaml.load(appstack_file)
         cls.step("Retrieve expected app, service, and broker names from the file")
-        cls.expected_app_names = {app_info["name"] for app_info in settings["applications"] if
+        cls.expected_app_names = {app_info["name"] for app_info in appstack_yml["applications"] if
                                   app_info["env"].get("push_argument") != "--no-start"}
-        cls.expected_upsi_names = {app_info["name"] for app_info in settings["user_provided_service_instances"]}
-        cls.expected_broker_names = {app_info["name"] for app_info in settings["service_brokers"]}
+        cls.expected_upsi_names = {app_info["name"] for app_info in appstack_yml["user_provided_service_instances"]}
+        cls.expected_broker_names = {app_info["name"] for app_info in appstack_yml["service_brokers"]}
         cls.step("Retrieve apps, services, and brokers present in cf")
         ref_space_guid = Organization.get_ref_org_and_space()[1].guid
         cls.cf_apps = Application.cf_api_get_list(ref_space_guid)
@@ -98,4 +98,26 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
         missing_brokers = self.expected_broker_names - cf_broker_names
         self.assertEqual(missing_brokers, set(), "Brokers missing in cf")
 
-
+    def test_spring_services_dont_expose_sensitive_endpoints(self):
+        SENSITIVE_ENDPOINTS = ["actuator", "autoconfig", "beans", "configprops", "docs", "dump", "env", "flyway",
+                               "info", "liquidbase", "logfile", "metrics", "mappings", "shutdown", "trace"]
+        skipped_apps = {"gateway"}
+        client = AppClient.get_admin_client()
+        for url in [a.urls[0] for a in self.platform_apps if a.name in self.expected_app_names - skipped_apps]:
+            app_name = url.split(".")[0]
+            try:
+                client.request(method="GET", endpoint="health", app_name=app_name)
+            except UnexpectedResponseError:
+                logger.info("Not checking {} service".format(app_name))
+                continue
+            with self.subTest(app_name=app_name):
+                self.step("Check that the sensitive endpoints are not enabled.")
+                enabled_endpoints = []
+                for endpoint in SENSITIVE_ENDPOINTS:
+                    try:
+                        client.request(method="GET", endpoint=endpoint, app_name=app_name)
+                    except UnexpectedResponseError:
+                        continue
+                    else:
+                        enabled_endpoints.append(endpoint)
+                self.assertEqual(enabled_endpoints, [], "{} exposes {}".format(app_name, enabled_endpoints))

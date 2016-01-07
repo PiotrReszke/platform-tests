@@ -82,9 +82,10 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
         log_http_response(response)
         if not response.ok:
             raise UnexpectedResponseError(response.status_code, response.text)
-        if response.text == "":
+        try:
+            return json.loads(response.text)
+        except ValueError:
             return response.text
-        return json.loads(response.text)
 
     def download_file(self, endpoint, target_file_path):
         """Download (large) file in chunks and save it to target_file_path."""
@@ -107,6 +108,10 @@ class ConsoleClient(PlatformApiClient):
         super().__init__(platform_username, platform_password)
         if platform_password is not None:
             self.authenticate(platform_password)
+
+    @classmethod
+    def get_admin_client(cls, client_type=None):
+        return super().get_admin_client(client_type="console")
 
     @property
     def url(self):
@@ -157,6 +162,10 @@ class AppClient(PlatformApiClient):
     @property
     def url(self):
         return "http://{}.{}/".format(self._application_name, self._domain)
+
+    @classmethod
+    def get_admin_client(cls, client_type=None):
+        return super().get_admin_client(client_type="app")
 
     def _get_token(self):
         path = "https://{}/oauth/token".format(self._login_endpoint)
