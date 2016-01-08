@@ -190,6 +190,14 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         obj_list = get_list_method(*args, **kwargs)
         self.assertNotInList(something, obj_list)
 
+    @retry(AssertionError, tries=60, delay=2)
+    def get_from_list_by_attribute_with_retry(self, attr_name, attr_value, get_list_method, *args, **kwargs):
+        """Get list repeatedly and return item with particular attribute value"""
+        items = get_list_method(*args, **kwargs)
+        thing = next((i for i in items if getattr(i, attr_name) == attr_value), None)
+        self.assertIsNotNone(thing)
+        return thing
+
     @classmethod
     def mark_prerequisite(cls, is_first=False):
         """For wrapping test methods which should be skipped based on previous failures"""

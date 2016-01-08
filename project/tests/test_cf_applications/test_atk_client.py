@@ -15,19 +15,15 @@
 #
 
 import os
-import shutil
-import tarfile
-import unittest
 
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, cloud_foundry as cf, ATKtools,\
-    AtkTestException
-from objects import Organization, Transfer, DataSet, AtkInstance, Application, User
+    UnexpectedResponseError, get_test_name
+from objects import Organization, Transfer, DataSet, ServiceType, ServiceInstance, Application, User
 
 
 logger = get_logger("test ATK")
 
 
-@unittest.skip("DPNG-2758 atk-broker creates broken instances; Bad Gateway status for organization removal - DPNG-2424")
 class Atk(ApiTestCase):
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     UAA_FILENAME = "pyclient.test"
@@ -35,14 +31,40 @@ class Atk(ApiTestCase):
     UAA_FILE_PATH = os.path.join(TEST_DATA_DIRECTORY, UAA_FILENAME)
     ATK_SERVICE_LABEL = "atk"
     atk_virtualenv = None
-    atk_client_tar_file_path = None
-    atk_client_directory = None
     atk_app = None
+    transfer_title = get_test_name()
+    dataset = None
 
     def _assert_uaa_file_is_not_empty(self):
         with open(self.UAA_FILE_PATH) as f:
             content = f.read()
         self.assertNotEqual(content, "", "uaa file was not created by atk client")
+
+    def _create_service_instance(self, org_guid, space_guid, service_label, plan_name, atk_name):
+        """
+        Create service instance. Return the instance.
+        This method was created as creating ATK exceeds server timeout and console returns 504 Gateway Timeout.
+        """
+        instance = None
+        instance_name = atk_name
+        try:
+            instance = ServiceInstance.api_create(
+                org_guid=org_guid,
+                space_guid=space_guid,
+                service_label=service_label,
+                name=instance_name,
+                service_plan_name=plan_name
+            )
+        except UnexpectedResponseError as e:
+            if e.status == 504 or "Gateway Timeout" in e.error_message:
+                return self.get_from_list_by_attribute_with_retry(
+                    attr_name="name",
+                    attr_value=instance_name,
+                    get_list_method=ServiceInstance.api_get_list,
+                    space_guid=space_guid
+                )
+            raise
+        return instance
 
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
@@ -54,38 +76,6 @@ class Atk(ApiTestCase):
         admin_user = User.get_admin()
         admin_user.api_add_to_space(space_guid=cls.test_space.guid, org_guid=cls.test_org.guid, roles=("managers",
                                                                                                        "developers"))
-        cls.step("Login to cf")
-        cf.cf_login(cls.test_org.name, cls.test_space.name)
-
-        cls.step("Check if atk-client has correct credentials and is able to download token")
-        ATKtools.check_uaac_token()
-
-        cls.step("Create transfer and check it's finished")
-        cls.transfer = Transfer.api_create(source=cls.DATA_SOURCE, org=cls.test_org)
-        cls.transfer.ensure_finished()
-        cls.step("Publish in hive the data set created based on the submitted transfer")
-        cls.dataset = DataSet.api_get_matching_to_transfer(org_list=[cls.test_org], transfer_title=cls.transfer.title)
-        cls.dataset.publish_in_hive()
-
-        cls.step("Create atk service instance")
-        AtkInstance.api_create(org_guid=cls.test_org.guid, space_guid=cls.test_space.guid, service_label="atk",
-                               service_plan_name="simple")
-
-        cls.step("With huge timeout, check that atk application is created")
-        cls.atk_app = Application.ensure_started(space_guid=cls.test_space.guid, application_name_prefix="atk-")
-        if cls.atk_app is None:
-            raise AtkTestException("ATK application is not on application list")
-
-        cls.step("Download atk client package from the Platform")
-        atk_client_file_name = ATKtools.api_get_atk_client_file()
-        cls.atk_client_tar_file_path = os.path.join(atk_client_file_name)
-        with tarfile.open(atk_client_file_name) as tar:
-            tar.extractall(path=cls.TEST_DATA_DIRECTORY)
-        cls.atk_client_directory = os.path.join(cls.TEST_DATA_DIRECTORY, atk_client_file_name.split(".tar")[0])
-        cls.step("Create virtualenv and install the atk client package there")
-        cls.atk_virtualenv = ATKtools("atk_virtualenv")
-        cls.atk_virtualenv.create()
-        cls.atk_virtualenv.pip_install_local_package(cls.atk_client_directory)
 
     @classmethod
     def tearDownClass(cls):
@@ -96,65 +86,93 @@ class Atk(ApiTestCase):
             os.remove(cls.UAA_FILE_PATH)
         if cls.atk_virtualenv is not None:
             cls.atk_virtualenv.delete()
-        if cls.atk_client_tar_file_path is not None and os.path.exists(cls.atk_client_tar_file_path):
-            os.remove(cls.atk_client_tar_file_path)
-        if cls.atk_client_directory is not None and os.path.exists(cls.atk_client_directory):
-            shutil.rmtree(cls.atk_client_directory)
         Organization.cf_api_tear_down_test_orgs()
 
-    @unittest.expectedFailure
-    def test_atk_client_connection(self):
-        """DPNG-2758 atk-broker from nexus creates broken instances; DPNG-2508 Hue integration"""
+    @ApiTestCase.mark_prerequisite(is_first=True)
+    def test_step1_check_uaac_atk(self):
+        self.step("Check if atk-client has correct credentials and is able to download token")
+        ATKtools.check_uaac_token()
+
+    @ApiTestCase.mark_prerequisite()
+    def test_step2_create_atk_instance(self):
+        self.step("Create atk service instance")
+        name = get_test_name()
+        marketplace_services = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
+        atk_service = next((s for s in marketplace_services if s.label == self.ATK_SERVICE_LABEL), None)
+        self.assertIsNotNone(atk_service, msg="No atk service found in marketplace in {}".format(self.test_space))
+        atk_service_instance = self._create_service_instance(self.test_org.guid, self.test_space.guid,
+                                                             self.ATK_SERVICE_LABEL, plan_name="Simple", atk_name=name)
+        self.assertIsNotNone(atk_service_instance, msg="Atk instance is not found in {}".format(self.test_space))
+        self.step("With huge timeout, check that atk application is created")
+        self.__class__.atk_app = Application.ensure_started(space_guid=self.test_space.guid, application_name_prefix=name)
+        self.assertIsNotNone(self.atk_app, msg="ATK application is not on application list")
+
+    @ApiTestCase.mark_prerequisite()
+    def test_step3_create_dataset_and_publish_it_in_hive(self):
+        self.step("Create transfer and check it's finished")
+        Transfer.api_create(source=self.DATA_SOURCE, org=self.test_org, title=self.transfer_title).ensure_finished()
+        self.step("Publish in hive the data set created based on the submitted transfer")
+        self.__class__.dataset = DataSet.api_get_matching_to_transfer(org_list=[self.test_org],
+                                                                      transfer_title=self.transfer_title)
+        self.dataset.publish_in_hive()
+
+    @ApiTestCase.mark_prerequisite()
+    def test_step4_create_virtualenv_for_atk(self):
+        self.step("Create virtualenv")
+        self.__class__.atk_virtualenv = ATKtools("atk_virtualenv")
+        self.atk_virtualenv.create()
+        self.step("Install the atk client package")
+        self.atk_virtualenv.pip_install_from_url(self.atk_app.urls[0])
+
+    @ApiTestCase.mark_prerequisite()
+    def test_step5_atk_client_connection(self):
         self.step("Run atk connection test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "atk_client_connection_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
                                                       arguments={
                                                           "--organization": self.test_org.name,
-                                                          "--transfer": self.transfer.title,
-                                                          "--uaa_file_name": self.UAA_FILENAME
-                                                      })
-        self.assertNotIn("Traceback", response, msg=response.split("Traceback", 1)[1])
+                                                          "--transfer": self.transfer_title,
+                                                          "--uaa_file_name": self.UAA_FILENAME}
+                                                      )
+        self.assertNotIn("Traceback", response, msg=response)
         self._assert_uaa_file_is_not_empty()
 
-    @unittest.expectedFailure
-    def test_csv_file(self):
-        """DPNG-2758 atk-broker from nexus creates broken instances; DPNG-2106 Datasets published in Hue are empty"""
-        self.step("Run atk test")
+    @ApiTestCase.mark_prerequisite()
+    def test_step6_csv_file(self):
+        self.step("Run atk csvfile test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "csv_file_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
                                                       arguments={
                                                           "--organization": self.test_org.name,
-                                                          "--transfer": self.transfer.title,
+                                                          "--transfer": self.transfer_title,
                                                           "--uaa_file_name": self.UAA_FILENAME,
-                                                          "--target_uri": self.dataset.target_uri
-                                                      })
-        self.assertNotIn("Traceback", response, msg=response.split("Traceback", 1)[1])
+                                                          "--target_uri": self.dataset.target_uri}
+                                                      )
+        self.assertNotIn("Traceback", response, msg=response)
         self._assert_uaa_file_is_not_empty()
 
-    @unittest.expectedFailure
-    def test_export_to_hive(self):
-        """DPNG-2758 atk-broker from nexus creates broken instances; DPNG-2508 Hue integration"""
-        self.step("Run atk test")
+    @ApiTestCase.mark_prerequisite()
+    def test_step7_export_to_hive(self):
+        self.step("Run atk export to hive test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "export_to_hive_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
                                                       arguments={
                                                           "--organization": self.test_org.name,
-                                                          "--transfer": self.transfer.title,
-                                                          "--uaa_file_name": self.UAA_FILENAME
-                                                      })
-        self.assertNotIn("Traceback", response, msg=response.split("Traceback", 1)[1])
+                                                          "--transfer": self.transfer_title,
+                                                          "--uaa_file_name": self.UAA_FILENAME}
+                                                      )
+        self.assertNotIn("Traceback", response, msg=response)
         self._assert_uaa_file_is_not_empty()
 
-    @unittest.expectedFailure
-    def test_table_manipulation(self):
-        """DPNG-2508 Hue integration; DPNG-2324 ATK client cannot drop frames in one request"""
+    @ApiTestCase.mark_prerequisite()
+    def test_step8_table_manipulation(self):
         self.step("Run atk test")
         atk_test_script_path = os.path.join(self.TEST_DATA_DIRECTORY, "table_manipulation_test.py")
         response = self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_app.urls[0],
                                                       arguments={
                                                           "--organization": self.test_org.name,
-                                                          "--transfer": self.transfer.title,
-                                                          "--uaa_file_name": self.UAA_FILENAME
-                                                      })
-        self.assertNotIn("Traceback", response, msg=response.split("Traceback", 1)[1])
+                                                          "--transfer": self.transfer_title,
+                                                          "--uaa_file_name": self.UAA_FILENAME}
+                                                      )
+        self.assertNotIn("Traceback", response, msg=response)
         self._assert_uaa_file_is_not_empty()

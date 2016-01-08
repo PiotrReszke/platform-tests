@@ -28,8 +28,7 @@ import trustedanalytics as ta
 
 from common import AtkTestException, parse_arguments, check_uaa_file, remove_test_tables_from_database
 
-TEST_TAB_PATTERN = "test_org_[0-9]{8}_[0-9]{6}_[0-9]{6}$"
-TEST_DEFAULT_PATTERN = "test_tab_[0-9]{8}_[0-9]{6}_[0-9]{6}$"
+TEST_PATTERN = "^.+[0-9]{8}_[0-9]{6}_{0,1}[0-9]{0,6}(@gmail.com){0,1}$"
 
 parameters = parse_arguments()
 
@@ -49,13 +48,13 @@ frame = ta.Frame(hq)
 
 frame_content = frame.inspect(n=50)  # returns 50 rows
 frame_rows = frame_content.rows
-databases_to_remove = [row for row in frame_rows if re.match(TEST_TAB_PATTERN, row[0])]
+databases_to_remove = [row for row in frame_rows if re.match(TEST_PATTERN, row[0])]
 print(databases_to_remove)
 
 for database in databases_to_remove:
-    remove_test_tables_from_database(database, TEST_DEFAULT_PATTERN)
+    remove_test_tables_from_database(database, TEST_PATTERN)
 
-remove_test_tables_from_database(["default"], TEST_DEFAULT_PATTERN)
+remove_test_tables_from_database(["default"], TEST_PATTERN)
 
 
 

@@ -18,6 +18,8 @@ import os
 import subprocess
 import pexpect
 import time
+import requests
+
 
 from . import log_command, get_logger, log_http_request, log_http_response, UnexpectedResponseError, config, \
     platform_api_calls as api, AtkScriptException
@@ -63,6 +65,12 @@ class ATKtools(object):
         log_command(command)
         subprocess.check_call(command)
 
+    def pip_install_from_url(self, atk_url):
+        atk_url = "http://" + atk_url + "/client"
+        command = [self.pip, "install", atk_url]
+        log_command(command)
+        subprocess.check_call(command)
+
     def pip_uninstall(self, package_name):
         command = [self.pip, "uninstall", package_name]
         log_command(command)
@@ -88,7 +96,7 @@ class ATKtools(object):
         password = config.CONFIG["admin_password"]
 
         child = pexpect.spawn(" ".join(command))
-        child.expect("URI of ATK or OAuth server:")
+        child.expect("URI of the ATK server:")
         child.sendline(atk_url)
         child.expect("User name:")
         child.sendline(username)
@@ -123,7 +131,7 @@ class ATKtools(object):
     @classmethod
     def check_uaac_token(cls):
         uaa_endpoint = config.CONFIG["domain"]
-        path = "https://{}/oauth/token".format("uaa." + uaa_endpoint)
+        path = "http://{}/oauth/token".format("uaa." + uaa_endpoint)
         headers = {
             "Authorization": config.CONFIG["uaa_token"],
             "Accept": "application/json"
