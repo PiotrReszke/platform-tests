@@ -59,15 +59,15 @@ class TestOrganization(ApiTestCase):
     def test_get_more_than_50_organizations(self):
         self.step("Get list of organization and check how many there are")
         old_orgs = Organization.api_get_list()
-        orgs_num = len(old_orgs)
         self.step("Add organizations, so that there are more than 50")
-        new_orgs_num = (50 - orgs_num) + 1
+        new_orgs_num = (50 - len(old_orgs)) + 1
         new_orgs = [Organization.api_create() for _ in range(new_orgs_num)]
         self.step("Check that all new and old organizations are returned in org list")
         expected_orgs = old_orgs + new_orgs
         orgs = Organization.api_get_list()
-        self.assertEqual(len(orgs), len(expected_orgs))
-        self.assertUnorderedListEqual(orgs, expected_orgs)
+        self.assertGreaterEqual(len(orgs), len(expected_orgs))
+        missing_orgs = [o for o in expected_orgs if o not in orgs]
+        self.assertEqual(missing_orgs, [], "Not all test orgs are present on org list")
 
     def test_delete_organization_with_user(self):
         self.step("Create an organization")
