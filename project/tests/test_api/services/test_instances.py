@@ -60,7 +60,9 @@ class ServiceInstanceKeys(ApiTestCase):
         self.step("Check that service instance summary is empty in the second space")
         self.assertEqual(summary, {})
 
+    @unittest.expectedFailure
     def test_create_service_instance_keys(self):
+        """DPNG-4338 Adjust service creation test to handle 200 and 504 codes"""
         working_services = [s for s in self.marketplace_services if s.label not in self.SERVICES_TESTED_SEPARATELY]
         test_space = self.test_org.spaces[2]
         for service_type in working_services:

@@ -66,7 +66,7 @@ class TestMarketplaceServices(ApiTestCase):
                                                              service_type.label, plan["guid"])
 
     def test_create_gateway_instance(self):
-        """DPNG-3177 Cannot create gateway instance - 502 Bad Gateway"""
+        """DPNG-4338 Adjust service creation test to handle 200 and 504 codes"""
         label = "gateway"
         self.step("Check that {} service is available in Marketplace".format(label))
         service_type = next((st for st in self.marketplace if st.label == label), None)
