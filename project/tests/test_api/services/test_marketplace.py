@@ -25,7 +25,7 @@ logger = get_logger("test marketplace")
 
 class TestMarketplaceServices(ApiTestCase):
 
-    SERVICES_TESTED_SEPARATELY = ("atk", "gateway", "hdfs", "scoring-engine")
+    SERVICES_TESTED_SEPARATELY = ("atk", "gateway", "hdfs", "scoring-engine", "ipython")
 
     @classmethod
     def setUpClass(cls):
@@ -79,6 +79,16 @@ class TestMarketplaceServices(ApiTestCase):
     def test_create_hdfs_instance(self):
         """DPNG-2580 Creating instance of hdfs with plan encrypted fails with 502 Bad Gateway"""
         label = "hdfs"
+        self.step("Check that {} service is available in Marketplace".format(label))
+        service_type = next((st for st in self.marketplace if st.label == label), None)
+        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
+        for plan in service_type.service_plans:
+            with self.subTest(service=label, plan=plan["name"]):
+                self._create_and_delete_service_instance(self.test_org.guid, self.test_space.guid, label, plan["guid"])
+
+    def test_create_ipython_instance(self):
+        """DPNG-4442 Deleting ipyhton instance fails with Internal Sever Error (sometimes)"""
+        label = "ipython"
         self.step("Check that {} service is available in Marketplace".format(label))
         service_type = next((st for st in self.marketplace if st.label == label), None)
         self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
