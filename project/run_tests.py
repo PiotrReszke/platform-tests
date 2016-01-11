@@ -21,7 +21,7 @@ import requests
 from teamcity import is_running_under_teamcity
 from teamcity.unittestpy import TeamcityTestRunner
 
-from test_utils import config, get_logger
+from test_utils import config, get_logger, change_log_file_path
 
 
 if __name__ == "__main__":
@@ -30,6 +30,10 @@ if __name__ == "__main__":
 
     # parse settings passed from command line and update config
     args = config.parse_arguments()
+    if not is_running_under_teamcity():
+        log_dir = args.log_file_directory
+        os.makedirs(log_dir, exist_ok=True)
+        change_log_file_path(args.log_file_directory)
     config.update_test_config(client_type=args.client_type,
                               domain=args.environment,
                               proxy=args.proxy,

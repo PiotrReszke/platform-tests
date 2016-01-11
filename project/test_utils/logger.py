@@ -17,12 +17,16 @@
 import logging
 import json
 import sys
+import os
 
 import requests
 
+from datetime import datetime
+from teamcity import is_running_under_teamcity
+
 
 __all__ = ["get_logger", "set_level", "log_command", "log_http_request", "log_http_response",
-           "LOGGED_RESPONSE_BODY_LENGTH"]
+           "LOGGED_RESPONSE_BODY_LENGTH", "change_log_file_path"]
 
 
 __LOGGING_LEVEL = logging.NOTSET
@@ -31,7 +35,29 @@ LOGGED_RESPONSE_BODY_LENGTH = 0
 
 requests.packages.urllib3.disable_warnings()
 logger_format = "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
-logging.basicConfig(stream=sys.stdout, format=logger_format)
+if is_running_under_teamcity():
+    logging.basicConfig(stream=sys.stdout, format=logger_format)
+else:
+    log_file_name = "api_tests_log_{}.txt".format(datetime.now().strftime("%Y%m%d_%H%M%S"))
+    default_log_dir = os.path.join("/tmp", log_file_name)
+    fh = logging.FileHandler(default_log_dir)
+    sh = logging.StreamHandler(sys.stdout)
+    logging.basicConfig(format=logger_format, handlers=[sh, fh])
+
+
+def change_log_file_path(log_file_dir):
+    logger = logging.getLogger()
+    log_dir = os.path.join(log_file_dir, log_file_name)
+    if fh in logger.handlers:
+        fh.close()  # close opened log file
+        logger.removeHandler(fh)
+        try:
+            os.rename(default_log_dir, log_dir)  # try to move created log file to new directory
+        except OSError:
+            logger.exception("Can't move log file '{}' to '{}'.".format(default_log_dir, log_dir))
+    new_file_handler = logging.FileHandler(log_dir)
+    new_file_handler.setFormatter(logging.Formatter(logger_format))
+    logger.addHandler(new_file_handler)
 
 
 def set_level(level_name):

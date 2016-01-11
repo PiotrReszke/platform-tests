@@ -140,4 +140,7 @@ def parse_arguments():
     parser.add_argument("-l", "--logging-level",
                         choices=["DEBUG", "INFO", "WARNING"],
                         default="DEBUG")
+    parser.add_argument("-d", "--log-file-directory",
+                        default="/tmp",
+                        help="Change default log file directory.")
     return parser.parse_args()
