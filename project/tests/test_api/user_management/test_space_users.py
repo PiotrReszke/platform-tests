@@ -216,16 +216,13 @@ class UpdateSpaceUser(BaseSpaceUserClass):
                                             self.test_space.guid, new_roles=new_roles)
         self._assert_user_in_space_with_roles(USER, self.test_space.guid)
 
-    def test_delete_user_roles_while_in_space(self):
-        # deleting all roles deletes user from the space, but the user remains in the organization
+    def test_cannot_delete_all_user_roles_while_in_space(self):
         self.step("Add user to space")
         USER.api_add_to_space(space_guid=self.test_space.guid, org_guid=TEST_ORG.guid)
-        self.step("Update the user, removing all space roles")
-        USER.api_update_space_roles(self.test_space.guid, new_roles=())
-        self._assert_user_not_in_space(USER, self.test_space.guid)
-        self.step("Check that the user is still in the organization")
-        org_users = User.api_get_list_via_organization(org_guid=TEST_ORG.guid)
-        self.assertInList(USER, org_users, "User is not in the organization")
+        self.step("Try to update the user, removing all space roles")
+        self.assertRaisesUnexpectedResponse(409, "You must have at least one role", USER.api_update_space_roles,
+                                            self.test_space.guid, new_roles=())
+        self._assert_user_in_space_with_roles(USER, self.test_space.guid)
 
     def test_cannot_update_user_which_is_not_in_space(self):
         user_not_in_space = USER
