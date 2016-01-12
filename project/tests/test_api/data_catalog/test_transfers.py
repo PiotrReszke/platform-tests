@@ -58,12 +58,10 @@ class SubmitTransfer(SubmitTransferBase):
         retrieved_transfer = Transfer.api_get(transfer.id)
         self.assertEqual(retrieved_transfer.category, new_category, "Created transfer has different category")
 
-    @unittest.expectedFailure
-    def test_cannot_create_transfer_when_providing_wrong_org_guid(self):
-        """DPNG-3679 Creating transfer by providing wrong organization guid returns http status 500"""
+    def test_cannot_create_transfer_when_providing_invalid_org_guid(self):
         org_guid = "wrong_guid"
-        self.step("Create a transfer")
-        self.assertRaisesUnexpectedResponse(400, "org does not exist", api.api_create_transfer,
+        self.step("Try create a transfer by providing invalid org guid")
+        self.assertRaisesUnexpectedResponse(400, "not a valid UUID", api.api_create_transfer,
                                             source=self.EXAMPLE_LINK, title="test-transfer-{}".format(time.time()),
                                             is_public=False, org_guid=org_guid, category="other")
 
