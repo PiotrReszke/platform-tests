@@ -16,7 +16,9 @@
 
 import functools
 
-from test_utils import platform_api_calls as api, cloud_foundry as cf, get_test_name
+from retry import retry
+
+from test_utils import platform_api_calls as api, cloud_foundry as cf, get_test_name, UnexpectedResponseError
 from objects import ServiceInstanceKey
 
 
@@ -47,6 +49,16 @@ class ServiceInstance(object):
     def __hash__(self):
         return hash(tuple(getattr(self, a) for a in self.COMPARABLE_ATTRS))
 
+    @classmethod
+    @retry(AssertionError, tries=60, delay=2)
+    def _get_instance_with_retry(cls, instance_name, space_guid):
+        """Wait for created instance and return it"""
+        instance_list = cls.api_get_list(space_guid)
+        instance = next((i for i in instance_list if i.name == instance_name), None)
+        if instance is None:
+            raise AssertionError("Instance not found")
+        return instance
+
     # ----------------------------------------- Platform API ----------------------------------------- #
 
     @classmethod
@@ -67,9 +79,14 @@ class ServiceInstance(object):
             if service_plan_data is None:
                 raise ValueError("No such plan {} for service {}".format(service_plan_name, service_label))
             service_plan_guid = service_plan_data["metadata"]["guid"]
-        response = api.api_create_service_instance(name=name, service_plan_guid=service_plan_guid, org_guid=org_guid,
-                                                   space_guid=space_guid, client=client)
-        return cls(guid=response["metadata"]["guid"], name=name, space_guid=space_guid, service_label=service_label)
+        try:
+            response = api.api_create_service_instance(name=name, service_plan_guid=service_plan_guid,
+                                                       org_guid=org_guid, space_guid=space_guid, client=client)
+            return cls(guid=response["metadata"]["guid"], name=name, space_guid=space_guid, service_label=service_label)
+        except UnexpectedResponseError as e:
+            if e.status == 504 and "Gateway Timeout" in e.error_message:
+                return cls._get_instance_with_retry(name, space_guid)
+            raise
 
     @classmethod
     def api_get_list(cls, space_guid=None, service_type_guid=None, client=None):
@@ -113,6 +130,10 @@ class ServiceInstance(object):
 
     def api_delete(self, client=None):
         api.api_delete_service_instance(self.guid, client=client)
+
+    @classmethod
+    def api_get_data_science_service_instances(cls, space_guid, org_guid, service_label):
+        return api.api_tools_service_instances(service_label, space_guid, org_guid)
 
     # ----------------------------------------- CF API ----------------------------------------- #
 
@@ -162,8 +183,9 @@ class AtkInstance(ServiceInstance):
     def api_get_list_from_data_science_atk(cls, org_guid, client=None):
         response = api.api_get_atk_instances(org_guid, client=client)
         atk_instances = []
-        for data in response["instances"]:
-            instance = cls(guid=data["guid"], name=data["name"], space_guid=None, service_label="atk",
-                           org_guid=org_guid, scoring_engine=data["scoring_engine"], state=data["state"])
-            atk_instances.append(instance)
+        if response["instances"] is not None:
+            for data in response["instances"]:
+                instance = cls(guid=data["guid"], name=data["name"], space_guid=None, service_label="atk",
+                               org_guid=org_guid, scoring_engine=data["scoring_engine"], state=data["state"])
+                atk_instances.append(instance)
         return atk_instances

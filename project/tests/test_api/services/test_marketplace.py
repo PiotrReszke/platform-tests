@@ -65,9 +65,7 @@ class TestMarketplaceServices(ApiTestCase):
                     self._create_and_delete_service_instance(self.test_org.guid, self.test_space.guid,
                                                              service_type.label, plan["guid"])
 
-    @unittest.expectedFailure
     def test_create_gateway_instance(self):
-        """DPNG-4338 Adjust service creation test to handle 200 and 504 codes"""
         label = "gateway"
         self.step("Check that {} service is available in Marketplace".format(label))
         service_type = next((st for st in self.marketplace if st.label == label), None)
@@ -96,9 +94,7 @@ class TestMarketplaceServices(ApiTestCase):
             with self.subTest(service=label, plan=plan["name"]):
                 self._create_and_delete_service_instance(self.test_org.guid, self.test_space.guid, label, plan["guid"])
 
-    @unittest.expectedFailure
     def test_create_atk_instance(self):
-        """DPNG-3788 502 bad gateway while creating ATK instance"""
         label = "atk"
         self.step("Check that {} service is available in Marketplace".format(label))
         service_type = next((st for st in self.marketplace if st.label == label), None)

@@ -45,26 +45,14 @@ class Atk(ApiTestCase):
         Create service instance. Return the instance.
         This method was created as creating ATK exceeds server timeout and console returns 504 Gateway Timeout.
         """
-        instance = None
         instance_name = atk_name
-        try:
-            instance = ServiceInstance.api_create(
-                org_guid=org_guid,
-                space_guid=space_guid,
-                service_label=service_label,
-                name=instance_name,
-                service_plan_name=plan_name
-            )
-        except UnexpectedResponseError as e:
-            if e.status == 504 or "Gateway Timeout" in e.error_message:
-                return self.get_from_list_by_attribute_with_retry(
-                    attr_name="name",
-                    attr_value=instance_name,
-                    get_list_method=ServiceInstance.api_get_list,
-                    space_guid=space_guid
-                )
-            raise
-        return instance
+        return ServiceInstance.api_create(
+            org_guid=org_guid,
+            space_guid=space_guid,
+            service_label=service_label,
+            name=instance_name,
+            service_plan_name=plan_name
+        )
 
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)

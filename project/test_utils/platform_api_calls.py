@@ -335,13 +335,15 @@ def api_create_scoring_engine(atk_name, instance_name, space_guid, service_plan_
 # ================================================= service-exposer ================================================== #
 
 
-def api_tools_service_instances(service_label, space_guid, client=None):
+def api_tools_service_instances(service_label, space_guid, org_guid=None, client=None):
     """GET /rest/tools/service_instances"""
     client = client or PlatformApiClient.get_admin_client()
     params = {
         "service": service_label,
         "space": space_guid
     }
+    if org_guid is not None:
+        params.update({"org": org_guid})
     return client.request("GET", "rest/tools/service_instances", params=params,
                           log_msg="PLATFORM: get tools for service instance")
 
