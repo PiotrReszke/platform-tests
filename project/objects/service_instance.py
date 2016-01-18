@@ -63,7 +63,7 @@ class ServiceInstance(object):
 
     @classmethod
     def api_create(cls, org_guid, space_guid, service_label, name=None, service_plan_name=None,
-                   service_plan_guid=None, client=None):
+                   service_plan_guid=None, params=None, client=None):
         """
         Service instance can be either created passing:
         - service_plan_guid - one api call is used, or
@@ -81,7 +81,8 @@ class ServiceInstance(object):
             service_plan_guid = service_plan_data["metadata"]["guid"]
         try:
             response = api.api_create_service_instance(name=name, service_plan_guid=service_plan_guid,
-                                                       org_guid=org_guid, space_guid=space_guid, client=client)
+                                                       org_guid=org_guid, space_guid=space_guid, params=params,
+                                                       client=client)
             return cls(guid=response["metadata"]["guid"], name=name, space_guid=space_guid, service_label=service_label)
         except UnexpectedResponseError as e:
             if e.status == 504 and "Gateway Timeout" in e.error_message:

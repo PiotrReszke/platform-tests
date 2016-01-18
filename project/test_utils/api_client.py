@@ -142,7 +142,8 @@ class AppClient(PlatformApiClient):
         "metrics-provider": lambda x: "metrics" in x,
         "service-catalog": lambda x: x.startswith("rest/service"),
         "user-management": lambda x: (("orgs" in x and "atkinstances" not in x and "metrics" not in x) or
-                                      ("spaces" in x) or ("invitations" in x) or ("registrations" in x))
+                                      ("spaces" in x) or ("invitations" in x) or ("registrations" in x)),
+        "hdfs-uploader": lambda x: x.startswith("rest/upload")
     }
 
     def __init__(self, platform_username, platform_password):

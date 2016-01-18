@@ -68,12 +68,14 @@ def get_csv_data(file_path):
     return data
 
 
-def download_file(url):
+def download_file(url, save_file_name=None):
     """
     Download a file from provided url and return its directory
     """
     os.makedirs(TMP_FILE_DIR, exist_ok=True)
-    file_path = os.path.join(TMP_FILE_DIR, "test_file_{}.csv".format(datetime.now().strftime('%Y%m%d_%H%M%S_%f')))
+    if save_file_name is None:
+        save_file_name = "test_file_{}.csv".format(datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
+    file_path = os.path.join(TMP_FILE_DIR, save_file_name)
     r = requests.get(url)
     with open(file_path, "wb") as csv_file:
         csv_file.write(r.content)

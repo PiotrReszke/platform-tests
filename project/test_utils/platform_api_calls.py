@@ -228,7 +228,7 @@ def api_get_service_instances(space_guid=None, service_guid=None, client=None):
                           log_msg="PLATFORM: get service instance list")
 
 
-def api_create_service_instance(name, service_plan_guid, org_guid, space_guid, client=None):
+def api_create_service_instance(name, service_plan_guid, org_guid, space_guid, params=None, client=None):
     """POST /rest/service_instances"""
     client = client or PlatformApiClient.get_admin_client()
     body = {
@@ -238,6 +238,8 @@ def api_create_service_instance(name, service_plan_guid, org_guid, space_guid, c
         "space_guid": space_guid,
         "parameters": {"name": name}
     }
+    if params is not None:
+        body["parameters"].update(params)
     return client.request("POST", "rest/service_instances", body=body, log_msg="PLATFORM: create service instance")
 
 

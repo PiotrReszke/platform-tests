@@ -15,6 +15,7 @@
 #
 
 import functools
+from retry import retry
 
 from . import Space
 from test_utils import get_logger, UnexpectedResponseError, platform_api_calls as api, cloud_foundry as cf, CONFIG, \
@@ -128,6 +129,7 @@ class Organization(object):
             org_services.extend(services)
         return org_apps, org_services
 
+    @retry(UnexpectedResponseError, tries=2, delay=5)
     def cf_api_delete(self):
         cf.cf_api_delete_org(self.guid)
 
