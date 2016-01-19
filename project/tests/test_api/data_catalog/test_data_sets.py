@@ -282,7 +282,7 @@ class CreateDatasets(ApiTestCase):
         cls.step("Get target uri from hdfs instance")
         _, ref_space = Organization.get_ref_org_and_space()
         hdfs = next(app for app in Application.cf_api_get_list(ref_space.guid) if "hdfs-downloader" in app.name)
-        cls.target_uri = hdfs.cf_api_env()['VCAP_SERVICES']['hdfs'][0]['credentials']['uri']
+        cls.target_uri = hdfs.cf_api_env()['VCAP_SERVICES']['hdfs'][0]['credentials']['uri'].replace("%{organization}", cls.org.guid)
 
     @classmethod
     def tearDownClass(cls):
