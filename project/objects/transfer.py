@@ -126,7 +126,7 @@ class Transfer(object):
         self.id_in_object_store = transfer.id_in_object_store
         self.timestamps = transfer.timestamps
         if self.state != self.finished_status:
-            raise AssertionError("Transfer did not finish in {}s".format(timeout))
+            raise AssertionError("Transfer did not finish in {}s. State: {}".format(timeout, self.state))
 
     def is_finished(self):
         return self.finished_status in self.timestamps.keys()
