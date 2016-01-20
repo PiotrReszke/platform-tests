@@ -16,7 +16,7 @@
 
 import unittest
 
-from test_utils import ApiTestCase, get_logger
+from test_utils import ApiTestCase, get_logger, get_test_name, iPython
 from objects import ServiceInstance, ServiceType, Organization
 
 
@@ -51,6 +51,18 @@ class TestMarketplaceServices(ApiTestCase):
         self.step("Check that the instance was deleted")
         instances = ServiceInstance.api_get_list(space_guid=space_guid)
         self.assertNotInList(instance, instances)
+
+    def _create_ipython_instance_and_login(self, param_key, param_value):
+        param = {param_key: param_value}
+        self.step("Create service instance and check it exist in list")
+        ipython = iPython(self.test_org.guid, self.test_space.guid, params=param)
+        self.assertInListWithRetry(ipython.instance, ServiceInstance.api_get_list, self.test_space.guid)
+        self.step("Get credentials for the new ipython service instance")
+        ipython.get_credentials()
+        ipython.login()
+        terminal = ipython.connect_to_terminal(terminal_no=0)
+        _ = terminal.get_output()
+        return terminal
 
     def test_check_marketplace_services_list_vs_cloudfoundry(self):
         self.step("Check that services in cf are the same as in Marketplace")
@@ -103,3 +115,23 @@ class TestMarketplaceServices(ApiTestCase):
             with self.subTest(service=label, plan=plan["name"]):
                 self._create_and_delete_service_instance(self.test_org.guid, self.test_space.guid, label, plan["guid"])
 
+    def test_create_instance_with_extra_parameter(self):
+        param_key = "test_param"
+        param_value = "test_value"
+        terminal = self._create_ipython_instance_and_login(param_key, param_value)
+        terminal.send_input("env\n")
+        output = "".join(terminal.get_output())
+        self.assertIn("{}={}".format(param_key, param_value), output)
+
+    @unittest.expectedFailure
+    def test_create_instance_try_overwrite_parameter(self):
+        """DPNG-4615 Env variables can be overwritten by passing parameter on service instance creation"""
+        param_keys = ["LANGUAGE", "PATH"]
+        param_value = "test_value"
+        for param_key in param_keys:
+            with self.subTest(param_key=param_key):
+                terminal = self._create_ipython_instance_and_login(param_key, param_value)
+                _ = terminal.get_output()
+                terminal.send_input("env\n")
+                output = "".join(terminal.get_output())
+                self.assertNotIn("{}={}".format(param_key, param_value), output)

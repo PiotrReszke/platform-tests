@@ -190,6 +190,12 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         obj_list = get_list_method(*args, **kwargs)
         self.assertNotInList(something, obj_list)
 
+    @retry(AssertionError, tries=10, delay=2)
+    def assertInListWithRetry(self, something, get_list_method, *args, **kwargs):
+        """Use when adding something takes longer"""
+        obj_list = get_list_method(*args, **kwargs)
+        self.assertInList(something, obj_list)
+
     @retry(AssertionError, tries=60, delay=2)
     def get_from_list_by_attribute_with_retry(self, attr_name, attr_value, get_list_method, *args, **kwargs):
         """Get list repeatedly and return item with particular attribute value"""

@@ -159,7 +159,7 @@ class iPython(object):
     IPYTHON_SERVICE_LABEL = "ipython"
     WS_TIMEOUT = 5  # (seconds) - timeout for unresponsive socket
 
-    def __init__(self, org_guid, space_guid, instance_name=None):
+    def __init__(self, org_guid, space_guid, instance_name=None, params=None):
         """Create iPython service instance"""
         if instance_name is None:
             instance_name = self.IPYTHON_SERVICE_LABEL + datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -173,7 +173,8 @@ class iPython(object):
             self.http_session.verify = False
             self.ws_sslopt = {"cert_reqs": ssl.CERT_NONE}
         self.instance = ServiceInstance.api_create(org_guid=org_guid, space_guid=space_guid, name=instance_name,
-                                                   service_label=self.IPYTHON_SERVICE_LABEL, service_plan_name="free")
+                                                   service_label=self.IPYTHON_SERVICE_LABEL, service_plan_name="free",
+                                                   params=params)
 
     def __repr__(self):
         return "{} (instance_url={})".format(self.__class__.__name__, self.instance_url)
