@@ -36,6 +36,11 @@ class GetDataSets(ApiTestCase):
     def _create_transfer(cls, org, category, is_public, source):
         return Transfer.api_create(category, is_public, org=org, source=source)
 
+    def _filter_datasets(self, org, filters=(), only_private=False, only_public=False):
+        ds_list = DataSet.api_get_list(org_list=[org], filters=filters, only_private=only_private,
+                                       only_public=only_public)
+        return [d for d in ds_list if d in self.datasets]
+
     @classmethod
     @cleanup_after_failed_setup(DataSet.api_teardown_test_datasets, Transfer.api_teardown_test_transfers,
                                 Organization.cf_api_tear_down_test_orgs)
@@ -55,7 +60,8 @@ class GetDataSets(ApiTestCase):
         for transfer in cls.transfers:
             transfer.ensure_finished()
         cls.step("Get all data sets in the test org")
-        cls.datasets = DataSet.api_get_list(org_list=[cls.org])
+        transfer_titles = [t.title for t in cls.transfers]
+        cls.datasets = [d for d in DataSet.api_get_list(org_list=[cls.org]) if d.title in transfer_titles]
 
     @classmethod
     def tearDownClass(cls):
@@ -75,7 +81,7 @@ class GetDataSets(ApiTestCase):
         self.step("Retrieve datasets by categories")
         for category in DataSet.CATEGORIES:
             with self.subTest(category=category):
-                filtered_datasets = DataSet.api_get_list(org_list=[self.org], filters=({"category": [category]},))
+                filtered_datasets = self._filter_datasets(self.org, ({"category": [category]},))
                 expected_datasets = [d for d in self.datasets if d.category == category]
                 self.assertListEqual(filtered_datasets, expected_datasets)
 
@@ -83,7 +89,7 @@ class GetDataSets(ApiTestCase):
         self.step("Sort datasets by creation time and retrieve first two")
         time_range = sorted([dataset.creation_time for dataset in self.datasets][:2])
         self.step("Retrieve datasets for specified time range")
-        filtered_datasets = DataSet.api_get_list(org_list=[self.org], filters=({"creationTime": time_range},))
+        filtered_datasets = self._filter_datasets(self.org, ({"creationTime": time_range},))
         expected_datasets = [d for d in self.datasets if time_range[0] <= d.creation_time <= time_range[1]]
         self.assertUnorderedListEqual(filtered_datasets, expected_datasets)
 
@@ -92,19 +98,19 @@ class GetDataSets(ApiTestCase):
         self.step("Retrieve datasets by file format")
         for file_format in DataSet.FILE_FORMATS:
             with self.subTest(file_format=file_format):
-                filtered_datasets = DataSet.api_get_list(org_list=[self.org], filters=({"format": [file_format]},))
+                filtered_datasets = self._filter_datasets(self.org, ({"format": [file_format]},))
                 expected_datasets = [d for d in self.datasets if d.format == file_format]
                 self.assertUnorderedListEqual(filtered_datasets, expected_datasets)
 
     def test_get_public_datasets_from_current_org(self):
         self.step("Retrieve only public datasets")
-        filtered_datasets = DataSet.api_get_list(org_list=[self.org], only_public=True)
+        filtered_datasets = self._filter_datasets(self.org, only_public=True)
         expected_datasets = [d for d in self.datasets if d.is_public]
         self.assertUnorderedListEqual(filtered_datasets, expected_datasets)
 
     def test_get_private_datasets_from_current_org(self):
         self.step("Retrieve only private datasets")
-        filtered_datasets = DataSet.api_get_list(org_list=[self.org], only_private=True)
+        filtered_datasets = self._filter_datasets(self.org, only_private=True)
         expected_datasets = [d for d in self.datasets if not d.is_public]
         self.assertUnorderedListEqual(filtered_datasets, expected_datasets)
 
