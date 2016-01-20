@@ -15,7 +15,7 @@
 #
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup
-from objects import LatestEvent, Organization, Transfer
+from objects import LatestEvent, Organization, Transfer, User
 
 
 class DashboardLatestEvents(ApiTestCase):
@@ -28,11 +28,15 @@ class DashboardLatestEvents(ApiTestCase):
         """DPNG-3365 Transfer submission fails with 500 Internal Server Error right after deployment"""
         cls.step("Create test organization")
         cls.tested_org = Organization.api_create()
+        cls.step("Add admin to the organization")
+        User.get_admin().api_add_to_organization(org_guid=cls.tested_org.guid)
         cls.step("Produce an event in the tested organization - create a data set")
         transfer = Transfer.api_create(org=cls.tested_org, source=cls.TEST_TRANSFER_LINK)
         transfer.ensure_finished()
         cls.step("Create another organization and create a data set in that organization")
         other_org = Organization.api_create()
+        cls.step("Add admin to the second organization")
+        User.get_admin().api_add_to_organization(org_guid=other_org.guid)
         transfer = Transfer.api_create(org=other_org, source=cls.TEST_TRANSFER_LINK)
         transfer.ensure_finished()
         cls.step("Retrieve latest events from dashboard")
