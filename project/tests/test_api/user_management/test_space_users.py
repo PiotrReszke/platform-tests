@@ -179,6 +179,14 @@ class AddExistingUserToSpace(BaseSpaceUserClass):
         USER.api_add_to_space(self.test_space.guid, TEST_ORG.guid, roles=self.ALL_SPACE_ROLES)
         self._assert_user_in_space_with_roles(USER, self.test_space.guid)
 
+    def test_add_existing_user_by_updating_roles(self):
+        user_not_in_space = USER
+        self.step("Create test space")
+        space = Space.api_create(TEST_ORG)
+        self.step("Check that attempt to update a user via space they are not in returns an error.")
+        user_not_in_space.api_update_space_roles(space.guid, new_roles=User.SPACE_ROLES["auditor"])
+        self._assert_user_in_space_with_roles(USER, space.guid)
+
     def test_cannot_add_existing_user_to_non_existing_space(self):
         invalid_space_guid = "invalid-space-guid"
         self.step("Check that it is not possible to add existing user to not existing space")
@@ -223,18 +231,6 @@ class UpdateSpaceUser(BaseSpaceUserClass):
         self.assertRaisesUnexpectedResponse(409, "You must have at least one role", USER.api_update_space_roles,
                                             self.test_space.guid, new_roles=())
         self._assert_user_in_space_with_roles(USER, self.test_space.guid)
-
-    def test_cannot_update_user_which_is_not_in_space(self):
-        user_not_in_space = USER
-        self.step("Create test space")
-        space = Space.api_create(TEST_ORG)
-        self.step("Check that attempt to update a user via space they are not in returns an error.")
-        space_users = User.api_get_list_via_space(space.guid)
-        self.assertRaisesUnexpectedResponse(404, "User {} does not exist in space {}".format(user_not_in_space.guid,
-                                                                                             space.guid),
-                                            user_not_in_space.api_update_space_roles, space.guid,
-                                            new_roles=User.SPACE_ROLES["auditor"])
-        self.assertListEqual(User.api_get_list_via_space(space.guid), space_users)
 
     def test_cannot_update_non_existing_space_user(self):
         invalid_guid = "invalid-user-guid"
