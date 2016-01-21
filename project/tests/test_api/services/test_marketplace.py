@@ -96,6 +96,7 @@ class TestMarketplaceServices(ApiTestCase):
             with self.subTest(service=label, plan=plan["name"]):
                 self._create_and_delete_service_instance(self.test_org.guid, self.test_space.guid, label, plan["guid"])
 
+    @unittest.skip
     def test_create_ipython_instance(self):
         """DPNG-4442 Deleting ipyhton instance fails with Internal Sever Error (sometimes)"""
         label = "ipython"

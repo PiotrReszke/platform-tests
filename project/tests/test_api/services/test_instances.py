@@ -20,7 +20,7 @@ from objects import Organization, ServiceType, ServiceInstance, ServiceInstanceK
 
 
 class ServiceInstanceKeys(ApiTestCase):
-    SERVICES_TESTED_SEPARATELY = ['yarn', 'hdfs', 'hbase', 'atk', "scoring-engine"]
+    SERVICES_TESTED_SEPARATELY = ['yarn', 'hdfs', 'hbase', "scoring-engine", "gearpump", "gearpump-dashboard"]
 
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
@@ -69,6 +69,17 @@ class ServiceInstanceKeys(ApiTestCase):
                     self._create_instance_and_key(service_type.label, plan["guid"], self.test_org, test_space)
 
     @unittest.expectedFailure
+    def test_create_gearpump_service_instance_keys(self):
+        """DPNG-3832 Enable creating service key for services with large 'credentials' section"""
+        labels = ("gearpump", "gearpump-dashboard")
+        gp_services = [s for s in self.marketplace_services if s.label in labels]
+        test_space = self.test_org.spaces[2]
+        for service in gp_services:
+            for plan in service.service_plans:
+                with self.subTest(service=service.label, plan=plan["name"]):
+                    self._create_instance_and_key(service.label, plan["guid"], self.test_org, test_space)
+
+    @unittest.expectedFailure
     def test_create_yarn_service_instance_keys(self):
         """DPNG-3474 Command cf create-service-key does not work for yarn broker"""
         label = 'yarn'
@@ -97,15 +108,3 @@ class ServiceInstanceKeys(ApiTestCase):
         for plan in hbase.service_plans:
             with self.subTest(service=label, plan=plan["name"]):
                 self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
-
-    @unittest.skip
-    @unittest.expectedFailure
-    def test_create_atk_service_instance_keys(self):
-        """DPNG-3788 502 bad gateway while creating ATK instance"""
-        label = "atk"
-        atk = next(iter(s for s in self.marketplace_services if s.label == label))
-        test_space = self.test_org.spaces[2]
-        for plan in atk.service_plans:
-            with self.subTest(service=label, plan=plan["name"]):
-                self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
-
