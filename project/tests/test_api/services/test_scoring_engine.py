@@ -13,10 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import unittest
+
 from test_utils import ApiTestCase, cleanup_after_failed_setup, AppClient, download_file, get_test_name
 from objects import Organization, ServiceInstance, ServiceInstanceKey, Transfer, DataSet
 
 
+@unittest.skip("Freezes on intel-data-kerberos-second")
 class TestScoringEngineInstance(ApiTestCase):
     MODEL_FILE_NAME = "model.tar"
     MODEL_URL = "https://repo.gotapaas.eu/files/models_a8ab76353c2143509514da386d32a2f8.tar"
