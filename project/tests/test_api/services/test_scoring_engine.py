@@ -13,31 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from test_utils import ApiTestCase, cleanup_after_failed_setup, get_test_name
+from test_utils import ApiTestCase, cleanup_after_failed_setup
 from objects import Organization, ServiceInstance, ServiceInstanceKey, Transfer, DataSet
 
 
 class TestScoringEngineInstance(ApiTestCase):
     MODEL_URL = "https://repo.gotapaas.eu/files/models_a8ab76353c2143509514da386d32a2f8.tar"
-
-    @classmethod
-    def _create_transfer(cls, org, model_url, category="other"):
-        transfer = Transfer.api_create(category=category, org=org, source=model_url)
-        transfer.ensure_finished()
-        return transfer
-
-    @classmethod
-    def _create_instance(cls, service_label, plan_name, test_org, test_space, model_file_hdfs_path):
-        cls.step("Create test service instance")
-        instance_name = get_test_name()
-        return ServiceInstance.api_create(
-            org_guid=test_org.guid,
-            space_guid=test_space.guid,
-            service_label=service_label,
-            name=instance_name,
-            service_plan_name=plan_name,
-            params={"TAR_ARCHIVE": model_file_hdfs_path}
-        )
+    SE_LABEL = "scoring-engine"
+    SE_PLAN_NAME = "Simple"
 
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
@@ -45,15 +28,21 @@ class TestScoringEngineInstance(ApiTestCase):
         cls.step("Create test organization and test spaces")
         cls.test_org = Organization.api_create(space_names=("test-space",))
         cls.test_space = cls.test_org.spaces[0]
-        cls.se_label = "scoring-engine"
-        cls.se_plan = "Simple"
         cls.step("Create a transfer and get hdfs path")
-        t = cls._create_transfer(cls.test_org, cls.MODEL_URL)
-        ds = DataSet.api_get_matching_to_transfer([cls.test_org], t.title)
+        transfer = Transfer.api_create(category="other", org=cls.test_org, source=cls.MODEL_URL)
+        transfer.ensure_finished()
+        ds = DataSet.api_get_matching_to_transfer([cls.test_org], transfer.title)
         cls.hdfs_path = ds.target_uri
 
     def test_create_and_delete_scoring_engine_service_instance(self):
-        se_instance = self._create_instance(self.se_label, self.se_plan, self.test_org, self.test_space, self.hdfs_path)
+        self.step("Create test service instance")
+        se_instance = ServiceInstance.api_create(
+            org_guid=self.test_org.guid,
+            space_guid=self.test_space.guid,
+            service_label=self.SE_LABEL,
+            service_plan_name=self.SE_PLAN_NAME,
+            params={"TAR_ARCHIVE": self.hdfs_path}
+        )
         instances_list = ServiceInstance.api_get_list(self.test_space.guid)
         self.assertInList(se_instance, instances_list, "Scoring-engine was not created")
         self.step("Delete scoring engine instance and check it does not show on the list")
@@ -62,7 +51,14 @@ class TestScoringEngineInstance(ApiTestCase):
         self.assertNotInList(se_instance, instances, "Scoring engine instance was not deleted")
 
     def test_create_scoring_engine_service_instance_key(self):
-        se_instance = self._create_instance(self.se_label, self.se_plan, self.test_org, self.test_space, self.hdfs_path)
+        self.step("Create test service instance")
+        se_instance = ServiceInstance.api_create(
+            org_guid=self.test_org.guid,
+            space_guid=self.test_space.guid,
+            service_label=self.SE_LABEL,
+            service_plan_name=self.SE_PLAN_NAME,
+            params={"TAR_ARCHIVE": self.hdfs_path}
+        )
         self.step("Check that the instance exists in summary and has no keys")
         summary = ServiceInstance.api_get_keys(self.test_space.guid)
         self.assertIn(se_instance, summary, "Instance not found in summary")
