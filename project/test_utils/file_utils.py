@@ -54,7 +54,7 @@ def get_csv_record_count(file_path):
     """
     with open(file_path, newline="") as csv_file:
         csv_reader = csv.reader(csv_file)
-        row_count = sum(1 for row in csv_reader)
+        row_count = sum(1 for _ in csv_reader)
     return row_count
 
 

@@ -218,7 +218,7 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
                 if cls.PREREQUISITE_FAILED or \
                         ((len(self._outcome.result.failures) or len(self._outcome.result.errors)) > cls.FAILS_AND_ERRORS):
                     cls.PREREQUISITE_FAILED = True
-                    raise unittest.SkipTest("Skipped due to failed prerequisite")
+                    raise unittest.SkipTest("Skipped due to failed prerequisite\n")
                 else:
                    func(self, *args, **kwargs)
             return wrapped

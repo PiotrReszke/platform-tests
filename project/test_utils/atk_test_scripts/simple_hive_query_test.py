@@ -27,12 +27,13 @@ import trustedanalytics as ta
 
 from common import AtkTestException, parse_arguments, check_uaa_file
 
-
 parameters = parse_arguments()
-
-directory = os.path.dirname(__file__)
 
 ta.create_credentials_file(parameters.uaa_file_name)
 
 check_uaa_file(parameters.uaa_file_name)
 
+query = "select * from " + parameters.organization + "." + parameters.transfer
+print("\nQuery: {}".format(query))
+hq = ta.HiveQuery(query)
+frame = ta.Frame(hq)

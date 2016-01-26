@@ -17,29 +17,70 @@
 import os
 import subprocess
 import pexpect
-import time
 import requests
 
 
-from . import log_command, get_logger, log_http_request, log_http_response, UnexpectedResponseError, config, \
-    platform_api_calls as api, AtkScriptException
+from . import log_command, get_logger, log_http_request, log_http_response, UnexpectedResponseError, config,\
+    AtkScriptException
 
 __all__ = ["ATKtools"]
 
 
-logger = get_logger("ATKtools")
+logger = get_logger(__name__)
 
+
+class PexpectLoggerAdapter(object):
+
+    def __init__(self, logger_name, obscured_secret=None):
+        self.logger = get_logger(logger_name)
+        self.obscured_secret = obscured_secret
+
+    def write(self, data):
+        data = data.decode("utf-8").strip()
+        if data:  # non-blank
+            if self.obscured_secret is not None:
+                data = data.replace(self.obscured_secret, "[SECRET]")
+            self.logger.info(data)
+
+    def flush(self):
+        pass  # leave it to logging to flush properly
 
 
 class ATKtools(object):
 
-    HOME = os.path.expanduser("~")
+    TEST_SCRIPTS_DIRECTORY = os.path.join("test_utils", "atk_test_scripts")
+    HIVE_CLEANUP_SCRIPT = os.path.join(TEST_SCRIPTS_DIRECTORY, "remove_test_tables.py")
+    CREDENTIALS_FILE_PATH = "/tmp/atk_credentials_file"
 
     def __init__(self, name, interpreter_version="python2"):
-        self.path = os.path.join(self.HOME, "virtualenvs", name)
+        self.path = os.path.join("/tmp", name)
         self.system_interpreter = os.path.join("/usr/bin", interpreter_version)
         self.interpreter = os.path.join(self.path, "bin", interpreter_version)
         self.pip = os.path.join(self.path, "bin/pip")
+        self.installed_packages = []
+
+    @staticmethod
+    def get_atk_client_url(atk_url):
+        return "http://{}/client".format(atk_url)
+
+    @staticmethod
+    def get_expected_atk_app_name(atk_service_instance):
+        return "{}-{}".format(atk_service_instance.name, atk_service_instance.guid.split("-")[0])
+
+    def teardown(self, atk_url=None):
+        # Cleanup hive
+        if atk_url is not None and self.get_atk_client_url(atk_url) in self.installed_packages:
+            try:
+                self.run_atk_script(self.HIVE_CLEANUP_SCRIPT, atk_url)
+            except AtkScriptException as e:
+                logger.warning("Could not cleanup hive: DPNG-4579\n{}".format(e))
+            else:
+                raise AssertionError("Unexpected success: Is DPNG-4579 fixed yet on this environment?")
+        # Delete credentials file
+        if os.path.exists(self.CREDENTIALS_FILE_PATH):
+            os.remove(self.CREDENTIALS_FILE_PATH)
+        # Delete virtualenv directory
+        self.delete()
 
     def create(self):
         command = ["virtualenv", "-p", self.system_interpreter, self.path]
@@ -52,6 +93,7 @@ class ATKtools(object):
         subprocess.check_call(command)
 
     def pip_install(self, package_name, **pip_options):
+        self.installed_packages += package_name
         command = [self.pip, "install"]
         for option_name, value in pip_options.items():
             command += ["--" + option_name.replace("_", "-"), value]
@@ -59,43 +101,20 @@ class ATKtools(object):
         log_command(command)
         subprocess.check_call(command)
 
-    def pip_install_local_package(self, package_path):
-        """Package path is path where the package's setup.py is located"""
-        command = [self.pip, "install", "-e", package_path]
-        log_command(command)
-        subprocess.check_call(command)
-
-    def pip_install_from_url(self, atk_url):
-        atk_url = "http://" + atk_url + "/client"
-        command = [self.pip, "install", atk_url]
-        log_command(command)
-        subprocess.check_call(command)
-
-    def pip_uninstall(self, package_name):
-        command = [self.pip, "uninstall", package_name]
-        log_command(command)
-        yes = subprocess.Popen(["/usr/bin/yes"], stdout=subprocess.PIPE)
-        subprocess.check_call(command, stdin=yes.stdout)
-
-    def run_script(self, script_path, arguments=()):
-        command = [self.interpreter, script_path]
-        if len(arguments) != 0:
-            for k, v in arguments.items():
-                command += [k, v]
-        log_command(command)
-        return subprocess.check_call(command)
-
-    def run_atk_script(self, script_path, atk_url, arguments=None, timeout=None):
+    def run_atk_script(self, script_path, atk_url, arguments=None, timeout=480):
         command = [self.interpreter, script_path]
         if arguments is not None:
             for k, v in arguments.items():
                 command += [k, v]
+        command += ["--uaa_file_name", self.CREDENTIALS_FILE_PATH]
         log_command(command)
 
         username = config.CONFIG["admin_username"]
         password = config.CONFIG["admin_password"]
 
         child = pexpect.spawn(" ".join(command))
+        child.logfile_read = PexpectLoggerAdapter(logger_name="atk-client-out", obscured_secret=password)
+        child.logfile_send = PexpectLoggerAdapter(logger_name="atk-client-in", obscured_secret=password)
         child.expect("URI of the ATK server:")
         child.sendline(atk_url)
         child.expect("User name:")
@@ -103,30 +122,18 @@ class ATKtools(object):
         child.expect("Password:")
         child.sendline(password)
 
-        time.sleep(30)
         child.sendline("y")
-        child.expect(pexpect.EOF, timeout=480)
+        child.expect(pexpect.EOF, timeout=timeout)
         response = child.before.decode("utf-8")
 
-        logger.info("Atk script output:\n{}".format(response))
-
+        if "Traceback" in response:
+            raise AtkScriptException("Python exception in atk client")
         if "Connected" not in response:
             raise AtkScriptException("Python client failed to connect to ATK instance")
-        if "100.00% Tasks" not in response:
-            raise AtkScriptException("Hive could not find resources")
-
-        return response
-
-    @classmethod
-    def api_get_atk_client_file(cls, client=None):
-        atk_file_name = api.api_get_atk_client_file_name(client)
-        api.api_get_file(atk_file_name, atk_file_name, client)
-        return atk_file_name
-
-    @classmethod
-    def hive_clean_up(cls, atk_virtualenv, table_removal_script, atk_url, uaa_file):
-        atk_virtualenv.run_atk_script(table_removal_script, atk_url, arguments={"--uaa_file_name": uaa_file},
-                                      timeout=960)
+        with open(self.CREDENTIALS_FILE_PATH) as f:
+            content = f.read()
+        if content == "":
+            raise AtkScriptException("Credentials file is empty")
 
     @classmethod
     def check_uaac_token(cls):

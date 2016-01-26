@@ -165,16 +165,15 @@ class Application(object):
     def api_stop(self, client=None):
         api.api_change_app_status(self.guid, self.STATUS["stop"], client=client)
 
-    @classmethod
-    @retry(AssertionError, tries=180, delay=5)
-    def ensure_started(cls, space_guid, application_name_prefix):
-        applications = cls.api_get_list(space_guid)
-        application = next((app for app in applications if app.name.startswith(application_name_prefix)), None)
+    @retry(AssertionError, tries=30, delay=2)
+    def ensure_started(self):
+        applications = self.api_get_list(self.space_guid)
+        application = next((app for app in applications if app.name == self.name), None)
         if application is None:
-            raise AssertionError("{} app does not exist".format(application_name_prefix))
-        if not application.is_started:
-            raise AssertionError("{} is not started".format(application))
-        return application
+            raise AssertionError("App does not exist")
+        self._state = application._state
+        if not self.is_started:
+            raise AssertionError("App is not started")
 
     # -------------------------------- cf api -------------------------------- #
 

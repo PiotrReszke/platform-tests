@@ -38,7 +38,7 @@ logger_format = "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
 if is_running_under_teamcity():
     logging.basicConfig(stream=sys.stdout, format=logger_format)
 else:
-    log_file_name = "api_tests_log_{}.txt".format(datetime.now().strftime("%Y%m%d_%H%M%S"))
+    log_file_name = "api_tests_{}.log".format(datetime.now().strftime("%Y%m%d_%H%M%S"))
     default_log_dir = os.path.join("/tmp", log_file_name)
     fh = logging.FileHandler(default_log_dir)
     sh = logging.StreamHandler(sys.stdout)

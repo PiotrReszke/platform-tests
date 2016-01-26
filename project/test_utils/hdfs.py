@@ -20,6 +20,8 @@ import re
 from . import get_logger, config, SshClient, HdfsException
 
 
+
+
 __all__ = ["Hdfs"]
 
 
@@ -59,5 +61,8 @@ class Hdfs(object):
         command = self.hadoop_fs + ["-cat", file_path]
         output = self._execute(command)
         return output
+
+
+
 
 

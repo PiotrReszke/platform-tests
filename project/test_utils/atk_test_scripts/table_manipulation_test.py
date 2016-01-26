@@ -31,10 +31,9 @@ parameters = parse_arguments()
 
 directory = os.path.dirname(__file__)
 
-uaa_file_name = os.path.join(directory, parameters.uaa_file_name)
-ta.create_credentials_file(uaa_file_name)
+ta.create_credentials_file(parameters.uaa_file_name)
 
-check_uaa_file(uaa_file_name)
+check_uaa_file(parameters.uaa_file_name)
 
 query_select = "SELECT * FROM " + parameters.organization + "." + parameters.transfer
 print("Query: {}".format(query_select))

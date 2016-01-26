@@ -19,7 +19,7 @@ import unittest
 
 from retry import retry
 
-from test_utils import ApiTestCase, get_logger, iPython, cleanup_after_failed_setup, config
+from test_utils import ApiTestCase, get_logger, iPython, cleanup_after_failed_setup, config, ATKtools
 from objects import Organization, ServiceInstance, Application
 
 
@@ -29,8 +29,9 @@ logger = get_logger("iPython test")
 class iPythonConsole(ApiTestCase):
 
     IPYTHON_SERVICE_LABEL = "ipython"
+    ATK_SERVICE_LABEL = "atk"
+    ATK_PLAN_NAME = "Simple"
     TERMINAL_NO = 0
-    ATK_CLIENT_INDEX = "https://pypi.analyticstoolkit.intel.com/latest/simple/"
 
     @property
     def terminal_no(self):
@@ -47,19 +48,19 @@ class iPythonConsole(ApiTestCase):
         cls.test_space = cls.test_org.spaces[0]
         cls.step("Create instance of iPython service")
         cls.ipython = iPython(org_guid=cls.test_org.guid, space_guid=cls.test_space.guid)
-        cls._assert_ipython_instance_created(cls.ipython.instance)
+        cls._assert_ipython_instance_created(cls.ipython.instance, space_guid=cls.test_space.guid, ipython=cls.ipython)
         cls.step("Login into iPython")
         cls.ipython.login()
 
     @classmethod
     @retry(AssertionError, tries=5, delay=5)
-    def _assert_ipython_instance_created(cls, instance):
+    def _assert_ipython_instance_created(cls, instance, space_guid, ipython):
         cls.step("Get list of service instances and check ipython is on the list")
-        instances = ServiceInstance.api_get_list(space_guid=cls.test_space.guid)
+        instances = ServiceInstance.api_get_list(space_guid=space_guid)
         if instance not in instances:
             raise AssertionError("ipython instance is not on list")
         cls.step("Get credentials for the new ipython service instance")
-        cls.ipython.get_credentials()
+        ipython.get_credentials()
 
     @retry(AssertionError, tries=5, delay=5)
     def _assert_atk_client_is_installed(self, ipython_terminal):
@@ -68,13 +69,6 @@ class iPythonConsole(ApiTestCase):
         output = ipython_terminal.get_output()
         self.assertIsNotNone(re.search(success_pattern, output[-2]))
         self.assertIn("#", output[-1])
-
-    def _create_atk_instance(self):
-        self.step("Create atk instance")
-        ServiceInstance.cf_api_create(space_guid=self.test_space.guid, service_label="atk", service_plan_name="simple")
-        self.step("Check that atk application is created and started")
-        atk_app = Application.ensure_started(space_guid=self.test_space.guid, application_name_prefix="atk")
-        self.atk_url = atk_app.urls[0]
 
     def test_iPython_terminal(self):
         self.step("Create new ipython terminal")
@@ -97,11 +91,27 @@ class iPythonConsole(ApiTestCase):
 
     @unittest.skip
     def test_iPython_connect_to_atk_client(self):
-        """On hold until atk instance creation is possible"""
-        self._create_atk_instance()
+        self.step("Create atk instance")
+        atk_instance = ServiceInstance.api_create(
+            org_guid=self.test_org.guid,
+            space_guid=self.test_space.guid,
+            service_label=self.ATK_SERVICE_LABEL,
+            service_plan_name=self.ATK_PLAN_NAME
+        )
+        instances = ServiceInstance.api_get_list(space_guid=self.test_space.guid)
+        self.assertInList(atk_instance, instances)
+        self.step("Check that atk application is created and started")
+        atk_app = self.get_from_list_by_attribute_with_retry(
+            attr_name="name",
+            attr_value=ATKtools.get_expected_atk_app_name(atk_instance),
+            get_list_method=Application.api_get_list,
+            space_guid=self.test_space.guid
+        )
+        atk_app.ensure_started()
+        self.atk_url = atk_app.urls[0]
         self.step("Create new iPython terminal and install atk client")
         terminal = self.ipython.connect_to_terminal(terminal_no=self.terminal_no)
-        terminal.send_input("pip2 install --extra-index-url {} trustedanalytics\r".format(self.ATK_CLIENT_INDEX))
+        terminal.send_input("pip2 install http://{}/client\r".format(self.atk_url))
         self._assert_atk_client_is_installed(terminal)
         self.step("Create new iPython notebook")
         notebook = self.ipython.create_notebook()
