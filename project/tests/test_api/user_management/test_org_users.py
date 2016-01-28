@@ -15,7 +15,6 @@
 #
 import time
 import itertools
-import unittest
 
 from test_utils import ApiTestCase, get_logger, platform_api_calls as api, cleanup_after_failed_setup
 from objects import Organization, User

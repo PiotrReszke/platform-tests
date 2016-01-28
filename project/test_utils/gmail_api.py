@@ -137,7 +137,7 @@ def is_there_any_messages_to(recipient, user_id=TEST_EMAIL):
 
 
 def extract_code_from_message(message):
-    pattern = r"(?<=code=)([a-z]|[0-9]|-)+"
+    pattern = r"(?<=code=)([a-zA-Z0-9]|-)+"
     match = re.search(pattern, message)
     if match is None:
         raise AssertionError("Can't find code in given message: {}".format(message))
@@ -158,9 +158,19 @@ def get_invitation_codes_for_list(usernames):
     return codes
 
 
+def get_reset_password_links(username):
+    query = get_query_for_list([username])
+    #2 messages - reset email and create account
+    messages = wait_for_messages_matching_query(query, messages_number=2)
+
+    code = extract_code_from_message(messages[0]["content"])
+    logger.debug("Extracted reset password code {}", code)
+
+    return code
+
+
 def get_link_from_message(email_content):
     match = re.search(INVITATION_LINK_PATTERN, email_content)
     if match is None:
         raise AssertionError("Invitation link was not found in email content: {}".format(email_content))
     return match.group()
-

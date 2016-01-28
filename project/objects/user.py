@@ -174,6 +174,11 @@ class User(object):
         client.authenticate(self.password)
         return client
 
+    def get_client(self):
+        """Return API client for this user."""
+        client = PlatformApiClient.get_client(self.username)
+        return client
+
     def api_add_to_organization(self, org_guid, roles=ORG_ROLES["manager"], client=None):
         api.api_add_organization_user(org_guid, self.username, roles, client=client)
         self.org_roles[org_guid] = list(set(self.org_roles.get(org_guid, set())) | set(roles))

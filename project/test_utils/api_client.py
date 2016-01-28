@@ -47,6 +47,9 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
     def __repr__(self):
         return "{}: {}".format(self.__class__.__name__, self._username)
 
+    def get_username(self):
+        return self._username
+
     @classmethod
     def get_admin_client(cls, client_type=None):
         admin_username = config.CONFIG["admin_username"]
@@ -101,6 +104,8 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
                     f.flush()
 
 
+
+
 class ConsoleClient(PlatformApiClient):
     """HTTP client which calls Platform API - using console endpoint and cookie-based authentication."""
 
@@ -117,10 +122,13 @@ class ConsoleClient(PlatformApiClient):
     def url(self):
         return "https://console.{}/".format(self._domain)
 
+    def create_login_url(self, path):
+        return "{}://{}/{}".format(config.CONFIG["login.do_scheme"], self._login_endpoint, path)
+
     def authenticate(self, password):
         request = requests.Request(
             method="POST",
-            url="{}://{}/login.do".format(config.CONFIG["login.do_scheme"], self._login_endpoint),
+            url=self.create_login_url("login.do"),
             data={"username": self._username, "password": password},
             headers={"Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded"}
         )
@@ -129,6 +137,50 @@ class ConsoleClient(PlatformApiClient):
         response = self._session.send(request)
         log_http_response(response)
         if not response.ok or "forgotPasswordLink" in response.text:
+            raise UnexpectedResponseError(response.status_code, response.text)
+
+    def logout(self):
+        url = self.create_login_url("logout")
+        response = self._session.get(url)
+        log_http_response(response)
+
+    def post(self, url, data, description):
+        request = requests.Request(
+            method="POST",
+            url=url,
+            data=data,
+            headers={"Accept": "text/html", "Content-Type": "application/x-www-form-urlencoded"}
+        )
+        request = self._session.prepare_request(request)
+        log_http_request(request, self._username, description=description)
+        response = self._session.send(request)
+        log_http_response(response)
+        if not response.ok:
+            raise UnexpectedResponseError(response.status_code, response.text)
+
+    def get(self, url, description=""):
+        request = self._session.prepare_request(requests.Request("GET", url=url))
+        log_http_request(request, self._username, description=description)
+        response = self._session.send(request)
+
+        log_http_response(response)
+
+        if not response.ok:
+            raise UnexpectedResponseError(response.status_code, response.text)
+        return response.text
+
+    def put(self, url, data, description=""):
+        request = requests.Request(
+                method="PUT",
+                url=url,
+                data=data,
+                headers={"Accept": "application/json", "Content-Type": "application/json;charset=UTF-8"}
+        )
+        request = self._session.prepare_request(request)
+        log_http_request(request, self._username, description=description)
+        response = self._session.send(request)
+        log_http_response(response)
+        if not response.ok:
             raise UnexpectedResponseError(response.status_code, response.text)
 
 
