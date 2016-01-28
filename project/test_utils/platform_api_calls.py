@@ -469,6 +469,12 @@ def api_delete_invitation(email, client=None):
     client.request("DELETE", "rest/invitations/{}".format(email), log_msg="PLATFORM: delete invitation")
 
 
+def api_resend_invitation(email, client=None):
+    """POST /rest/invitations/{invitation}/resend"""
+    client = client or PlatformApiClient.get_admin_client()
+    client.request("POST", "rest/invitations/{}/resend".format(email), log_msg="PLATFORM: resend invitation")
+
+
 def api_register_new_user(code, password=None, org_name=None, client=None):
     """POST /rest/registrations"""
     msg = "PLATFORM: register as a new user"

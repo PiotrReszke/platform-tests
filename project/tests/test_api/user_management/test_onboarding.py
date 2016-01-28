@@ -152,3 +152,89 @@ class Onboarding(ApiTestCase):
         self.step("Check that the user was not created")
         username_list = [user.username for user in User.cf_api_get_all_users()]
         self.assertNotInList(username, username_list, "User was created")
+
+
+class PendingInvitations(ApiTestCase):
+
+    def test_add_new_pending_invitation(self):
+        self.step("Invite new user")
+        username = User.api_invite()
+        self.step("Check that the user is in the pending invitation list")
+        self.assertInListWithRetry(username, User.api_get_pending_invitations)
+
+    def test_accepting_invitation_deletes_it_from_pending_list(self):
+        self.step("Invite new user")
+        username = User.api_invite()
+        self.step("Get registration code from received message")
+        code = gmail_api.get_invitation_code_for_user(username)
+        self.step("Register user with the received code")
+        User.api_register_after_onboarding(code, username)
+        self.step("Check that invitation is no longer present in pending invitation list")
+        self.assertNotInListWithRetry(username, User.api_get_pending_invitations)
+
+    def test_add_new_pending_invitation_twice_for_the_same_user(self):
+        self.step("Send invitation two times for a single user")
+        username = User.api_invite()
+        User.api_invite(username=username)
+        invitation_list = User.api_get_pending_invitations()
+        self.step("Check that there is only one invitation for the user")
+        self.assertEqual(invitation_list.count(username), 1, "More than one invitation for user {}".format(username))
+
+    def test_resend_pending_invitation(self):
+        self.step("Invite new user")
+        username = User.api_invite()
+        self.step("Check that the user received the message")
+        messages = gmail_api.wait_for_messages_to(recipient=username, messages_number=1)
+        self.assertEqual(len(messages), 1)
+        self.step("Resend invitation")
+        User.api_resend_user_invitation(username)
+        self.step("Check that the user received the new message")
+        messages = gmail_api.wait_for_messages_to(recipient=username, messages_number=2)
+        self.assertEqual(len(messages), 2)
+        code = gmail_api.extract_code_from_message(messages[1]["content"])
+        self.step("Register user with the received code")
+        user, organization = User.api_register_after_onboarding(code, username)
+        self.assert_user_in_org_and_roles(user, organization.guid, User.ORG_ROLES["manager"])
+
+    def test_cannot_resend_not_existing_pending_invitation(self):
+        username = "not_existing_user"
+        self.assertRaisesUnexpectedResponse(404, "No pending invitation for {}".format(username),
+                                            User.api_resend_user_invitation, username)
+
+    @unittest.expectedFailure
+    def test_cannot_resend_invitation_providing_empty_name(self):
+        """DPNG-4657 http 500 when trying to use unsupported api endpoints"""
+        self.assertRaisesUnexpectedResponse(404, "Not found", User.api_resend_user_invitation, "")
+
+    def test_delete_pending_invitation(self):
+        self.step("Invite new user")
+        username = User.api_invite()
+        self.assertInListWithRetry(username, User.api_get_pending_invitations)
+        self.step("Delete pending user invitation")
+        User.api_delete_user_invitation(username)
+        self.assertNotInListWithRetry(username, User.api_get_pending_invitations)
+        self.step("Get registration code from received message")
+        code = gmail_api.get_invitation_code_for_user(username)
+        self.step("Check that the user cannot register after deletion of pending invitation")
+        self.assertRaisesUnexpectedResponse(403, "", User.api_register_after_onboarding, code, username)
+
+    @unittest.expectedFailure
+    def test_cannot_delete_not_existing_pending_invitation(self):
+        """DPNG-4654 Typo in 'DELETE /rest/invitations/ error message."""
+        self.step("Try to delete not existing invitation")
+        username = "not_existing_user"
+        self.assertRaisesUnexpectedResponse(404, "No pending invitation for {}".format(username),
+                                            User.api_delete_user_invitation, username)
+
+    @unittest.expectedFailure
+    def test_cannot_delete_pending_invitation_providing_empty_name(self):
+        """DPNG-4657 http 500 when trying to use unsupported api endpoints"""
+        self.assertRaisesUnexpectedResponse(404, "Not found", User.api_delete_user_invitation, "")
+
+    def test_cannot_get_pending_invitations_as_non_admin_user(self):
+        self.step("Create new org and user")
+        test_org = Organization.api_create()
+        test_user = User.api_create_by_adding_to_organization(test_org.guid)
+        test_user_client = test_user.login()
+        self.step("As non admin user try to get pending invitations list")
+        self.assertRaisesUnexpectedResponse(403, "Access is denied", User.api_get_pending_invitations, test_user_client)

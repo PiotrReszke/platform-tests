@@ -199,6 +199,10 @@ class User(object):
     def api_delete_user_invitation(username, client=None):
         api.api_delete_invitation(username, client=client)
 
+    @staticmethod
+    def api_resend_user_invitation(username, client=None):
+        api.api_resend_invitation(username, client=client)
+
     @classmethod
     def get_admin(cls):
         """Return User object for admin user"""
