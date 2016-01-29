@@ -57,7 +57,6 @@ class Atk(ApiTestCase):
         self.step("Check if atk has correct credentials and is able to download uaac token")
         ATKtools.check_uaac_token()
 
-    @unittest.expectedFailure
     @ApiTestCase.mark_prerequisite()
     def test_1_create_data_set_and_publish_it_in_hive(self):
         """DPNG-2010 Cannot get JDBC connection when publishing dataset to Hive"""
@@ -138,7 +137,6 @@ class Atk(ApiTestCase):
                                            arguments={"--organization": self.test_org.name,
                                                       "--transfer": self.transfer_title})
 
-    @unittest.expectedFailure
     @ApiTestCase.mark_prerequisite()
     def test_8_table_manipulation(self):
         self.step("Run atk table manipulation test")
