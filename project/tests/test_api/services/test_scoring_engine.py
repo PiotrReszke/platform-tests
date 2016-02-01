@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from test_utils import ApiTestCase, cleanup_after_failed_setup
-from objects import Organization, ServiceInstance, ServiceInstanceKey, Transfer, DataSet
+from objects import Organization, ServiceInstance, ServiceInstanceKey, Transfer, DataSet, User
 
 
 class TestScoringEngineInstance(ApiTestCase):
@@ -28,6 +28,8 @@ class TestScoringEngineInstance(ApiTestCase):
         cls.step("Create test organization and test spaces")
         cls.test_org = Organization.api_create(space_names=("test-space",))
         cls.test_space = cls.test_org.spaces[0]
+        cls.step("Add admin to the organization")
+        User.get_admin().api_add_to_organization(org_guid=cls.test_org.guid)
         cls.step("Create a transfer and get hdfs path")
         transfer = Transfer.api_create(category="other", org=cls.test_org, source=cls.MODEL_URL)
         transfer.ensure_finished()
