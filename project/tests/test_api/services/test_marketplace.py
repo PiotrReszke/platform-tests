@@ -124,7 +124,6 @@ class TestMarketplaceServices(ApiTestCase):
         output = "".join(terminal.get_output())
         self.assertIn("{}={}".format(param_key, param_value), output)
 
-    @unittest.expectedFailure
     def test_create_instance_try_overwrite_parameter(self):
         """DPNG-4615 Env variables can be overwritten by passing parameter on service instance creation"""
         param_keys = ["LANGUAGE", "PATH"]

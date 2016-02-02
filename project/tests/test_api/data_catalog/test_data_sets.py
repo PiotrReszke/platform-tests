@@ -320,7 +320,6 @@ class CreateDatasets(ApiTestCase):
                 with self.subTest(accessibility=access, detail=key):
                     self.assertEqual(expected_details[key], ds_details[key])
 
-    @unittest.expectedFailure
     def test_create_dataset_recordcount(self):
         """DPNG-3656 Wrong record count for csv file in dataset details"""
         label = "recordCount"
