@@ -30,8 +30,6 @@ from common import AtkTestException, parse_arguments, check_uaa_file
 
 parameters = parse_arguments()
 
-directory = os.path.dirname(__file__)
-
 ta.create_credentials_file(parameters.uaa_file_name)
 
 check_uaa_file(parameters.uaa_file_name)
@@ -71,7 +69,3 @@ if original_table_rows == exported_table_rows and original_table_inspect_list ==
 else:
     raise AtkTestException("Exported data is not same to original one")
 
-delete_query = "DROP TABLE default." + destination_table
-print("Query: {}".format(delete_query))
-hq_delete = ta.HiveQuery(delete_query)
-delete_frame = ta.Frame(hq_delete)

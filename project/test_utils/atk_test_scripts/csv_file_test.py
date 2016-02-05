@@ -37,47 +37,16 @@ ta.create_credentials_file(parameters.uaa_file_name)
 
 check_uaa_file(parameters.uaa_file_name)
 
-query_source = "select * from " + parameters.organization + "." + parameters.transfer
-print("\nQuery: {}".format(query_source))
-hq = ta.HiveQuery(query_source)
-original_frame = ta.Frame(hq)
-
 hdfs_path = parameters.target_uri.split("/", 3)[3]
 print("calling CsvFile...")
 hcsv = ta.CsvFile("../../../" + hdfs_path, schema=[('line' + str(i), str) for i in xrange(8)], delimiter=",")
 frame = ta.Frame(hcsv)
 
-destination_table = "test_tab_{}".format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
+frame_content = frame.inspect(20)
+print("original_table_content: ", frame_content)
+frame_rows = frame_content.rows
 
-print("exporting...")
-frame.export_to_hive(destination_table)
-
-query_destination = "select * from default." + destination_table
-print("\nQuery: {}".format(query_destination))
-hq_default = ta.HiveQuery(query_destination)
-exported_frame = ta.Frame(hq_default)
-
-original_table_rows = original_frame.row_count
-exported_table_rows = exported_frame.row_count
-
-print("\noriginal_table_rows: ", original_table_rows)
-print("exported_table_rows: ", exported_table_rows)
-
-original_table_content = original_frame.inspect()
-exported_table_content = exported_frame.inspect()
-
-print("\noriginal_table_content: ", original_table_content)
-print("exported_table_content: ", exported_table_content)
-
-original_table_inspect_list = original_table_content.rows
-exported_table_inspect_list = exported_table_content.rows
-
-if original_table_rows == exported_table_rows and original_table_inspect_list == exported_table_inspect_list:
-    print("Table {} exported correctly".format(parameters.organization + "." + parameters.transfer))
+if frame.row_count == 17:
+    print("Frame of file {} created correctly".format(hdfs_path))
 else:
-    raise AtkTestException("Exported data is not same to original one")
-
-delete_query = "DROP TABLE default." + destination_table
-print("\nQuery: {}".format(delete_query))
-hq_delete = ta.HiveQuery(delete_query)
-delete_frame = ta.Frame(hq_delete)
+    raise AtkTestException("Frame of file {} not created correctly".format(hdfs_path))

@@ -29,8 +29,6 @@ from common import AtkTestException, parse_arguments, check_uaa_file
 
 parameters = parse_arguments()
 
-directory = os.path.dirname(__file__)
-
 ta.create_credentials_file(parameters.uaa_file_name)
 
 check_uaa_file(parameters.uaa_file_name)

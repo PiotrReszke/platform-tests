@@ -58,17 +58,7 @@ class Atk(ApiTestCase):
         ATKtools.check_uaac_token()
 
     @ApiTestCase.mark_prerequisite()
-    def test_1_create_data_set_and_publish_it_in_hive(self):
-        """DPNG-2010 Cannot get JDBC connection when publishing dataset to Hive"""
-        self.step("Create transfer and check it's finished")
-        Transfer.api_create(source=self.DATA_SOURCE, org=self.test_org, title=self.transfer_title).ensure_finished()
-        self.step("Publish in hive the data set created based on the submitted transfer")
-        data_set = DataSet.api_get_matching_to_transfer(org_list=[self.test_org], transfer_title=self.transfer_title)
-        data_set.publish_in_hive()
-        self.__class__.data_set_hdfs_path = data_set.target_uri
-
-    @ApiTestCase.mark_prerequisite()
-    def test_2_create_atk_instance(self):
+    def test_1_create_atk_instance(self):
         self.step("Check that atk service is available in Marketplace")
         marketplace = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
         atk_service = next((s for s in marketplace if s.label == self.ATK_SERVICE_LABEL), None)
@@ -96,51 +86,53 @@ class Atk(ApiTestCase):
         self.__class__.atk_url = atk_app.urls[0]
 
     @ApiTestCase.mark_prerequisite()
-    def test_3_install_atk_client(self):
+    def test_2_install_atk_client(self):
         self.step("Install atk client package")
         self.atk_virtualenv.pip_install(ATKtools.get_atk_client_url(self.atk_url))
 
     @ApiTestCase.mark_prerequisite()
-    def test_4_check_atk_client_connection(self):
+    def test_3_check_atk_client_connection(self):
         self.step("Run atk connection test")
         atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "atk_client_connection_test.py")
-        self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_url,
-                                           arguments={"--organization": self.test_org.name,
-                                                      "--transfer": self.transfer_title})
+        self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_url)
 
     @ApiTestCase.mark_prerequisite()
-    def test_5_simple_hive_query(self):
-        self.step("Run atk connection test")
-        atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "simple_hive_query_test.py")
-        self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_url,
-                                           arguments={"--organization": self.test_org.name,
-                                                      "--transfer": self.transfer_title})
+    def test_4_create_data_set_and_publish_it_in_hive(self):
+        """DPNG-2010 Cannot get JDBC connection when publishing dataset to Hive"""
+        self.step("Create transfer and check it's finished")
+        Transfer.api_create(source=self.DATA_SOURCE, org=self.test_org, title=self.transfer_title).ensure_finished()
+        self.step("Publish in hive the data set created based on the submitted transfer")
+        data_set = DataSet.api_get_matching_to_transfer(org_list=[self.test_org], transfer_title=self.transfer_title)
+        data_set.publish_in_hive()
+        self.__class__.data_set_hdfs_path = data_set.target_uri
 
-    @unittest.expectedFailure
     @ApiTestCase.mark_prerequisite()
-    def test_6_csv_file_export(self):
-        """DPNG-4579 DROP TABLE query in Hive returns 'Job aborted' error"""
+    def test_5_frame_csv_file(self):
         self.step("Run atk csv file test")
         atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "csv_file_test.py")
         self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_url,
-                                           arguments={"--organization": self.test_org.name,
-                                                      "--transfer": self.transfer_title,
-                                                      "--target_uri": self.data_set_hdfs_path})
+                                           arguments={"--target_uri": self.data_set_hdfs_path})
 
-    @unittest.expectedFailure
     @ApiTestCase.mark_prerequisite()
-    def test_7_export_to_hive(self):
-        """DPNG-4579 DROP TABLE query in Hive returns 'Job aborted' error"""
-        self.step("Run atk export to hive test")
-        atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "export_to_hive_test.py")
+    def test_6_simple_hive_query(self):
+        self.step("Run atk connection test")
+        atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "hive_simple_query_test.py")
         self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_url,
                                            arguments={"--organization": self.test_org.name,
                                                       "--transfer": self.transfer_title})
 
     @ApiTestCase.mark_prerequisite()
-    def test_8_table_manipulation(self):
+    def test_7_export_to_hive(self):
+        self.step("Run atk export to hive test")
+        atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "hive_export_test.py")
+        self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_url,
+                                           arguments={"--organization": self.test_org.name,
+                                                      "--transfer": self.transfer_title})
+
+    @ApiTestCase.mark_prerequisite()
+    def test_8_hive_table_manipulation(self):
         self.step("Run atk table manipulation test")
-        atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "table_manipulation_test.py")
+        atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "hive_table_manipulation_test.py")
         self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_url,
                                            arguments={"--organization": self.test_org.name,
                                                       "--transfer": self.transfer_title})

@@ -130,10 +130,7 @@ class ATKtools(object):
             raise AtkScriptException("Python exception in atk client")
         if "Connected" not in response:
             raise AtkScriptException("Python client failed to connect to ATK instance")
-        with open(self.CREDENTIALS_FILE_PATH) as f:
-            content = f.read()
-        if content == "":
-            raise AtkScriptException("Credentials file is empty")
+        
         return response
 
     @classmethod
