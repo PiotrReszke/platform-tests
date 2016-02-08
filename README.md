@@ -11,6 +11,7 @@
 1. Clone the repository and `cd api-tests`.
 2. Decrypt secrets. In api-tests directory run `./deploy/unlock.sh`.
 3. Set up virtualenv `./deploy/create_virtualenv.sh`. This script will create virtualenv with all Python packages required in `~/virtualenvs/pyvenv_api_tests`.
+4. If you plan to run tests on a new environment (i.e. not daily, sprint, demo, etc.), supply non-default config values in `api-tests/project/test_utils/config.py`, in `__CONFIG` string.
 
 #### Run tests
 1. Activate virtualenv: `source ~/virtualenvs/pyvenv_api_tests/bin/activate`.
