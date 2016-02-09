@@ -1,12 +1,12 @@
 ## Running api tests
 
-#### Requirements
+### Requirements
 * Recommended OS - Ubuntu 14
 * access to the Web (several tests rely on Web resources)
 * key `key.dat` to decrypt repository secrets (ask repository owner)
 
 
-#### Setup
+### Setup
 
 **Access to cdh launcher**
 ```
@@ -70,10 +70,11 @@ cf api-tests
 This will create virtualenv with all Python packages required in `~/virtualenvs/pyvenv_api_tests`.
 
 **Add config**
+
 If you plan to run tests on a new environment (i.e. not daily, sprint, demo, etc.), supply non-default config values in `api-tests/project/test_utils/config.py`, in `__CONFIG` string.
 
 
-#### Run tests
+### Run tests
 1. Activate virtualenv: `source ~/virtualenvs/pyvenv_api_tests/bin/activate`.
 2. `cd api-tests/project`
 3. Run tests using `run_tests.sh` script (see below).
@@ -97,7 +98,7 @@ To run application tests
 Tests log to both stdout, and stderr, so to save output to a file, use `> <log_file> 2>&1`.
 
 
-#### Run tests on TeamCity agent
+### Run tests on TeamCity agent
 
 Before tests are run on TeamCity:
 
