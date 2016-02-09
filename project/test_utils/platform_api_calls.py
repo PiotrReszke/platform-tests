@@ -518,3 +518,11 @@ def api_delete_space(space_guid, client=None):
         raise YouMustBeJokingException("You're trying to delete the reference space")
     client = client or PlatformApiClient.get_admin_client()
     client.request("DELETE", "rest/spaces/{}".format(space_guid), log_msg="PLATFORM: delete space")
+
+
+# ================================================= App Development ================================================== #
+
+
+def api_get_app_development_page(client=None):
+    """GET /app/tools/tools.html"""
+    return client.request("GET", "app/tools/tools.html", log_msg="PLATFORM: get app development tools page")
