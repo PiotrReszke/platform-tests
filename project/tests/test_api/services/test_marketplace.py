@@ -124,14 +124,3 @@ class TestMarketplaceServices(ApiTestCase):
         output = "".join(terminal.get_output())
         self.assertIn("{}={}".format(param_key, param_value), output)
 
-    def test_create_instance_try_overwrite_parameter(self):
-        """DPNG-4615 Env variables can be overwritten by passing parameter on service instance creation"""
-        param_keys = ["LANGUAGE", "PATH"]
-        param_value = "test_value"
-        for param_key in param_keys:
-            with self.subTest(param_key=param_key):
-                terminal = self._create_ipython_instance_and_login(param_key, param_value)
-                _ = terminal.get_output()
-                terminal.send_input("env\n")
-                output = "".join(terminal.get_output())
-                self.assertNotIn("{}={}".format(param_key, param_value), output)
