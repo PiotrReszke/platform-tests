@@ -1,43 +1,100 @@
 ## Running api tests
 
 #### Requirements
-* apt packages required: python3 python3-dev git git-crypt
-* key to decrypt repository secrets (ask repository owner)
-* access to the Web (to download appstack.yml, to download pip from https://bootstrap.pypa.io/get-pip.py and other python packages, to access links for transfer creation)
-* private key of cdh launcher in `~/.ssh/auto-deploy-virginia.pem`
-* User trusted.analytics.tester@gmail.com with appropriate roles and authorizations. To create such user, use script `api-tests/deploy/create_test_admin.sh`
+* Recommended OS - Ubuntu 14
+* access to the Web (several tests rely on Web resources)
+* key `key.dat` to decrypt repository secrets (ask repository owner)
+
 
 #### Setup
-1. Clone the repository and `cd api-tests`.
-2. Decrypt secrets. In api-tests directory run `./deploy/unlock.sh`.
-3. Set up virtualenv `./deploy/create_virtualenv.sh`. This script will create virtualenv with all Python packages required in `~/virtualenvs/pyvenv_api_tests`.
-4. If you plan to run tests on a new environment (i.e. not daily, sprint, demo, etc.), supply non-default config values in `api-tests/project/test_utils/config.py`, in `__CONFIG` string.
+
+**Access to cdh launcher**
+```
+cp <private/key/of/ec2-user> ~/.ssh/auto-deploy-virginia.pem
+```
+Unfortunately, tests currently use a hardcoded path.
+
+**Install required packages**
+```
+sudo apt-get install python3 python3-dev git rubygems-integration
+```
+
+**Download and install git crypt**
+```
+wget https://github.com/AGWA/git-crypt/archive/0.5.0.zip
+unzip 0.5.0.zip
+cd git-crypt-0.5.0
+make git-crypt
+sudo make install git-crypt
+```
+
+**Install cf client**
+```
+wget https://cli.run.pivotal.io/stable?release=debian64 -O cf-client.deb
+sudo dpkg -i cf-client.deb
+```
+
+**Install uaac**
+```
+sudo gem install cf-uaac
+```
+
+**Clone repository**
+```
+git clone git@github.com:intel-data/api-tests.git
+```
+
+
+**Configure test admin user**
+To run tests, we need a user trusted.analytics.tester@gmail.com with appropriate roles and authorizations. To create such user, use script `api-tests/deploy/create_test_admin.sh`.
+```
+create_test_admin.sh <domain> <cf admin password> <reference org name> <reference space name>
+```
+- domain, e.g. gotapaas.eu
+- cf admin password - cf password of user admin
+- reference org name (defaults to seedorg)
+- reference space name (defaults to seedspace)
+ 
+**Decrypt repository secrets**
+
+Place `key.dat` in api-tests directory.
+```
+cf api-tests
+./deploy/unlock.sh
+```
+
+**Set up virtualenv**
+```
+./deploy/create_virtualenv.sh
+```
+This will create virtualenv with all Python packages required in `~/virtualenvs/pyvenv_api_tests`.
+
+**Add config**
+If you plan to run tests on a new environment (i.e. not daily, sprint, demo, etc.), supply non-default config values in `api-tests/project/test_utils/config.py`, in `__CONFIG` string.
+
 
 #### Run tests
 1. Activate virtualenv: `source ~/virtualenvs/pyvenv_api_tests/bin/activate`.
 2. `cd api-tests/project`
 3. Run tests using `run_tests.sh` script (see below).
 
-To run all tests:
-`./run_tests.sh -e <domain, e.g. demotrustedanalytics.com>`
+To run smoke tests:
+`./run_tests.sh -e <domain, e.g. demotrustedanalytics.com> -s test_appstack > <log_file> 2>&1`
 
-This shell script is used only to run_tests.py in a virtual environment, passing all arguments to the Python script. If you want to see/modify what is happening when tests are run, go there. Argument parsing function is located in project/test_utils/config.py
+To run api tests:
+`./run_tests.sh -e <domain, e.g. demotrustedanalytics.com> -s test_api > <log_file> 2>&1`
+
+To run application tests 
+`./run_tests.sh -e <domain, e.g. demotrustedanalytics.com> -s test_cf_applications > <log_file> 2>&1`
+
+**Parameters**
+-s - run tests from one directory or file, e.g. `./run_tests.sh -e <domain> -s <path/in/tests/directory>`.
+-t - run single test: `./run_tests.sh -e <domain> -t <test_name>`, for example: `-t test_create_organization`.
+--proxy - use proxy address with port, e.g. `--proxy proxy-mu.intel.com:911`. If you omit this parameter, requests will use http/https proxy retrieved from system settings.
+-l - specify logging level. There are 3 logging levels: DEBUG (default), INFO `-l INFO`, WARNING `-l WARNING`.
+
+`run_tests.sh` shell script is used only to run_tests.py in a virtual environment, passing all arguments to the Python script. If you want to see/modify what is happening when tests are run, go there. Argument parsing function is located in project/test_utils/config.py
 Tests log to both stdout, and stderr, so to save output to a file, use `> <log_file> 2>&1`.
-
-**-s**
-To run tests from one directory or file, use -s: `./run_tests.sh -e <domain> -s <path/in/tests/directory>`.
-For example, to run only smoke tests, use `-s test_appstack`, to run only api tests, use: `-s test_api`, to run only user-management tests, use `-s test_api/user_management`, to run only onboarding tests, use `-s test_api/user_management/test_onboarding.py`.
-
-**-t**
-To run single test: `./run_tests.sh -e <domain> -t <test_name>`.
-For example: `-t test_create_organization`.
-
-**--proxy**
-If you omit this parameter, requests will use http/https proxy retrieved from system settings.
-If you want to specify proxy, use proxy address with port, e.g. `--proxy proxy-mu.intel.com:911`
-
-**-l**
-There are 3 logging levels: DEBUG (default), INFO `-l INFO`, WARNING `-l WARNING`.
 
 
 #### Run tests on TeamCity agent
