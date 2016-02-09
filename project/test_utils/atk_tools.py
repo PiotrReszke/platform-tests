@@ -134,6 +134,7 @@ class ATKtools(object):
             content = f.read()
         if content == "":
             raise AtkScriptException("Credentials file is empty")
+        return response
 
     @classmethod
     def check_uaac_token(cls):
