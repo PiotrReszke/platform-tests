@@ -15,12 +15,11 @@
 #
 
 import re
-import unittest
 
 from retry import retry
 
 from test_utils import ApiTestCase, get_logger, iPython, cleanup_after_failed_setup, config, ATKtools
-from objects import Organization, ServiceInstance, Application
+from objects import Organization, ServiceInstance, Application, User
 
 
 logger = get_logger("iPython test")
@@ -43,9 +42,14 @@ class iPythonConsole(ApiTestCase):
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
+        cls.step("Get reference space")
+        _, cls.ref_space = Organization.get_ref_org_and_space()
         cls.step("Create test organization and test space")
         cls.test_org = Organization.api_create(space_names=("test-space",))
         cls.test_space = cls.test_org.spaces[0]
+        admin_user = User.get_admin()
+        admin_user.api_add_to_space(space_guid=cls.test_space.guid, org_guid=cls.test_org.guid,
+                                    roles=User.SPACE_ROLES["developer"])
         cls.step("Create instance of iPython service")
         cls.ipython = iPython(org_guid=cls.test_org.guid, space_guid=cls.test_space.guid)
         cls._assert_ipython_instance_created(cls.ipython.instance, space_guid=cls.test_space.guid, ipython=cls.ipython)
@@ -89,25 +93,11 @@ class iPythonConsole(ApiTestCase):
         output = notebook.get_stream_result()
         self.assertEqual(output, "Hello, world!\n")
 
-    @unittest.skip
     def test_iPython_connect_to_atk_client(self):
-        self.step("Create atk instance")
-        atk_instance = ServiceInstance.api_create(
-            org_guid=self.test_org.guid,
-            space_guid=self.test_space.guid,
-            service_label=self.ATK_SERVICE_LABEL,
-            service_plan_name=self.ATK_PLAN_NAME
-        )
-        instances = ServiceInstance.api_get_list(space_guid=self.test_space.guid)
-        self.assertInList(atk_instance, instances)
-        self.step("Check that atk application is created and started")
-        atk_app = self.get_from_list_by_attribute_with_retry(
-            attr_name="name",
-            attr_value=ATKtools.get_expected_atk_app_name(atk_instance),
-            get_list_method=Application.api_get_list,
-            space_guid=self.test_space.guid
-        )
-        atk_app.ensure_started()
+        self.step("Get atk app from seedspace")
+        atk_app = next((app for app in Application.cf_api_get_list(self.ref_space.guid) if app.name == "atk"), None)
+        if atk_app is None:
+            raise AssertionError("Atk app not found in seedspace")
         self.atk_url = atk_app.urls[0]
         self.step("Create new iPython terminal and install atk client")
         terminal = self.ipython.connect_to_terminal(terminal_no=self.terminal_no)
@@ -126,4 +116,6 @@ class iPythonConsole(ApiTestCase):
         notebook.send_input(config.CONFIG["admin_username"], reply=True)
         self.assertIn("", notebook.get_prompt_text())
         notebook.send_input(config.CONFIG["admin_password"], reply=True, obscure_from_log=True)
-        self.assertEqual(notebook.check_command_status(), "ok")
+        self.assertIn("Connect now?", notebook.get_prompt_text())
+        notebook.send_input("y", reply=True)
+        self.assertIn("Connected.", notebook.get_stream_result())
