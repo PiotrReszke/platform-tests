@@ -44,16 +44,17 @@ sudo gem install cf-uaac
 git clone git@github.com:intel-data/api-tests.git
 ```
 
-
 **Configure test admin user**
+
 To run tests, we need a user trusted.analytics.tester@gmail.com with appropriate roles and authorizations. To create such user, use script `api-tests/deploy/create_test_admin.sh`.
 ```
-create_test_admin.sh <domain> <cf admin password> <reference org name> <reference space name>
+create_test_admin.sh <domain> <cf admin password> <reference org name> <reference space name> <password>
 ```
 - domain, e.g. gotapaas.eu
-- cf admin password - cf password of user admin
+- cf admin password -- cf password of user admin
 - reference org name (defaults to seedorg)
 - reference space name (defaults to seedspace)
+- password (see password for trusted.analytics.tester@gmail.com in DEFAULT section in `api-tests/project/test_utils/secrets/.secret.ini`)
  
 **Decrypt repository secrets**
 
@@ -89,12 +90,17 @@ To run application tests
 `./run_tests.sh -e <domain, e.g. demotrustedanalytics.com> -s test_cf_applications > <log_file> 2>&1`
 
 **Parameters**
--s - run tests from one directory or file, e.g. `./run_tests.sh -e <domain> -s <path/in/tests/directory>`.
--t - run single test: `./run_tests.sh -e <domain> -t <test_name>`, for example: `-t test_create_organization`.
---proxy - use proxy address with port, e.g. `--proxy proxy-mu.intel.com:911`. If you omit this parameter, requests will use http/https proxy retrieved from system settings.
--l - specify logging level. There are 3 logging levels: DEBUG (default), INFO `-l INFO`, WARNING `-l WARNING`.
 
-`run_tests.sh` shell script is used only to run_tests.py in a virtual environment, passing all arguments to the Python script. If you want to see/modify what is happening when tests are run, go there. Argument parsing function is located in project/test_utils/config.py
+`-s` - run tests from one directory or file, e.g. `./run_tests.sh -e <domain> -s <path/in/tests/directory>`.
+
+`-t` - run single test: `./run_tests.sh -e <domain> -t <test_name>`, for example: `-t test_create_organization`.
+
+`--proxy` - use proxy address with port, e.g. `--proxy proxy-mu.intel.com:911`. If you omit this parameter, requests will use http/https proxy retrieved from system settings.
+
+`-l` - specify logging level. There are 3 logging levels: DEBUG (default), INFO `-l INFO`, WARNING `-l WARNING`.
+
+The `run_tests.sh` shell script is used only to run_tests.py in a virtual environment, passing all arguments to the Python script. If you want to see/modify what is happening when tests are run, go there. Argument parsing function is located in project/test_utils/config.py
+
 Tests log to both stdout, and stderr, so to save output to a file, use `> <log_file> 2>&1`.
 
 
