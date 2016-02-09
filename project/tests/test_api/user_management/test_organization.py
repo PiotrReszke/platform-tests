@@ -25,6 +25,8 @@ class TestOrganization(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
+        User.cf_api_tear_down_test_users()
+        User.api_tear_down_test_invitations()
         Organization.cf_api_tear_down_test_orgs()
 
     def test_create_organization(self):

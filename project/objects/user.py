@@ -95,6 +95,7 @@ class User(object):
     def api_create_by_adding_to_organization(cls, org_guid, username=None, password="testPassw0rd",
                                              roles=ORG_ROLES["manager"], inviting_client=None):
         username = get_test_name(email=True) if username is None else username
+        cls.TEST_INVITED_EMAILS.append(username)
         api.api_add_organization_user(org_guid, username, roles, client=inviting_client)
         code = gmail_api.get_invitation_code_for_user(username)
         client = PlatformApiClient.get_client(username)
@@ -113,6 +114,7 @@ class User(object):
         org = Organization.api_create()
         usernames = [get_test_name(email=True) for _ in range(number)]
         for username in usernames:
+            cls.TEST_INVITED_EMAILS.append(username)
             api.api_add_organization_user(org.guid, username, roles)
         codes = gmail_api.get_invitation_codes_for_list(usernames)
         for username in usernames:
@@ -131,6 +133,7 @@ class User(object):
     def api_create_by_adding_to_space(cls, org_guid, space_guid, username=None, password="testPassw0rd",
                                       roles=SPACE_ROLES["manager"], inviting_client=None):
         username = get_test_name(email=True) if username is None else username
+        cls.TEST_INVITED_EMAILS.append(username)
         api.api_add_space_user(org_guid, space_guid, username, roles, inviting_client)
         code = gmail_api.get_invitation_code_for_user(username)
         client = PlatformApiClient.get_client(username)
@@ -247,9 +250,11 @@ class User(object):
     @classmethod
     def api_tear_down_test_invitations(cls):
         """Use this method in tearDown and tearDownClass."""
+        pending_invites = cls.api_get_pending_invitations()
+        cls.TEST_INVITED_EMAILS = [e for e in cls.TEST_INVITED_EMAILS if e in pending_invites]
         while len(cls.TEST_INVITED_EMAILS) > 0:
             test_invited = cls.TEST_INVITED_EMAILS.pop()
             try:
-                User.api_delete_user_invitation(test_invited)
+                cls.api_delete_user_invitation(test_invited)
             except UnexpectedResponseError as e:
                 logger.warning("Failed to delete {}: {}".format(test_invited, e.error_message))
