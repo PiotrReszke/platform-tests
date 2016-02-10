@@ -199,7 +199,7 @@ class iPython(object):
         except ValueError:
             return response.text
 
-    @retry(KeyError, tries=3, delay=2)
+    @retry(KeyError, tries=5, delay=5)
     def get_credentials(self):
         response = self.instance.api_get_credentials()
         self.password = response["password"]
