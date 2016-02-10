@@ -302,7 +302,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                     user_list = User.api_get_list_via_space(TEST_SPACE.guid, client=USERS_CLIENTS[client])
                     self.assertInList(test_user, user_list, "User {} was not found in list".format(test_user))
                 else:
-                    self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                    self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                         User.api_get_list_via_space, TEST_SPACE.guid,
                                                         client=USERS_CLIENTS[client])
 
@@ -316,7 +316,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                                                                    inviting_client=USERS_CLIENTS[client])
                     self._assert_user_in_space_with_roles(test_user, TEST_SPACE.guid)
                 else:
-                    self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                    self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                         User.api_create_by_adding_to_space, TEST_ORG.guid,
                                                         TEST_SPACE.guid, inviting_client=USERS_CLIENTS[client])
                     self.assertUnorderedListEqual(User.api_get_list_via_space(TEST_SPACE.guid), user_list,
@@ -331,7 +331,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                     test_user.api_add_to_space(TEST_SPACE.guid, TEST_ORG.guid, client=USERS_CLIENTS[client])
                     self._assert_user_in_space_with_roles(test_user, TEST_SPACE.guid)
                 else:
-                    self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                    self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                         User.api_create_by_adding_to_space, TEST_ORG.guid,
                                                         TEST_SPACE.guid, inviting_client=USERS_CLIENTS[client])
 
@@ -346,7 +346,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                     test_user.api_update_space_roles(TEST_SPACE.guid, new_roles=new_roles, client=USERS_CLIENTS[client])
                     self._assert_user_in_space_with_roles(test_user, TEST_SPACE.guid)
                 else:
-                    self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                    self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                         test_user.api_update_space_roles, TEST_SPACE.guid,
                                                         new_roles=new_roles, client=USERS_CLIENTS[client])
                     self.assertListEqual(test_user.space_roles.get(TEST_SPACE.guid),
@@ -362,7 +362,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                     test_user.api_delete_from_space(TEST_SPACE.guid, client=USERS_CLIENTS[client])
                     self._assert_user_not_in_space(test_user, TEST_SPACE.guid)
                 else:
-                    self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                    self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                         test_user.api_delete_from_space, TEST_SPACE.guid,
                                                         client=USERS_CLIENTS[client])
                     self.assertInList(test_user, User.api_get_list_via_space(TEST_SPACE.guid), "User was deleted")
@@ -385,7 +385,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                     space_list = Space.api_get_list()
                     self.assertInList(new_space, space_list, "Space was not created.")
                 else:
-                    self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                    self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                         Space.api_create, TEST_ORG, client=USERS_CLIENTS[client])
                     self.assertUnorderedListEqual(TEST_ORG.api_get_spaces(), space_list, "Space was created")
 
@@ -406,6 +406,6 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                     new_space.api_delete(TEST_ORG, client=USERS_CLIENTS[client])
                     self.assertNotInListWithRetry(new_space, Space.api_get_list)
                 else:
-                    self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                    self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                         new_space.api_delete, TEST_ORG, client=USERS_CLIENTS[client])
                     self.assertInList(new_space, TEST_ORG.api_get_spaces(), "Space was not deleted")

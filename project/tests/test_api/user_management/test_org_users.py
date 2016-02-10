@@ -153,7 +153,7 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
         org = Organization.api_create()
         expected_roles = User.ORG_ROLES["auditor"]
         self.step("Check that a platform user is not able to add themselves to the organization")
-        self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+        self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                             invited_user.api_add_to_organization, org_guid=org.guid,
                                             roles=expected_roles, client=inviting_client)
         self._assert_user_not_in_org(invited_user, org.guid)
@@ -393,7 +393,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                         user_not_in_org.api_update_org_roles, org_guid=org.guid, new_roles=User.ORG_ROLES["auditor"],
                         client=client)
                 else:
-                    self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+                    self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                                         user_not_in_org.api_update_org_roles, org_guid=org.guid,
                                                         new_roles=User.ORG_ROLES["auditor"], client=client)
                 self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
@@ -677,5 +677,5 @@ class GetOrganizationUsers(BaseOrgUserClass):
         org = Organization.api_create()
         client = USERS[0]["client"]
         self.step("Check that the user cannot get list of users in the test org")
-        self.assertRaisesUnexpectedResponse(403, "You are not authorized to perform the requested action",
+        self.assertRaisesUnexpectedResponse(403, "Forbidden",
                                             User.api_get_list_via_organization, org_guid=org.guid, client=client)
