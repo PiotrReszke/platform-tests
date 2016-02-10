@@ -16,7 +16,7 @@ Unfortunately, tests currently use a hardcoded path.
 
 **Install required packages**
 ```
-sudo apt-get install python3 python3-dev git rubygems-integration
+sudo apt-get install python3 python3-dev git
 ```
 
 **Download and install git crypt**
@@ -28,25 +28,28 @@ make git-crypt
 sudo make install git-crypt
 ```
 
-**Install cf client**
-```
-wget https://cli.run.pivotal.io/stable?release=debian64 -O cf-client.deb
-sudo dpkg -i cf-client.deb
-```
-
-**Install uaac**
-```
-sudo gem install cf-uaac
-```
-
 **Clone repository**
 ```
 git clone git@github.com:intel-data/api-tests.git
 ```
 
-**Configure test admin user**
+**Configure test admin user** if it's not already present on an environment
 
-To run tests, we need a user trusted.analytics.tester@gmail.com with appropriate roles and authorizations. To create such user, use script `api-tests/deploy/create_test_admin.sh`.
+To run tests, we need a user trusted.analytics.tester@gmail.com with appropriate roles and authorizations. To create such user, use script `api-tests/deploy/create_test_admin.sh`. The script requires cf client and uaac.
+
+install cf client
+```
+wget https://cli.run.pivotal.io/stable?release=debian64 -O cf-client.deb
+sudo dpkg -i cf-client.deb
+```
+
+install uaac
+```
+sudo apt-get install rubygems-integration
+sudo gem install cf-uaac
+```
+
+run the script
 ```
 create_test_admin.sh <domain> <cf admin password> <reference org name> <reference space name> <password>
 ```
@@ -70,7 +73,7 @@ cf api-tests
 ```
 This will create virtualenv with all Python packages required in `~/virtualenvs/pyvenv_api_tests`.
 
-**Add config**
+**Add config** if environment has non-default configuration (e.g. no seedorg)
 
 If you plan to run tests on a new environment (i.e. not daily, sprint, demo, etc.), supply non-default config values in `api-tests/project/test_utils/config.py`, in `__CONFIG` string.
 
