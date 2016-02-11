@@ -8,18 +8,18 @@
 
 ### Setup
 
-**Access to cdh launcher**
+**1. Access to cdh launcher**
 ```
 cp <private/key/of/ec2-user> ~/.ssh/auto-deploy-virginia.pem
 ```
 Unfortunately, tests currently use a hardcoded path.
 
-**1. Install required packages**
+**2. Install required packages**
 ```
 sudo apt-get install python3 python3-dev git
 ```
 
-**2. Download and install git crypt**
+**3. Download and install git crypt**
 ```
 wget https://github.com/AGWA/git-crypt/archive/0.5.0.zip
 unzip 0.5.0.zip
@@ -28,12 +28,12 @@ make git-crypt
 sudo make install git-crypt
 ```
 
-**3. Clone repository**
+**4. Clone repository**
 ```
 git clone git@github.com:intel-data/api-tests.git
 ```
 
-**4. Decrypt repository secrets**
+**5. Decrypt repository secrets**
 
 Place `key.dat` in api-tests directory.
 ```
@@ -41,17 +41,17 @@ cf api-tests
 ./deploy/unlock.sh
 ```
 
-**5. Set up virtualenv**
+**6. Set up virtualenv**
 ```
 ./deploy/create_virtualenv.sh
 ```
 This will create [pyvenv](https://docs.python.org/3/using/scripts.html) with all Python packages required in `~/virtualenvs/pyvenv_api_tests`.
 
-**6. Add config** -- only if environment has non-default configuration (e.g. no seedorg)
+**7. Add config** -- only if environment has non-default configuration (e.g. no seedorg)
 
 If you plan to run tests on a new environment (i.e. not daily, sprint, demo, etc.), supply non-default config values in `api-tests/project/test_utils/config.py`, in `__CONFIG` string.
 
-**7. Configure test admin user** -- only if it's not already present on an environment
+**8. Configure test admin user** -- only if it's not already present on an environment
 
 To run tests, we need a user trusted.analytics.tester@gmail.com with appropriate roles and authorizations. To create such user, use script `api-tests/deploy/create_test_admin.sh`. The script requires cf client and uaac.
 
