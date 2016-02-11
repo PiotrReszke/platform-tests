@@ -619,7 +619,7 @@ class DeleteOrganizationUser(BaseOrgUserClass):
                                             deleted_user.api_delete_from_organization, org_guid=org.guid)
 
     def test_org_manager_can_delete_another_user(self):
-        """DPNG-2459 Cannot delete user - HttpStatus.CODE_NOT_FOUND"""
+        """DPNG-2459 Cannot delete user - 404"""
         self.step("Create a test organization")
         org = Organization.api_create()
         manager_role = User.ORG_ROLES["manager"]
