@@ -18,7 +18,7 @@ import itertools
 
 from test_utils import ApiTestCase, get_logger, platform_api_calls as api, cleanup_after_failed_setup
 from objects import Organization, User
-
+from constants.HttpStatus import OrganizationHttpStatus as HttpStatus
 
 logger = get_logger("test org users")
 
@@ -142,8 +142,9 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
                 inviting_user.api_add_to_organization(org.guid, roles=non_manager_roles)
                 expected_roles = User.ORG_ROLES["auditor"]
                 self.step("Check that the non-manager is able to add a platform user to the org")
-                self.assertRaisesUnexpectedResponse(403, "Forbidden", invited_user.api_add_to_organization,
-                                                    org_guid=org.guid, roles=expected_roles, client=inviting_client)
+                self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
+                                                    invited_user.api_add_to_organization, org_guid=org.guid,
+                                                    roles=expected_roles, client=inviting_client)
                 self._assert_user_not_in_org(invited_user, org.guid)
 
     def test_user_cannot_add_themselves_to_org(self):
@@ -152,7 +153,7 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
         org = Organization.api_create()
         expected_roles = User.ORG_ROLES["auditor"]
         self.step("Check that a platform user is not able to add themselves to the organization")
-        self.assertRaisesUnexpectedResponse(403, "Forbidden",
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
                                             invited_user.api_add_to_organization, org_guid=org.guid,
                                             roles=expected_roles, client=inviting_client)
         self._assert_user_not_in_org(invited_user, org.guid)
@@ -162,8 +163,9 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
         invalid_org_guid = "this-org-guid-is-not-correct"
         roles = self.ALL_ROLES
         self.step("Check that adding user to organization using invalid org guid raises an error")
-        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", invited_user.api_add_to_organization,
-                                            org_guid=invalid_org_guid, roles=roles)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_WRONG_UUID_FORMAT_EXCEPTION,
+                                            invited_user.api_add_to_organization, org_guid=invalid_org_guid,
+                                            roles=roles)
 
     def test_cannot_add_existing_user_with_incorrect_role(self):
         invited_user = self.test_user
@@ -171,8 +173,8 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
         org = Organization.api_create()
         invalid_role = ["incorrect-role"]
         self.step("Check that it is not possible to add user to the organization with role {}".format(invalid_role))
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", invited_user.api_add_to_organization, org_guid=org.guid,
-                                            roles=invalid_role)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
+                                            invited_user.api_add_to_organization, org_guid=org.guid, roles=invalid_role)
         self._assert_user_not_in_org(invited_user, org.guid)
 
 
@@ -230,9 +232,9 @@ class AddNewUserToOrganization(BaseOrgUserClass):
                 inviting_user.api_add_to_organization(org_guid=org.guid, roles=non_manager_roles)
                 self.step("Check that user cannot be added to organization by non-manager")
                 org_users = User.api_get_list_via_organization(org.guid)
-                self.assertRaisesUnexpectedResponse(403, "Forbidden", User.api_create_by_adding_to_organization,
-                                                    org_guid=org.guid, roles=User.ORG_ROLES["auditor"],
-                                                    inviting_client=inviting_client)
+                self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
+                                                    User.api_create_by_adding_to_organization, org_guid=org.guid,
+                                                    roles=User.ORG_ROLES["auditor"], inviting_client=inviting_client)
                 # assert user list did not change
                 self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
@@ -243,7 +245,7 @@ class AddNewUserToOrganization(BaseOrgUserClass):
         org_users = User.api_get_list_via_organization(org.guid)
         username = "non-valid-username{}".format(time.time())
         roles = self.ALL_ROLES
-        self.assertRaisesUnexpectedResponse(409, "That email address is not valid",
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_EMAIL_ADDRESS_NOT_VALID,
                                             User.api_create_by_adding_to_organization, org_guid=org.guid,
                                             username=username, roles=roles)
         # assert user list did not change
@@ -253,7 +255,7 @@ class AddNewUserToOrganization(BaseOrgUserClass):
         org_guid = "this-org-guid-is-not-correct"
         roles = self.ALL_ROLES
         self.step("Check that an error is raised when trying to add user using incorrect org guid")
-        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception",
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_WRONG_UUID_FORMAT_EXCEPTION,
                                             User.api_create_by_adding_to_organization, org_guid=org_guid, roles=roles)
 
     def test_cannot_add_new_user_incorrect_role(self):
@@ -261,8 +263,8 @@ class AddNewUserToOrganization(BaseOrgUserClass):
         org_users = User.api_get_list_via_organization(org.guid)
         roles = ["i-don't-exist"]
         self.step("Check that error is raised when trying to add user using incorrect roles")
-        self.assertRaisesUnexpectedResponse(400, "", User.api_create_by_adding_to_organization, org_guid=org.guid,
-                                            roles=roles)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_EMPTY,
+                                            User.api_create_by_adding_to_organization, org_guid=org.guid, roles=roles)
         # assert user list did not change
         self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
@@ -319,8 +321,9 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                 updated_user.api_update_org_roles(org.guid, new_roles=updated_roles, client=client)
                 self.assert_user_in_org_and_roles(updated_user, org.guid, updated_roles)
             else:
-                self.assertRaisesUnexpectedResponse(403, "Forbidden", updated_user.api_update_org_roles,
-                                                    org.guid, new_roles=updated_roles, client=client)
+                self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
+                                                    updated_user.api_update_org_roles, org.guid,
+                                                    new_roles=updated_roles, client=client)
                 self.assert_user_in_org_and_roles(updated_user, org.guid, init_roles)
 
     def test_update_org_user_add_new_role(self):
@@ -353,7 +356,8 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         org, _, client, updated_user = self._create_org_and_init_users("admin", expected_roles)
         self.step("Check that removing manager role of the only org manager as admin, returns an error")
         new_roles = expected_roles - User.SPACE_ROLES["manager"]
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", updated_user.api_update_org_roles, org_guid=org.guid,
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
+                                            updated_user.api_update_org_roles, org_guid=org.guid,
                                             new_roles=new_roles, client=client)
         self.assert_user_in_org_and_roles(updated_user, org.guid, expected_roles)
 
@@ -370,8 +374,9 @@ class UpdateOrganizationUser(BaseOrgUserClass):
             other_org = Organization.api_create()
             self.user.api_add_to_organization(other_org.guid, roles=user_role)
             with self.subTest(user_type=user_role):
-                self.assertRaisesUnexpectedResponse(403, "Forbidden", updated_user.api_update_org_roles,
-                                                    org.guid, new_roles=role, client=self.user_client)
+                self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
+                                                    updated_user.api_update_org_roles, org.guid, new_roles=role,
+                                                    client=self.user_client)
                 self.assert_user_in_org_and_roles(updated_user, org.guid, initial_role)
 
     def test_cannot_update_user_which_is_not_in_org(self):
@@ -388,11 +393,12 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                 client = self._get_client(client_name)
                 if client_name == "admin":
                     self.assertRaisesUnexpectedResponse(
-                        404, "User {} does not exist in organization {}.".format(user_not_in_org.guid, org.guid),
+                        HttpStatus.CODE_NOT_FOUND,
+                        HttpStatus.MSG_USER_NOT_EXIST_IN_ORGANIZATION.format(user_not_in_org.guid, org.guid),
                         user_not_in_org.api_update_org_roles, org_guid=org.guid, new_roles=User.ORG_ROLES["auditor"],
                         client=client)
                 else:
-                    self.assertRaisesUnexpectedResponse(403, "Forbidden",
+                    self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
                                                         user_not_in_org.api_update_org_roles, org_guid=org.guid,
                                                         new_roles=User.ORG_ROLES["auditor"], client=client)
                 self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
@@ -411,8 +417,9 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         roles = User.ORG_ROLES["billing_manager"]
         self.step("Check that updating user which is not in an organization returns an error")
         org_users = User.api_get_list_via_organization(org_guid=org.guid)
-        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_org_user_roles,
-                                            org_guid=org.guid, user_guid=invalid_guid, new_roles=roles)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_WRONG_UUID_FORMAT_EXCEPTION,
+                                            api.api_update_org_user_roles, org_guid=org.guid, user_guid=invalid_guid,
+                                            new_roles=roles)
         self.assertListEqual(User.api_get_list_via_organization(org_guid=org.guid), org_users)
 
     def test_cannot_update_org_user_in_non_existing_org(self):
@@ -420,8 +427,9 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         user_guid = self.test_user.guid
         roles = User.ORG_ROLES["billing_manager"]
         self.step("Check that updating user using invalid org guid returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Wrong uuid format exception", api.api_update_org_user_roles,
-                                            org_guid=invalid_guid, user_guid=user_guid, new_roles=roles)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_WRONG_UUID_FORMAT_EXCEPTION,
+                                            api.api_update_org_user_roles, org_guid=invalid_guid, user_guid=user_guid,
+                                            new_roles=roles)
 
     def test_cannot_update_org_user_with_incorrect_role(self):
         initial_roles = User.ORG_ROLES["billing_manager"]
@@ -429,8 +437,9 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         for client_name, _ in self.non_manager_roles:
             org, _, _, updated_user = self._create_org_and_init_users(client_name, initial_roles)
             self.step("Check that updating user using invalid role returns an error")
-            self.assertRaisesUnexpectedResponse(400, "Bad Request", updated_user.api_update_org_roles,
-                                                org_guid=org.guid, new_roles=invalid_roles)
+            self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
+                                                updated_user.api_update_org_roles, org_guid=org.guid,
+                                                new_roles=invalid_roles)
             self.assert_user_in_org_and_roles(updated_user, org.guid, initial_roles)
 
     def test_update_role_of_one_org_manager_cannot_update_second(self):
@@ -439,8 +448,9 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         self.step("Remove manager role from one of the managers")
         first_user.api_update_org_roles(org_guid=org.guid, new_roles=self.NON_MANAGER_ROLES)
         self.step("Check that attempt to remove manager role from the second manager returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", second_user.api_update_org_roles,
-                                            org_guid=org.guid, new_roles=self.NON_MANAGER_ROLES)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
+                                            second_user.api_update_org_roles, org_guid=org.guid,
+                                            new_roles=self.NON_MANAGER_ROLES)
         self.assert_user_in_org_and_roles(first_user, org.guid, self.NON_MANAGER_ROLES)
         self.assert_user_in_org_and_roles(second_user, org.guid, manager_role)
 
@@ -451,8 +461,9 @@ class UpdateOrganizationUser(BaseOrgUserClass):
             new_roles = self.NON_MANAGER_ROLES - user_role
             self.step("Try to change role as '{}'".format(client_name))
             with self.subTest(user_type=user_role):
-                self.assertRaisesUnexpectedResponse(403, "Forbidden", updated_user.api_update_org_roles, org.guid,
-                                                    new_roles=new_roles, client=client)
+                self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
+                                                    updated_user.api_update_org_roles, org.guid, new_roles=new_roles,
+                                                    client=client)
                 self.assert_user_in_org_and_roles(updated_user, org.guid, user_role)
 
     def test_non_manager_users_cannot_change_their_roles_to_org_manager(self):
@@ -460,7 +471,8 @@ class UpdateOrganizationUser(BaseOrgUserClass):
             org, updated_user, client, _ = self._create_org_and_init_users(client_name)
             self.step("Try to change role as '{}'".format(client_name))
             with self.subTest(user_type=user_role):
-                self.assertRaisesUnexpectedResponse(403, "Forbidden", updated_user.api_update_org_roles, org.guid,
+                self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
+                                                    updated_user.api_update_org_roles, org.guid,
                                                     new_roles=User.ORG_ROLES["manager"], client=client)
                 self.assert_user_in_org_and_roles(updated_user, org.guid, user_role)
 
@@ -468,16 +480,16 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         manager_role = User.ORG_ROLES["manager"]
         org, updated_user, client, _ = self._create_org_and_init_users("manager")
         self.step("As org manager try to delete self 'org manager' role")
-        self.assertRaisesUnexpectedResponse(409, "You must have at least one role", updated_user.api_update_org_roles,
-                                            org.guid, new_roles={}, client=client)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_MUST_HAVE_AT_LEAST_ONE_ROLE,
+                                            updated_user.api_update_org_roles, org.guid, new_roles={}, client=client)
         self.assert_user_in_org_and_roles(updated_user, org.guid, manager_role)
 
     def test_org_manager_remove_own_role_when_there_is_another_org_manager(self):
         manager_role = User.ORG_ROLES["manager"]
         org, updated_user, client, _ = self._create_org_and_init_users("manager", manager_role)
         self.step("As one of the org managers delete own 'org manager' role")
-        self.assertRaisesUnexpectedResponse(409, "You must have at least one role", updated_user.api_update_org_roles,
-                                            org.guid, new_roles={}, client=client)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_MUST_HAVE_AT_LEAST_ONE_ROLE,
+                                            updated_user.api_update_org_roles, org.guid, new_roles={}, client=client)
         self.assert_user_in_org_and_roles(updated_user, org.guid, manager_role)
 
     def test_org_manager_add_roles_to_self(self):
@@ -495,8 +507,8 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         self.step("Create new platform user by adding to org")
         test_user = User.api_create_by_adding_to_organization(org_guid=TEST_ORG.guid, roles=expected_roles)
         self.step("Send request with empty body")
-        self.assertRaisesUnexpectedResponse(409, "You must have at least one role", api.api_update_org_user_roles,
-                                            TEST_ORG.guid, test_user.guid)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_MUST_HAVE_AT_LEAST_ONE_ROLE,
+                                            api.api_update_org_user_roles, TEST_ORG.guid, test_user.guid)
         self.assert_user_in_org_and_roles(test_user, TEST_ORG.guid, expected_roles)
 
 
@@ -528,8 +540,8 @@ class DeleteOrganizationUser(BaseOrgUserClass):
         self.step("Add user to organization as manager")
         deleted_user.api_add_to_organization(org_guid=org.guid, roles=roles)
         self.step("Check that the only manager cannot be removed from the organization")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", deleted_user.api_delete_from_organization,
-                                            org_guid=org.guid)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
+                                            deleted_user.api_delete_from_organization, org_guid=org.guid)
         self.assert_user_in_org_and_roles(deleted_user, org.guid, roles)
 
     def test_admin_deletes_one_of_org_users(self):
@@ -560,8 +572,8 @@ class DeleteOrganizationUser(BaseOrgUserClass):
         deleted_user.api_delete_from_organization(org_guid=org.guid)
         self._assert_user_not_in_org(deleted_user, org.guid)
         self.step("Check that removing the last org manager returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", not_deleted_user.api_delete_from_organization,
-                                            org_guid=org.guid)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
+                                            not_deleted_user.api_delete_from_organization, org_guid=org.guid)
         self.assert_user_in_org_and_roles(not_deleted_user, org.guid, roles)
 
     def test_admin_updates_role_of_one_org_manager_cannot_delete_second(self):
@@ -580,8 +592,8 @@ class DeleteOrganizationUser(BaseOrgUserClass):
                 updated_user.api_update_org_roles(org_guid=org.guid, new_roles=updated_user_roles)
                 self.assert_user_in_org_and_roles(updated_user, org.guid, updated_user_roles)
                 self.step("Check that removing the last manger returns an error")
-                self.assertRaisesUnexpectedResponse(400, "Bad Request", manager_user.api_delete_from_organization,
-                                                    org_guid=org.guid)
+                self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
+                                                    manager_user.api_delete_from_organization, org_guid=org.guid)
                 self.assert_user_in_org_and_roles(manager_user, org.guid, manager_role)
 
     def test_admin_cannot_delete_org_user_twice(self):
@@ -594,7 +606,8 @@ class DeleteOrganizationUser(BaseOrgUserClass):
         self.step("Delete test user from organization")
         deleted_user.api_delete_from_organization(org_guid=org.guid)
         self.step("Try to delete test user from organization second time")
-        self.assertRaisesUnexpectedResponse(404, "", deleted_user.api_delete_from_organization, org_guid=org.guid)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_EMPTY,
+                                            deleted_user.api_delete_from_organization, org_guid=org.guid)
 
     def test_admin_cannot_delete_non_existing_org_user(self):
         """DPNG-2216 Deleting from org a user which is not in this org does not return any error"""
@@ -602,10 +615,11 @@ class DeleteOrganizationUser(BaseOrgUserClass):
         self.step("Create a test organization")
         org = Organization.api_create()
         self.step("Check that an attempt to delete user which is not in org returns an error")
-        self.assertRaisesUnexpectedResponse(404, "", deleted_user.api_delete_from_organization, org_guid=org.guid)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_EMPTY,
+                                            deleted_user.api_delete_from_organization, org_guid=org.guid)
 
     def test_org_manager_can_delete_another_user(self):
-        """DPNG-2459 Cannot delete user - 404"""
+        """DPNG-2459 Cannot delete user - HttpStatus.CODE_NOT_FOUND"""
         self.step("Create a test organization")
         org = Organization.api_create()
         manager_role = User.ORG_ROLES["manager"]
@@ -635,8 +649,9 @@ class DeleteOrganizationUser(BaseOrgUserClass):
                 self.step("Add deleted user to the organization with roles {}".format(deleted_user_roles))
                 deleted_user.api_add_to_organization(org_guid=org.guid, roles=deleted_user_roles)
                 self.step("Check that non-manager cannot delete user from org")
-                self.assertRaisesUnexpectedResponse(403, "Forbidden", deleted_user.api_delete_from_organization,
-                                                    org_guid=org.guid, client=non_manager_client)
+                self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
+                                                    deleted_user.api_delete_from_organization, org_guid=org.guid,
+                                                    client=non_manager_client)
                 self.assert_user_in_org_and_roles(deleted_user, org.guid, deleted_user_roles)
 
 
@@ -662,8 +677,9 @@ class GetOrganizationUsers(BaseOrgUserClass):
         for role, client in self.non_manager_clients.items():
             with self.subTest(user_role=role):
                 self.step("Check that non-manager cannot get list of users in org")
-                self.assertRaisesUnexpectedResponse(403, "Forbidden", User.api_get_list_via_organization,
-                                                    org_guid=self.test_org.guid, client=client)
+                self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
+                                                    User.api_get_list_via_organization, org_guid=self.test_org.guid,
+                                                    client=client)
 
     def test_manager_can_get_org_users(self):
         self.step("Check that manager can get list of users in org")
@@ -676,5 +692,5 @@ class GetOrganizationUsers(BaseOrgUserClass):
         org = Organization.api_create()
         client = USERS[0]["client"]
         self.step("Check that the user cannot get list of users in the test org")
-        self.assertRaisesUnexpectedResponse(403, "Forbidden",
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
                                             User.api_get_list_via_organization, org_guid=org.guid, client=client)
