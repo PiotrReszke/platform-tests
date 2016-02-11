@@ -14,12 +14,12 @@ cp <private/key/of/ec2-user> ~/.ssh/auto-deploy-virginia.pem
 ```
 Unfortunately, tests currently use a hardcoded path.
 
-**Install required packages**
+**1. Install required packages**
 ```
 sudo apt-get install python3 python3-dev git
 ```
 
-**Download and install git crypt**
+**2. Download and install git crypt**
 ```
 wget https://github.com/AGWA/git-crypt/archive/0.5.0.zip
 unzip 0.5.0.zip
@@ -28,12 +28,30 @@ make git-crypt
 sudo make install git-crypt
 ```
 
-**Clone repository**
+**3. Clone repository**
 ```
 git clone git@github.com:intel-data/api-tests.git
 ```
 
-**Configure test admin user** if it's not already present on an environment
+**4. Decrypt repository secrets**
+
+Place `key.dat` in api-tests directory.
+```
+cf api-tests
+./deploy/unlock.sh
+```
+
+**5. Set up virtualenv**
+```
+./deploy/create_virtualenv.sh
+```
+This will create [pyvenv](https://docs.python.org/3/using/scripts.html) with all Python packages required in `~/virtualenvs/pyvenv_api_tests`.
+
+**6. Add config** -- only if environment has non-default configuration (e.g. no seedorg)
+
+If you plan to run tests on a new environment (i.e. not daily, sprint, demo, etc.), supply non-default config values in `api-tests/project/test_utils/config.py`, in `__CONFIG` string.
+
+**7. Configure test admin user** -- only if it's not already present on an environment
 
 To run tests, we need a user trusted.analytics.tester@gmail.com with appropriate roles and authorizations. To create such user, use script `api-tests/deploy/create_test_admin.sh`. The script requires cf client and uaac.
 
@@ -58,24 +76,6 @@ create_test_admin.sh <domain> <cf admin password> <reference org name> <referenc
 - reference org name (defaults to seedorg)
 - reference space name (defaults to seedspace)
 - password (see password for trusted.analytics.tester@gmail.com in DEFAULT section in `api-tests/project/test_utils/secrets/.secret.ini`)
- 
-**Decrypt repository secrets**
-
-Place `key.dat` in api-tests directory.
-```
-cf api-tests
-./deploy/unlock.sh
-```
-
-**Set up virtualenv**
-```
-./deploy/create_virtualenv.sh
-```
-This will create virtualenv with all Python packages required in `~/virtualenvs/pyvenv_api_tests`.
-
-**Add config** if environment has non-default configuration (e.g. no seedorg)
-
-If you plan to run tests on a new environment (i.e. not daily, sprint, demo, etc.), supply non-default config values in `api-tests/project/test_utils/config.py`, in `__CONFIG` string.
 
 
 ### Run tests
