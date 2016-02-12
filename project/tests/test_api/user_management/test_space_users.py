@@ -132,7 +132,7 @@ class AddNewUserToSpace(BaseSpaceUserClass):
     def test_cannot_create_user_with_non_ascii_characters_username(self):
         """DPNG-3583 Http 500 when email contains non ascii characters"""
         test_username = get_test_name(email=True)
-        test_username = test_username.replace("@", "ąśćżźł@")
+        test_username = "ąśćżźł" + test_username
         self.assertRaisesUnexpectedResponse(400, "Bad Request", User.api_create_by_adding_to_space, TEST_ORG.guid,
                                             TEST_SPACE.guid, username=test_username)
 
