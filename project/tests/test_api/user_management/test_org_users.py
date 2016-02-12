@@ -18,7 +18,7 @@ import itertools
 
 from test_utils import ApiTestCase, get_logger, platform_api_calls as api, cleanup_after_failed_setup
 from objects import Organization, User
-from constants.HttpStatus import OrganizationHttpStatus as HttpStatus
+from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
 
 logger = get_logger("test org users")
 

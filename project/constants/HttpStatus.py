@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015 Intel Corporation
+# Copyright (c) 2016 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License")
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-__all__ = ["HttpStatus", "OrganizationHttpStatus"]
+__all__ = ["HttpStatus", "UserManagementHttpStatus"]
 
 
 class HttpStatus(object):
@@ -134,7 +134,7 @@ class HttpStatus(object):
     CODE_INSUFFICIENT_STORAGE = 507
 
 
-class OrganizationHttpStatus(HttpStatus):
+class UserManagementHttpStatus(HttpStatus):
     """Organization http status messages"""
 
     MSG_WRONG_UUID_FORMAT_EXCEPTION = "Wrong uuid format exception"
