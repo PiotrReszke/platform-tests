@@ -135,7 +135,7 @@ class HttpStatus(object):
 
 
 class UserManagementHttpStatus(HttpStatus):
-    """Organization http status messages"""
+    """User management http status messages"""
 
     MSG_WRONG_UUID_FORMAT_EXCEPTION = "Wrong uuid format exception"
     MSG_EMAIL_ADDRESS_NOT_VALID = "That email address is not valid"
