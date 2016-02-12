@@ -41,11 +41,6 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
     app_kafka2hdfs = None
     topic_name = None
 
-    @classmethod
-    def tearDownClass(cls):
-        pass
-        # Organization.cf_api_tear_down_test_orgs()
-
     @retry(AssertionError, tries=5, delay=2)
     def _assert_message_count_in_app_stats(self, app, expected_message_count):
         self.step("Check that application api returns correct number of consumed messages")
