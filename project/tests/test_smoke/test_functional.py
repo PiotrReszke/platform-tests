@@ -131,6 +131,7 @@ class FunctionalSmokeTests(ApiTestCase):
         self.assertNotInList(transfer, transfers)
 
     def test_create_and_delete_marketplace_service_instances(self):
+        """gearpump: DPNG-4582 [GEARPUMP] after-review fixes - ensure prerequisities on startup"""
         self.step("Get list of services in marketplace")
         marketplace = ServiceType.api_get_list_from_marketplace(space_guid=self.ref_space.guid)
         marketplace = [s for s in marketplace if s.label != "scoring-engine"]
