@@ -108,6 +108,7 @@ class Atk(ApiTestCase):
 
     @ApiTestCase.mark_prerequisite()
     def test_5_frame_csv_file(self):
+        """kerberos: DPNG-4525, non-kerberos: DPNG-5171"""
         self.step("Run atk csv file test")
         atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "csv_file_test.py")
         self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_url,

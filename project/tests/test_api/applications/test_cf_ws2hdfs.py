@@ -100,6 +100,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     @ApiTestCase.mark_prerequisite(is_first=True)
     def test_cf_app_step_1_push_ws2kafka_kafka2hdfs(self):
+        """DPNG-4511 Cannot push kafka2hdfs on environments with kerberos"""
         postfix = str(int(time.time()))
         self.__class__.topic_name = "topic-{}".format(postfix)
         self.step("Push application ws2kafka")
@@ -126,6 +127,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     @ApiTestCase.mark_prerequisite()
     def test_cf_app_step_3_check_messages_in_hdfs(self):
+        """DPNG-5173 Cannot access hdfs directories using ec2-user"""
         self.step("Get details of broker guid")
         broker_guid = self.app_kafka2hdfs.get_credentials("hdfs")["uri"].split("/", 3)[3]
         self.step("Get messages from hdfs")
