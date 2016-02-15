@@ -40,6 +40,11 @@ Place `key.dat` in api-tests directory.
 cf api-tests
 ./deploy/unlock.sh
 ```
+Check that secrets are decrypted correctly:
+```
+cat api-tests/project/test_utils/secrets/.secret.ini
+```
+If the file looks normal, secrets have been decrypted.
 
 **6. Set up virtualenv**
 ```
