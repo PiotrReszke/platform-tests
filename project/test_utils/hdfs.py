@@ -33,7 +33,7 @@ class Hdfs(object):
     def __init__(self):
         hostname = "cdh-master-0"
         username = "ec2-user"
-        path_to_key = os.path.expanduser(os.path.join("~", ".ssh", "auto-deploy-virginia.pem"))
+        path_to_key = os.path.expanduser(config.CONFIG["cdh_key_path"])
 
         via_hostname = "cdh.{}".format(config.CONFIG["domain"])
         self.ssh_client = SshClient(hostname=hostname, username=username, path_to_key=path_to_key,

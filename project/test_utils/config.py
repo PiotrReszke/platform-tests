@@ -56,11 +56,13 @@ __CONFIG.read_string("""
         ssl_validation = False
         ref_org_name = seedorg
         ref_space_name = seedspace
+        cdh_key_path = ~/.ssh/auto-deploy-virginia.pem
     [gotapaas.eu]
         login.do_scheme = https
         ssl_validation = True
     [demo-gotapaas.com]
         ssl_validation = True
+        cdh_key_path = ~/.ssh/demo-gotapaas.pem
 """)
 
 
@@ -90,6 +92,7 @@ def update_test_config(domain=None, proxy=None, client_type=None, logged_respons
                                                        fallback=__CONFIG.getboolean("DEFAULT", "ssl_validation"))
         CONFIG["ref_org_name"] = __CONFIG.get(domain, "ref_org_name", fallback=defaults["ref_org_name"])
         CONFIG["ref_space_name"] = __CONFIG.get(domain, "ref_space_name", fallback=defaults["ref_space_name"])
+        CONFIG["cdh_key_path"] = __CONFIG.get(domain, "cdh_key_path", fallback=defaults["cdh_key_path"])
     CONFIG["proxy"] = proxy
     if logged_response_body_length is not None:
         logger.LOGGED_RESPONSE_BODY_LENGTH = logged_response_body_length
