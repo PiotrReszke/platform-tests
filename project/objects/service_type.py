@@ -85,10 +85,18 @@ class ServiceType(object):
         self.service_plans = service_plans
 
     @classmethod
-    def cf_api_get_list_from_marketplace(cls, space_guid):
+    def cf_api_get_list_from_marketplace_by_space(cls, space_guid):
         response = cf.cf_api_get_space_services(space_guid)
         return [cls._from_details(space_guid, data) for data in response["resources"]]
 
+    @classmethod
+    def cf_api_get_list(cls):
+        response = cf.cf_api_get_services()
+        services = []
+
+        for service in response:
+            services.append(cls._from_details(space_guid=None, details=service))
+        return services
 
 
 

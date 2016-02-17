@@ -190,6 +190,20 @@ def api_get_org_metrics(org_guid, client=None):
     client = client or PlatformApiClient.get_admin_client()
     return client.request("GET", "rest/orgs/{}/metrics".format(org_guid), log_msg="PLATFORM: get metrics")
 
+# ================================================= platform-operations=============================================== #
+
+
+def api_get_platform_operations(client=None):
+    """GET /rest/platform/summary"""
+    client = client or PlatformApiClient.get_admin_client()
+    return client.request("GET", "rest/platform/summary", log_msg="PLATFORM/OPERATIONS: metrics")
+
+
+def api_refresh_platform_operations(client=None):
+    """POST /rest/platform/summary/refresh_cache"""
+    client = client or PlatformApiClient.get_admin_client()
+    return client.request("POST", "rest/platform/summary/refresh_cache", log_msg="PLATFORM/OPERATIONS: refresh")
+
 
 # ================================================= platform-context ================================================= #
 

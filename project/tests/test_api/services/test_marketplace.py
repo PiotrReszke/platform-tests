@@ -73,7 +73,7 @@ class TestMarketplaceServices(ApiTestCase):
 
     def test_check_marketplace_services_list_vs_cloudfoundry(self):
         self.step("Check that services in cf are the same as in Marketplace")
-        cf_marketplace = ServiceType.cf_api_get_list_from_marketplace(self.test_space.guid)
+        cf_marketplace = ServiceType.cf_api_get_list_from_marketplace_by_space(self.test_space.guid)
         self.assertUnorderedListEqual(self.marketplace, cf_marketplace)
 
     def test_create_and_delete_service_instance(self):

@@ -161,13 +161,22 @@ class ServiceInstance(object):
         return cls(guid=response["metadata"]["guid"], service_label=service_label, name=name, space_guid=space_guid)
 
     @classmethod
-    def cf_api_get_upsi(cls):
+    def cf_api_get_upsi_list(cls):
         upsi_data = cf.cf_api_get_user_provided_service_instances()
         upsi = []
         for data in upsi_data:
             upsi.append(cls(guid=data["metadata"]["guid"], name=data["entity"]["name"], service_label=None,
                             space_guid=data["entity"]["space_guid"]))
         return upsi
+
+    @classmethod
+    def cf_api_get_list(cls):
+        si_data = cf.cf_api_get_service_instances()
+        services = []
+        for data in si_data:
+            services.append(cls(guid=data["metadata"]["guid"], name=data["entity"]["name"], service_label=None,
+                            space_guid=data["entity"]["space_guid"]))
+        return services
 
 
 class AtkInstance(ServiceInstance):

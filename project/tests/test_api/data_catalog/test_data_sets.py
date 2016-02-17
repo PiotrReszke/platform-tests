@@ -282,7 +282,7 @@ class CreateDatasets(ApiTestCase):
         User.get_admin().api_add_to_organization(org_guid=cls.org.guid)
         cls.step("Get target uri from hdfs instance")
         _, ref_space = Organization.get_ref_org_and_space()
-        hdfs = next(app for app in Application.cf_api_get_list(ref_space.guid) if "hdfs-downloader" in app.name)
+        hdfs = next(app for app in Application.cf_api_get_list_by_space(ref_space.guid) if "hdfs-downloader" in app.name)
         cls.target_uri = hdfs.cf_api_env()['VCAP_SERVICES']['hdfs'][0]['credentials']['uri'].replace("%{organization}", cls.org.guid)
 
     @classmethod
@@ -394,7 +394,7 @@ class DataSetFromHdfs(ApiTestCase):
         initial_transfer.ensure_finished()
         initial_dataset = DataSet.api_get_matching_to_transfer([self.org], initial_transfer.title)
         self.step("Get atk app from seedspace")
-        atk_app = next((app for app in Application.cf_api_get_list(self.ref_space.guid) if app.name == "atk"), None)
+        atk_app = next((app for app in Application.cf_api_get_list_by_space(self.ref_space.guid) if app.name == "atk"), None)
         if atk_app is None:
             raise AssertionError("Atk app not found in seedspace")
         self.step("Create virtualenv")

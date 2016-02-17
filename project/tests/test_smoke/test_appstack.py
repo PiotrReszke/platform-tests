@@ -38,8 +38,8 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
         cls.expected_broker_names = {app_info["name"] for app_info in appstack_yml["service_brokers"]}
         cls.step("Retrieve apps, services, and brokers present in cf")
         ref_space_guid = Organization.get_ref_org_and_space()[1].guid
-        cls.cf_apps = Application.cf_api_get_list(ref_space_guid)
-        cls.cf_upsi = [s for s in ServiceInstance.cf_api_get_upsi() if s.space_guid == ref_space_guid]
+        cls.cf_apps = Application.cf_api_get_list_by_space(ref_space_guid)
+        cls.cf_upsi = [s for s in ServiceInstance.cf_api_get_upsi_list() if s.space_guid == ref_space_guid]
         cls.cf_brokers = ServiceBroker.cf_api_get_list(ref_space_guid)
         cls.step("Retrieve apps and services present on the Platform")
         cls.platform_apps = Application.api_get_list(ref_space_guid)

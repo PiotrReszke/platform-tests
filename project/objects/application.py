@@ -21,11 +21,12 @@ import requests
 from retry import retry
 import yaml
 
-from test_utils import cloud_foundry as cf, platform_api_calls as api, get_logger, UnexpectedResponseError, \
+
+from test_utils import cloud_foundry as cf, platform_api_calls as api, UnexpectedResponseError, \
     log_http_request, log_http_response, get_test_name
 
 
-logger = get_logger("application")
+
 
 
 __all__ = ["Application"]
@@ -187,10 +188,22 @@ class Application(object):
         return applications
 
     @classmethod
-    def cf_api_get_list(cls, space_guid):
-        """Get list of applications from Cloud Foundry API"""
+    def cf_api_get_list_by_space(cls, space_guid):
+        """Get list of applications from Cloud Foundry API by space"""
         response = cf.cf_api_space_summary(space_guid)
         return cls.from_cf_api_space_summary_response(response, space_guid)
+
+    @classmethod
+    def cf_api_get_list(cls):
+        """Get list of applications from Cloud Foundry API"""
+        cf_applications = cf.cf_api_get_apps()
+        apps = []
+        for data in cf_applications:
+            app = cls(name=data["entity"]["name"], space_guid=None, state=data["entity"]["state"],
+                      guid=data["metadata"]["guid"], instances=(None, data["entity"]["instances"]),
+                      urls=data["metadata"]["url"])
+            apps.append(app)
+        return apps
 
     def cf_api_get_summary(self):
         response = cf.cf_api_app_summary(self.guid)

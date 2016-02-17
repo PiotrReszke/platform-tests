@@ -60,7 +60,7 @@ class Apps(ApiTestCase):
         self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
         self.step("Delete the application and check that it doesn't exist")
         self.test_app.api_delete()
-        self.assertNotInList(self.test_app, Application.cf_api_get_list(self.test_space.guid))
+        self.assertNotInList(self.test_app, Application.cf_api_get_list_by_space(self.test_space.guid))
 
     def test_api_push_restage_delete(self):
         self.step("Restage the application and check that it is running")
@@ -68,7 +68,7 @@ class Apps(ApiTestCase):
         self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
         self.step("Delete the application and check that it doesn't exist")
         self.test_app.api_delete()
-        self.assertNotInList(self.test_app, Application.cf_api_get_list(self.test_space.guid))
+        self.assertNotInList(self.test_app, Application.cf_api_get_list_by_space(self.test_space.guid))
 
     def test_delete_space_and_org_after_app_creation_and_deletion(self):
         """DPNG-2683 Cannot delete space where an app used to be"""

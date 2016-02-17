@@ -95,7 +95,7 @@ class iPythonConsole(ApiTestCase):
 
     def test_iPython_connect_to_atk_client(self):
         self.step("Get atk app from seedspace")
-        atk_app = next((app for app in Application.cf_api_get_list(self.ref_space.guid) if app.name == "atk"), None)
+        atk_app = next((app for app in Application.cf_api_get_list_by_space(self.ref_space.guid) if app.name == "atk"), None)
         if atk_app is None:
             raise AssertionError("Atk app not found in seedspace")
         self.atk_url = atk_app.urls[0]

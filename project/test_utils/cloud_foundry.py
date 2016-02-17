@@ -165,7 +165,16 @@ def cf_api_get_space_services(space_guid, label=None):
     return CfApiClient.get_client().request("GET", "spaces/{}/services".format(space_guid), params=params,
                                             log_msg="CF: get space services")
 
+# -------------------------------------------------- service --------------------------------------------------------- #
+
+
+def cf_api_get_services():
+    """GET /v2/services"""
+    return __get_all_pages(endpoint="services", log_msg="CF: get all services")
+
+
 # -------------------------------------------------- service plans --------------------------------------------------- #
+
 
 def cf_api_get_service_plans(service_guid=None):
     """GET /v2/service_plans"""
@@ -207,7 +216,23 @@ def cf_api_get_user_provided_service_instances():
     return __get_all_pages("user_provided_service_instances", log_msg="CF: get upsi")
 
 
+def cf_api_get_service_instances():
+    """GET /v2/service_instances"""
+    return __get_all_pages("service_instances", log_msg="CF: get service instances")
+
+# ---------------------------------------------------- buildpacks ---------------------------------------------------- #
+
+
+def cf_api_get_buildpacks():
+    """GET /v2/buildpacks"""
+    return __get_all_pages("buildpacks", log_msg="CF: get build packs")
+
 # ------------------------------------------------------- apps ------------------------------------------------------- #
+
+def cf_api_get_apps():
+    """GET /v2/apps"""
+    return __get_all_pages("apps", log_msg="CF: get apps")
+
 
 def cf_api_get_app_env(app_guid):
     """GET /v2/apps/{app_guid}/env"""
@@ -236,6 +261,7 @@ def cf_api_get_service_brokers(space_guid=None):
 
 # ----------------------------------------------------- routes ------------------------------------------------------- #
 
+
 def cf_api_delete_route(route_guid):
     """DELETE /v2/routes/{route_guid}"""
     CfApiClient.get_client().request("DELETE", endpoint="routes/{}".format(route_guid), params={"async": "false"},
@@ -256,6 +282,7 @@ def cf_api_create_service_key(service_instance_guid, service_key_name):
 
 # -------------------------------------------------------------------------------------------------------------------- #
 
+
 def cf_get_ref_org_and_space_guids():
     """Return tuple or org_guid and space_guid for reference org and space (e.g. seedorg, seedspace)."""
     if CONFIG.get("ref_org_guid") is None or CONFIG.get("ref_space_guid") is None:
@@ -266,4 +293,3 @@ def cf_get_ref_org_and_space_guids():
         spaces = cf_api_get_org_spaces(CONFIG["ref_org_guid"])
         CONFIG["ref_space_guid"] = next(s["metadata"]["guid"] for s in spaces if s["entity"]["name"] == space_name)
     return CONFIG["ref_org_guid"], CONFIG["ref_space_guid"]
-
