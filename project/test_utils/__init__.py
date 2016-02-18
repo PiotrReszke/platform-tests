@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+from .test_markers import *
 from .exceptions import *
 from .logger import *
 from .config import *
@@ -29,3 +30,4 @@ from .platform_api_calls import *
 from .ipython_tools import iPython
 from .file_utils import *
 from .api_password import *
+

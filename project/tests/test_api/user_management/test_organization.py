@@ -14,13 +14,14 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, get_logger
+from test_utils import ApiTestCase, get_logger, priority, components
 from objects import Organization, User
 
 
 logger = get_logger("test organization")
 
 
+@components("user-management", "auth-gateway")
 class TestOrganization(ApiTestCase):
 
     @classmethod
@@ -29,6 +30,7 @@ class TestOrganization(ApiTestCase):
         User.api_tear_down_test_invitations()
         Organization.cf_api_tear_down_test_orgs()
 
+    @priority.p0
     def test_create_organization(self):
         self.step("Create an organization")
         expected_org = Organization.api_create()
@@ -36,6 +38,7 @@ class TestOrganization(ApiTestCase):
         orgs = Organization.api_get_list()
         self.assertInList(expected_org, orgs)
 
+    @priority.p1
     def test_rename_organization(self):
         self.step("Create an organization")
         expected_org = Organization.api_create()
@@ -46,6 +49,7 @@ class TestOrganization(ApiTestCase):
         orgs = Organization.api_get_list()
         self.assertInList(expected_org, orgs)
 
+    @priority.p0
     def test_delete_organization(self):
         self.step("Create an organization")
         deleted_org = Organization.api_create()
@@ -58,6 +62,7 @@ class TestOrganization(ApiTestCase):
         orgs = Organization.api_get_list()
         self.assertNotInList(deleted_org, orgs)
 
+    @priority.p1
     def test_get_more_than_50_organizations(self):
         self.step("Get list of organization and check how many there are")
         old_orgs = Organization.api_get_list()
@@ -71,6 +76,7 @@ class TestOrganization(ApiTestCase):
         missing_orgs = [o for o in expected_orgs if o not in orgs]
         self.assertEqual(missing_orgs, [], "Not all test orgs are present on org list")
 
+    @priority.p1
     def test_delete_organization_with_user(self):
         self.step("Create an organization")
         org = Organization.api_create()
