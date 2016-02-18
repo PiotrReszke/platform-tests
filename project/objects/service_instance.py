@@ -50,13 +50,13 @@ class ServiceInstance(object):
         return hash(tuple(getattr(self, a) for a in self.COMPARABLE_ATTRS))
 
     @classmethod
-    @retry(AssertionError, tries=60, delay=2)
+    @retry(AssertionError, tries=100, delay=3)
     def _get_instance_with_retry(cls, instance_name, space_guid):
         """Wait for created instance and return it"""
         instance_list = cls.api_get_list(space_guid)
         instance = next((i for i in instance_list if i.name == instance_name), None)
         if instance is None:
-            raise AssertionError("Instance not found")
+            raise AssertionError("Instance was not created in 5 minutes")
         return instance
 
     # ----------------------------------------- Platform API ----------------------------------------- #
