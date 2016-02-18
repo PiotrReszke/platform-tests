@@ -270,6 +270,10 @@ class CfApiClient(AppClient):
             cls._CF_API_CLIENT = cls(admin_username, admin_password)
         return cls._CF_API_CLIENT
 
+    def get_oauth_token(self):
+        self._get_token()
+        return self._token
+
 
 class UaaApiClient(PlatformApiClient):
 

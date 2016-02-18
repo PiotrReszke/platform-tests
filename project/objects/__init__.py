@@ -26,4 +26,5 @@ from .transfer import Transfer
 from .service_broker import ServiceBroker
 from .latest_event import LatestEvent
 from .external_tools import ExternalTools
+from .service_binding import ServiceBinding
 
