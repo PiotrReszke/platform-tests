@@ -18,13 +18,12 @@ import unittest
 
 from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
 from objects import Organization, Space, User
-
+from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
 
 logger = get_logger("test spaces")
 
 
 class Spaces(ApiTestCase):
-
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
@@ -55,7 +54,8 @@ class Spaces(ApiTestCase):
         self.step("Create a space")
         space = Space.api_create(org=self.test_org)
         self.step("Check that attempt to create a space with the same name in the same org returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", Space.api_create, org=self.test_org, name=space.name)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST, Space.api_create,
+                                            org=self.test_org, name=space.name)
 
     def test_create_space_with_long_name(self):
         self.step("Create space with name 400 char long")
@@ -67,7 +67,8 @@ class Spaces(ApiTestCase):
 
     def test_create_space_with_empty_name(self):
         self.step("Check that attempt to create space with empty name returns an error")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", Space.api_create, name="", org=self.test_org)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST, Space.api_create,
+                                            name="", org=self.test_org)
 
     def test_delete_space(self):
         self.step("Create a space")
@@ -84,7 +85,7 @@ class Spaces(ApiTestCase):
         space.api_delete(org=self.test_org)
         self.assertNotInListWithRetry(space, Space.api_get_list)
         self.step("Check that attempt to delete the space again returns an error")
-        self.assertRaisesUnexpectedResponse(404, "Not Found", space.api_delete)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_NOT_FOUND, space.api_delete)
 
     def test_cannot_delete_space_with_user(self):
         self.step("Create a space")

@@ -16,6 +16,8 @@
 
 from test_utils import ApiTestCase, gmail_api, get_logger, PasswordAPI
 from objects import User
+from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
+
 
 logger = get_logger("test org users")
 
@@ -53,7 +55,7 @@ class PasswordTests(ApiTestCase):
         pswd_api.reset_password_set_new(code, self.NEW_PASSWORD)
 
         self.step("Try to login with old credentials.")
-        self.assertRaisesUnexpectedResponse(200, "", user.login)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_OK, HttpStatus.MSG_EMPTY, user.login)
 
         self.step("Login to the platform with new credentials.")
         user.password=self.NEW_PASSWORD
@@ -72,7 +74,7 @@ class PasswordTests(ApiTestCase):
 
         self.step("Logout and try to login with old credentials.")
         client.logout()
-        self.assertRaisesUnexpectedResponse(200, "", user.login)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_OK, HttpStatus.MSG_EMPTY, user.login)
 
         self.step("Login to the platform with new credentials.")
         user.password=self.NEW_PASSWORD

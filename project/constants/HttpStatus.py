@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-__all__ = ["HttpStatus", "UserManagementHttpStatus"]
+__all__ = ["HttpStatus", "UserManagementHttpStatus", "DataCatalogHttpStatus"]
 
 
 class HttpStatus(object):
@@ -141,3 +141,16 @@ class UserManagementHttpStatus(HttpStatus):
     MSG_EMAIL_ADDRESS_NOT_VALID = "That email address is not valid"
     MSG_MUST_HAVE_AT_LEAST_ONE_ROLE = "You must have at least one role"
     MSG_USER_NOT_EXIST_IN_ORGANIZATION = "User {} does not exist in organization {}."
+    MSG_USER_ALREADY_EXISTS = "User {} already exists"
+    MSG_USER_IS_NOT_IN_GIVEN_SPACE = "The user is not in given space"
+    MSG_ACCESS_DENIED = "Access is denied"
+    MSG_PASSWORD_CANNOT_BE_EMPTY = "Password cannot be empty"
+    MSG_ORGANIZATION_ALREADY_EXISTS = "Organization \\\"{}\\\" already exists"
+    MSG_NO_PENDING_INVITATION_FOR = "No pending invitation for {}"
+
+
+class DataCatalogHttpStatus(HttpStatus):
+    """Data catalog http status messages"""
+
+    MSG_NOT_VALID_UUID = "not a valid UUID"
+    MSG_ORGANIZATION_NOT_EXIST = "org does not exist"

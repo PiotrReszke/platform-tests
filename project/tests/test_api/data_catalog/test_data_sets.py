@@ -22,6 +22,7 @@ from retry import retry
 from test_utils import ApiTestCase, cleanup_after_failed_setup, generate_csv_file, get_csv_record_count, \
     tear_down_test_files, get_csv_data, download_file, ATKtools
 from objects import Organization, Transfer, DataSet, User, Application, ServiceInstance
+from constants.HttpStatus import HttpStatus
 
 
 EXAMPLE_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
@@ -205,7 +206,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         self.step("Delete dataset")
         dataset.api_delete()
         self.step("Try to delete the dataset again")
-        self.assertRaisesUnexpectedResponse(404, "", dataset.api_delete)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_EMPTY, dataset.api_delete)
 
     def test_change_private_dataset_to_public(self):
         dataset = self._create_dataset(self.org, self.source)

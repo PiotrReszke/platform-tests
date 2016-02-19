@@ -4,7 +4,7 @@ import time
 
 from test_utils import config, gmail_api, get_logger, ApiTestCase, platform_api_calls as api, get_test_name
 from objects import User, Organization
-
+from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
 
 logger = get_logger("test onboarding")
 
@@ -82,7 +82,8 @@ class Onboarding(ApiTestCase):
         self.step("Invite a test user. The new user registers.")
         user, organization = User.api_onboard()
         self.step("Check that sending invitation to the same user causes an error.")
-        self.assertRaisesUnexpectedResponse(409, "User {} already exists".format(user.username),
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT,
+                                            HttpStatus.MSG_USER_ALREADY_EXISTS.format(user.username),
                                             User.api_invite, user.username)
 
     def test_non_admin_user_cannot_invite_another_user(self):
@@ -92,15 +93,16 @@ class Onboarding(ApiTestCase):
         non_admin_user_client = non_admin_user.login()
         self.step("Check an error is returned when non-admin tries to onboard another user")
         username = get_test_name(email=True)
-        self.assertRaisesUnexpectedResponse(403, "Access is denied", User.api_invite, username,
-                                            inviting_client=non_admin_user_client)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_ACCESS_DENIED,
+                                            User.api_invite, username, inviting_client=non_admin_user_client)
         self._assert_user_received_messages(username, 0)
 
     def test_cannot_create_an_account_with_invalid_code(self):
         self.step("An error is returned when user registers with invalid code")
         username = get_test_name(email=True)
-        self.assertRaisesUnexpectedResponse(403, "", User.api_register_after_onboarding,
-                                            "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", username)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_EMPTY,
+                                            User.api_register_after_onboarding, "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                                            username)
 
     def test_cannot_use_the_same_activation_code_twice(self):
         self.step("Invite a user")
@@ -109,13 +111,15 @@ class Onboarding(ApiTestCase):
         self.step("The new user registers")
         User.api_register_after_onboarding(code, username)
         self.step("Check that error is returned when the user tries to use code twice")
-        self.assertRaisesUnexpectedResponse(403, "", User.api_register_after_onboarding, code, username)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_EMPTY,
+                                            User.api_register_after_onboarding, code, username)
 
     def test_invite_user_with_non_email_username(self):
         """DPNG-2625 Onboarding user with invalid e-mail as username results in Internal Server Error"""
         self.step("Check that passing invalid email results in error")
         username = "non_mail_username"
-        self.assertRaisesUnexpectedResponse(409, "That email address is not valid", User.api_invite, username)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_EMAIL_ADDRESS_NOT_VALID,
+                                            User.api_invite, username)
 
     def test_user_cannot_register_without_password(self):
         """DPNG-2367 Registration without password - http 500"""
@@ -123,8 +127,8 @@ class Onboarding(ApiTestCase):
         username = User.api_invite()
         code = gmail_api.get_invitation_code_for_user(username)
         self.step("Check that an error is returned when the user tries to register without a password")
-        self.assertRaisesUnexpectedResponse(400, "Password cannot be empty", api.api_register_new_user, code=code,
-                                            org_name=get_test_name())
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_PASSWORD_CANNOT_BE_EMPTY,
+                                            api.api_register_new_user, code=code, org_name=get_test_name())
         self.step("Check that the user was not created")
         username_list = [user.username for user in User.cf_api_get_all_users()]
         self.assertNotInList(username, username_list, "User was created")
@@ -134,7 +138,8 @@ class Onboarding(ApiTestCase):
         username = User.api_invite()
         code = gmail_api.get_invitation_code_for_user(username)
         self.step("Check that an error is returned when the user registers with an already-existing org name")
-        self.assertRaisesUnexpectedResponse(409, "Organization \\\"{}\\\" already exists".format(self.test_org.name),
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT,
+                                            HttpStatus.MSG_ORGANIZATION_ALREADY_EXISTS.format(self.test_org.name),
                                             User.api_register_after_onboarding, code, username,
                                             org_name=self.test_org.name)
         self.step("Check that the user was not created")
@@ -147,15 +152,14 @@ class Onboarding(ApiTestCase):
         username = User.api_invite()
         code = gmail_api.get_invitation_code_for_user(username)
         self.step("Check that an error is returned when user registers without passing an org name")
-        self.assertRaisesUnexpectedResponse(400, "Bad Request", api.api_register_new_user, code=code,
-                                            password="testPassw0rd")
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
+                                            api.api_register_new_user, code=code, password="testPassw0rd")
         self.step("Check that the user was not created")
         username_list = [user.username for user in User.cf_api_get_all_users()]
         self.assertNotInList(username, username_list, "User was created")
 
 
 class PendingInvitations(ApiTestCase):
-
     def test_add_new_pending_invitation(self):
         self.step("Invite new user")
         username = User.api_invite()
@@ -198,13 +202,15 @@ class PendingInvitations(ApiTestCase):
 
     def test_cannot_resend_not_existing_pending_invitation(self):
         username = "not_existing_user"
-        self.assertRaisesUnexpectedResponse(404, "No pending invitation for {}".format(username),
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND,
+                                            HttpStatus.MSG_NO_PENDING_INVITATION_FOR.format(username),
                                             User.api_resend_user_invitation, username)
 
     @unittest.expectedFailure
     def test_cannot_resend_invitation_providing_empty_name(self):
         """DPNG-4657 http 500 when trying to use unsupported api endpoints"""
-        self.assertRaisesUnexpectedResponse(404, "Not found", User.api_resend_user_invitation, "")
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_NOT_FOUND,
+                                            User.api_resend_user_invitation, "")
 
     def test_delete_pending_invitation(self):
         self.step("Invite new user")
@@ -216,20 +222,23 @@ class PendingInvitations(ApiTestCase):
         self.step("Get registration code from received message")
         code = gmail_api.get_invitation_code_for_user(username)
         self.step("Check that the user cannot register after deletion of pending invitation")
-        self.assertRaisesUnexpectedResponse(403, "", User.api_register_after_onboarding, code, username)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_EMPTY,
+                                            User.api_register_after_onboarding, code, username)
 
     @unittest.expectedFailure
     def test_cannot_delete_not_existing_pending_invitation(self):
         """DPNG-4654 Typo in 'DELETE /rest/invitations/ error message."""
         self.step("Try to delete not existing invitation")
         username = "not_existing_user"
-        self.assertRaisesUnexpectedResponse(404, "No pending invitation for {}".format(username),
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND,
+                                            HttpStatus.MSG_NO_PENDING_INVITATION_FOR.format(username),
                                             User.api_delete_user_invitation, username)
 
     @unittest.expectedFailure
     def test_cannot_delete_pending_invitation_providing_empty_name(self):
         """DPNG-4657 http 500 when trying to use unsupported api endpoints"""
-        self.assertRaisesUnexpectedResponse(404, "Not found", User.api_delete_user_invitation, "")
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_NOT_FOUND,
+                                            User.api_delete_user_invitation, "")
 
     def test_cannot_get_pending_invitations_as_non_admin_user(self):
         self.step("Create new org and user")
@@ -237,4 +246,5 @@ class PendingInvitations(ApiTestCase):
         test_user = User.api_create_by_adding_to_organization(test_org.guid)
         test_user_client = test_user.login()
         self.step("As non admin user try to get pending invitations list")
-        self.assertRaisesUnexpectedResponse(403, "Access is denied", User.api_get_pending_invitations, test_user_client)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_ACCESS_DENIED,
+                                            User.api_get_pending_invitations, test_user_client)

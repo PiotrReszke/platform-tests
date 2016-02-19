@@ -20,7 +20,7 @@ import unittest
 from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api, \
     generate_csv_file, tear_down_test_files, get_test_name
 from objects import Organization, Transfer, DataSet, User
-
+from constants.HttpStatus import DataCatalogHttpStatus as HttpStatus
 
 logger = get_logger("test data transfer")
 
@@ -61,9 +61,10 @@ class SubmitTransfer(SubmitTransferBase):
     def test_cannot_create_transfer_when_providing_invalid_org_guid(self):
         org_guid = "wrong_guid"
         self.step("Try create a transfer by providing invalid org guid")
-        self.assertRaisesUnexpectedResponse(400, "not a valid UUID", api.api_create_transfer,
-                                            source=self.EXAMPLE_LINK, title="test-transfer-{}".format(time.time()),
-                                            is_public=False, org_guid=org_guid, category="other")
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_NOT_VALID_UUID,
+                                            api.api_create_transfer, source=self.EXAMPLE_LINK,
+                                            title="test-transfer-{}".format(time.time()), is_public=False,
+                                            org_guid=org_guid, category="other")
 
     def test_create_transfer_without_category(self):
         transfer = self._create_transfer(category=None)
@@ -84,7 +85,6 @@ class SubmitTransfer(SubmitTransferBase):
 
 
 class SubmitTransferFromLocalFile(SubmitTransfer):
-
     def _create_transfer(self, column_count=10, row_count=10, category="other", size=None):
         self.step("Generate sample csv file")
         file_path = generate_csv_file(column_count=column_count, row_count=row_count, size=size)
@@ -97,7 +97,7 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
         tear_down_test_files()
 
     def test_submit_transfer_from_large_file(self):
-        transfer = self._create_transfer(size=20*1024*1024)
+        transfer = self._create_transfer(size=20 * 1024 * 1024)
         self.step("Get data set matching to transfer {}".format(transfer.title))
         DataSet.api_get_matching_to_transfer([self.org], transfer.title)
 
@@ -109,9 +109,10 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
         self.step("Generate sample csv file")
         file_path = generate_csv_file(column_count=10, row_count=10)
         self.step("Create a transfer")
-        self.assertRaisesUnexpectedResponse(400, "org does not exist", api.api_create_transfer_by_file_upload,
-                                            source=file_path, title="test-transfer-{}".format(time.time()),
-                                            is_public=False, org_guid=org_guid, category=category)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_ORGANIZATION_NOT_EXIST,
+                                            api.api_create_transfer_by_file_upload, source=file_path,
+                                            title="test-transfer-{}".format(time.time()), is_public=False,
+                                            org_guid=org_guid, category=category)
 
     @unittest.expectedFailure
     def test_create_transfer_without_category(self):
@@ -133,7 +134,6 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
 
 
 class OtherTransferTests(SubmitTransferBase):
-
     def test_admin_can_get_transfer_list(self):
         self.step("Check if the list of transfers can be retrieved")
         transfers = Transfer.api_get_list(org_list=[self.org])
