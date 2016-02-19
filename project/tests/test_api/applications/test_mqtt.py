@@ -45,8 +45,8 @@ class TestMqtt(ApiTestCase):
     MQTT_TOPIC_NAME = "space-shuttle/test-data"
 
     def _compile_mqtt_demo(self):
-        self.step("Clone repository mqtt-demo")
-        app_source_utils.clone_repository("mqtt-demo", self.APP_REPO_PATH)
+        self.step("Clone or Pull repository mqtt-demo")
+        app_source_utils.clone_or_pull_repository("mqtt-demo", self.APP_REPO_PATH)
         self.step("Compile the sources")
         app_source_utils.compile_mvn(self.APP_REPO_PATH)
 

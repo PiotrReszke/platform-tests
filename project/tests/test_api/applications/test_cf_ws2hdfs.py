@@ -50,8 +50,8 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     @classmethod
     def _clone_and_compile_sources(cls):
-        cls.step("Clone repository ingestion-ws-kafka-hdfs")
-        app_source_utils.clone_repository("ingestion-ws-kafka-hdfs", cls.APP_REPO_PATH)
+        cls.step("Clone or Pull repository ingestion-ws-kafka-hdfs")
+        app_source_utils.clone_or_pull_repository("ingestion-ws-kafka-hdfs", cls.APP_REPO_PATH)
         cls.step("Set dependency url")
         app_source_utils.set_dependency_url(cls.KAFKA2HDFS_PATH, "build.gradle")
         cls.step("Compile the sources")

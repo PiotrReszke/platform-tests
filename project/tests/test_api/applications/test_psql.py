@@ -57,8 +57,8 @@ class Postgres(ApiTestCase):
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
-        cls.step("Clone {}".format(cls.APP_REPO_NAME))
-        app_source_utils.clone_repository(cls.APP_REPO_NAME, cls.PSQL_APP_DIR)
+        cls.step("Clone or Pull {}".format(cls.APP_REPO_NAME))
+        app_source_utils.clone_or_pull_repository(cls.APP_REPO_NAME, cls.PSQL_APP_DIR)
         cls.step("Create test org and test space")
         test_org = Organization.api_create(space_names=("test_name",))
         test_space = test_org.spaces[0]
@@ -71,11 +71,6 @@ class Postgres(ApiTestCase):
             source_directory=cls.PSQL_APP_DIR,
             bound_services=(postgres_instance_name,)
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        shutil.rmtree(cls.PSQL_APP_DIR)
 
     def tearDown(self):
         for table in PsqlTable.TEST_TABLES:

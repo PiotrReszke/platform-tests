@@ -26,7 +26,6 @@ import requests
 
 from . import config, log_command, get_logger, log_http_request, log_http_response
 
-
 logger = get_logger(__name__)
 
 # Build gradle has problem with dependency and artifact
@@ -52,12 +51,25 @@ def github_get_file_content(repository, file_path, owner="intel-data", ref=None)
 
 
 def clone_repository(repository_name, target_directory, owner="intel-data"):
-    API_URL = "https://{2}:{3}@github.com/{0}/{1}.git".format(owner, repository_name, *config.CONFIG["github_auth"])
-    logger.info("Clone from {} to {}".format(API_URL, target_directory))
+    repo_url = get_repo_url(repository_name, owner)
+    logger.info("Clone from {} to {}".format(repo_url, target_directory))
     if os.path.exists(target_directory):
         shutil.rmtree(target_directory)
     os.mkdir(target_directory)
-    Repo.clone_from(API_URL, target_directory)
+    Repo.clone_from(repo_url, target_directory)
+
+
+def clone_or_pull_repository(repository_name, target_directory, owner="intel-data"):
+    """Pull changes into repository if repository exists otherwise clone it"""
+    if os.path.exists(target_directory):
+        repo_url = get_repo_url(repository_name, owner)
+        logger.info("Pull from {} into {}".format(repo_url, target_directory))
+        repo = Repo(target_directory)
+        repo.head.reset("--hard")
+        origin = repo.remotes.origin
+        origin.pull()
+    else:
+        clone_repository(repository_name, target_directory, owner)
 
 
 def compile_mvn(directory):
@@ -97,8 +109,17 @@ def set_dependency_url(application_path, filename):
 
 
 def checkout_branch_pointing_to_commit(repo_path, commit_id):
-    """Create branch which points to chosen commit and switch to it"""
-    repo = Repo(repo_path)
+    """Create branch which points to chosen commit and switch to it or checkout and reset if already exists"""
     branch_name = "branch_{}".format(commit_id)
-    logger.info("Create branch {} and switch to it".format(branch_name))
-    repo.git.checkout(commit_id, b=branch_name)
+    repo = Repo(repo_path)
+    if branch_name not in repo.branches:
+        logger.info("Create branch {} and switch to it".format(branch_name))
+        repo.git.checkout(commit_id, b=branch_name)
+    else:
+        logger.info("Switch to branch {} and reset it".format(branch_name))
+        repo.git.checkout(commit_id, B=branch_name)
+
+
+def get_repo_url(repository_name, owner="intel-data"):
+    """Returns repository url address"""
+    return "https://{2}:{3}@github.com/{0}/{1}.git".format(owner, repository_name, *config.CONFIG["github_auth"])

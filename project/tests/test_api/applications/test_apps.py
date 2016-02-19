@@ -31,8 +31,8 @@ class Apps(ApiTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.step("Clone example application repository from github")
-        app_source_utils.clone_repository("cf-env", cls.APP_REPO_PATH, owner="cloudfoundry-community")
+        cls.step("Clone or Pull example application repository from github")
+        app_source_utils.clone_or_pull_repository("cf-env", cls.APP_REPO_PATH, owner="cloudfoundry-community")
         # checkout to older commit where app uses the same version of Ruby as installed on the TC agents
         app_source_utils.checkout_branch_pointing_to_commit(cls.APP_REPO_PATH, cls.APP_COMMIT_ID)
 
