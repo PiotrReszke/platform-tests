@@ -71,13 +71,12 @@ class ServiceInstanceKeys(ApiTestCase):
     @unittest.expectedFailure
     def test_create_gearpump_service_instance_keys(self):
         """DPNG-3832 Enable creating service key for services with large 'credentials' section"""
-        labels = ("gearpump", "gearpump-dashboard")
-        gp_services = [s for s in self.marketplace_services if s.label in labels]
+        label = "gearpump"
+        gearpump = next(s for s in self.marketplace_services if s.label == label)
         test_space = self.test_org.spaces[2]
-        for service in gp_services:
-            for plan in service.service_plans:
-                with self.subTest(service=service.label, plan=plan["name"]):
-                    self._create_instance_and_key(service.label, plan["guid"], self.test_org, test_space)
+        for plan in gearpump.service_plans:
+            with self.subTest(service=label, plan=plan["name"]):
+                self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
 
     @unittest.expectedFailure
     def test_create_yarn_service_instance_keys(self):

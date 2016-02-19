@@ -134,7 +134,7 @@ class FunctionalSmokeTests(ApiTestCase):
         """gearpump: DPNG-4582 [GEARPUMP] after-review fixes - ensure prerequisities on startup"""
         self.step("Get list of services in marketplace")
         marketplace = ServiceType.api_get_list_from_marketplace(space_guid=self.ref_space.guid)
-        marketplace = [s for s in marketplace if s.label != "scoring-engine"]
+        marketplace = [s for s in marketplace if s.label not in ("scoring-engine", "gearpump-dashboard")]
         for service in marketplace:
             for plan in service.service_plans:
                 with self.subTest(service=service.label, plan=plan["name"]):
