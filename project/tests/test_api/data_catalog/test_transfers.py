@@ -18,7 +18,7 @@ import time
 import unittest
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api, \
-    generate_csv_file, tear_down_test_files, get_test_name
+    generate_csv_file, tear_down_test_files, get_test_name, generate_empty_file
 from objects import Organization, Transfer, DataSet, User
 from constants.HttpStatus import DataCatalogHttpStatus as HttpStatus
 
@@ -136,6 +136,17 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
         transfer = self._create_transfer(file_name="test file with space in name {}.csv")
         self.step("Get data set matching to transfer {}".format(transfer.title))
         DataSet.api_get_matching_to_transfer([self.org], transfer.title)
+
+    @unittest.expectedFailure
+    def test_submit_transfer_from_empty_file(self):
+        """DPNG-5182 Adding empty file to data catalog trigger transfer error"""
+        self.step("Generate sample csv file")
+        file_path = generate_empty_file()
+        self.step("Create a transfer")
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_EMPTY,
+                                            api.api_create_transfer_by_file_upload, source=file_path,
+                                            title="test-transfer-{}".format(time.time()), is_public=False,
+                                            org_guid=self.org.guid, category="other")
 
 
 class OtherTransferTests(SubmitTransferBase):

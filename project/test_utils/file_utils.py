@@ -19,7 +19,8 @@ from datetime import datetime
 import os
 import requests
 
-__all__ = ["generate_csv_file", "get_csv_record_count", "tear_down_test_files", "get_csv_data", "download_file"]
+__all__ = ["generate_csv_file", "get_csv_record_count", "tear_down_test_files", "get_csv_data", "download_file",
+           "generate_empty_file"]
 
 TMP_FILE_DIR = "/tmp/test_files"
 TMP_FILE_NAME = "test_file_{}.csv"
@@ -88,3 +89,12 @@ def tear_down_test_files():
     while len(TEST_FILES) > 0:
         file_path = TEST_FILES.pop()
         os.remove(file_path)
+
+
+def generate_empty_file():
+    """ Return path to the new empty file. """
+    os.makedirs(TMP_FILE_DIR, exist_ok=True)
+    file_path = os.path.join(TMP_FILE_DIR, "empty_file_{}.csv".format(datetime.now().strftime('%Y%m%d_%H%M%S_%f')))
+    open(file_path, "w").close()
+    TEST_FILES.append(file_path)
+    return file_path
