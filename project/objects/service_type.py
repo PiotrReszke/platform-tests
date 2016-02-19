@@ -16,7 +16,7 @@
 
 import functools
 
-from test_utils import platform_api_calls as api, cloud_foundry as cf
+from test_utils import platform_api_calls as api, cloud_foundry as cf, application_broker as broker_client
 
 
 __all__ = ["ServiceType"]
@@ -33,6 +33,7 @@ class ServiceType(object):
         self.description = description
         self.space_guid = space_guid
         self.service_plans = service_plans  # service plan is a dict with keys "guid", and "name"
+
 
     def __eq__(self, other):
         return all([getattr(self, ca) == getattr(other, ca) for ca in self.COMPARABLE_ATTRIBUTES])
@@ -97,6 +98,14 @@ class ServiceType(object):
         for service in response:
             services.append(cls._from_details(space_guid=None, details=service))
         return services
+
+    @classmethod
+    def app_broker_create_service_in_catalog(cls, service_name, description, app_guid):
+        service = broker_client.app_broker_create_service(app_guid, description, service_name)
+        service_plans = service.get("plans")
+        return cls(label=service["name"], guid=service["id"], description=service["description"],
+                   space_guid=service["app"]["entity"]["space_guid"], service_plans=service_plans)
+
 
 
 

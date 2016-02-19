@@ -57,6 +57,7 @@ __CONFIG.read_string("""
         ssl_validation = False
         ref_org_name = seedorg
         ref_space_name = seedspace
+        cf_api_version = v2
         cdh_key_path = ~/.ssh/auto-deploy-virginia.pem
     [gotapaas.eu]
         login.do_scheme = https
@@ -99,6 +100,7 @@ def update_test_config(domain=None, proxy=None, client_type=None, logged_respons
         CONFIG["cdh_key_path"] = __CONFIG.get(domain, "cdh_key_path", fallback=defaults["cdh_key_path"])
         CONFIG["arcadia_username"] = __SECRETS.get(domain, "arcadia_username", fallback=defaults["arcadia_username"])
         CONFIG["arcadia_password"] = __SECRETS.get(domain, "arcadia_password", fallback=defaults["arcadia_password"])
+        CONFIG["cf_api_version"] = __CONFIG.get(domain, "cf_api_version", fallback=defaults["cf_api_version"])
     CONFIG["proxy"] = proxy
     if logged_response_body_length is not None:
         logger.LOGGED_RESPONSE_BODY_LENGTH = logged_response_body_length

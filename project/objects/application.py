@@ -27,8 +27,6 @@ from test_utils import cloud_foundry as cf, platform_api_calls as api, Unexpecte
 
 
 
-
-
 __all__ = ["Application"]
 
 

@@ -15,19 +15,19 @@
 #
 
 import functools
+import uuid
 
 from retry import retry
 
-from test_utils import platform_api_calls as api, cloud_foundry as cf, get_test_name, UnexpectedResponseError
+from test_utils import platform_api_calls as api, cloud_foundry as cf, get_test_name, UnexpectedResponseError,\
+    application_broker as broker_client, config
 from objects import ServiceInstanceKey
-
 
 __all__ = ["ServiceInstance", "AtkInstance"]
 
 
 @functools.total_ordering
 class ServiceInstance(object):
-
     COMPARABLE_ATTRS = ["guid", "name", "space_guid", "service_label"]
 
     def __init__(self, guid, name, space_guid, service_label, bound_apps=None):
@@ -178,9 +178,19 @@ class ServiceInstance(object):
                             space_guid=data["entity"]["space_guid"]))
         return services
 
+    # ----------------------------------------- APPLICATION BROKER API ----------------------------------------- #
+
+    @classmethod
+    def app_broker_create_instance(cls, organization_guid, plan_id, service_id, space_guid):
+        instance_name = config.get_test_name()
+        instance_guid = uuid.uuid4()
+        broker_client.app_broker_new_service_instance(instance_guid, organization_guid, plan_id, service_id, space_guid, instance_name)
+
+        return cls(guid=instance_guid, name=instance_name, service_label=None,
+                            space_guid=space_guid)
+
 
 class AtkInstance(ServiceInstance):
-
     started_status = "STARTED"
 
     def __init__(self, guid, name, space_guid, service_label, org_guid=None, scoring_engine=None, state=None):

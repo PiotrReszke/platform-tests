@@ -17,11 +17,9 @@
 import abc
 import json
 import time
-
 import requests
 
 from . import config, log_http_request, log_http_response, UnexpectedResponseError
-
 
 __all__ = ["PlatformApiClient", "ConsoleClient", "AppClient", "CfApiClient", "UaaApiClient"]
 
@@ -66,7 +64,7 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
                 cls._CLIENTS[client_type][username] = AppClient(username, password)
         return cls._CLIENTS[client_type][username]
 
-    def request(self, method, endpoint, headers=None, files=None, params=None, data=None, body=None, log_msg=""):
+    def request(self, method, endpoint, headers=None, files=None, params=None, data=None, body=None, log_msg="", auth=None):
         request = requests.Request(
             method=method.upper(),
             url=self.url + endpoint,
@@ -74,7 +72,8 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
             data=data,
             params=params,
             json=body,
-            files=files
+            files=files,
+            auth=auth
         )
         request = self._session.prepare_request(request)
         log_http_request(request, self._username, self._password, description=log_msg, data=data)
