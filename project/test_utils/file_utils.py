@@ -19,21 +19,22 @@ from datetime import datetime
 import os
 import requests
 
-
 __all__ = ["generate_csv_file", "get_csv_record_count", "tear_down_test_files", "get_csv_data", "download_file"]
 
-
 TMP_FILE_DIR = "/tmp/test_files"
+TMP_FILE_NAME = "test_file_{}.csv"
 TEST_FILES = []  # list of generated files - used for cleanup
 
 
-def generate_csv_file(column_count=10, size=None, row_count=10):
+def generate_csv_file(column_count=10, size=None, row_count=10, file_name=None):
     """
     Return path to the new file.
     Pass row_count or size (in bytes) - if both are passed, size takes precedence.
     """
     os.makedirs(TMP_FILE_DIR, exist_ok=True)
-    file_path = os.path.join(TMP_FILE_DIR, "test_file_{}.csv".format(datetime.now().strftime('%Y%m%d_%H%M%S_%f')))
+    file_name = TMP_FILE_NAME.format(
+        datetime.now().strftime('%Y%m%d_%H%M%S_%f')) if file_name is None else file_name
+    file_path = os.path.join(TMP_FILE_DIR, file_name)
     with open(file_path, "w", newline="") as csv_file:
         csv_writer = csv.writer(csv_file, lineterminator='\n')
         csv_writer.writerow(["COL_{}".format(i) for i in range(column_count)])
@@ -87,8 +88,3 @@ def tear_down_test_files():
     while len(TEST_FILES) > 0:
         file_path = TEST_FILES.pop()
         os.remove(file_path)
-
-
-
-
-

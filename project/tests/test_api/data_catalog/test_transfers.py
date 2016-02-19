@@ -85,9 +85,9 @@ class SubmitTransfer(SubmitTransferBase):
 
 
 class SubmitTransferFromLocalFile(SubmitTransfer):
-    def _create_transfer(self, column_count=10, row_count=10, category="other", size=None):
+    def _create_transfer(self, column_count=10, row_count=10, category="other", size=None, file_name=None):
         self.step("Generate sample csv file")
-        file_path = generate_csv_file(column_count=column_count, row_count=row_count, size=size)
+        file_path = generate_csv_file(column_count=column_count, row_count=row_count, size=size, file_name=file_name)
         self.step("Create a transfer with new category")
         transfer = Transfer.api_create_by_file_upload(category=category, org=self.org, file_path=file_path)
         transfer.ensure_finished()
@@ -131,6 +131,11 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
             category="other"
         )
         self.assertTrue("token" not in response, "token field was returned in response")
+
+    def test_submit_transfer_from_file_with_space_in_name(self):
+        transfer = self._create_transfer(file_name="test file with space in name {}.csv")
+        self.step("Get data set matching to transfer {}".format(transfer.title))
+        DataSet.api_get_matching_to_transfer([self.org], transfer.title)
 
 
 class OtherTransferTests(SubmitTransferBase):
