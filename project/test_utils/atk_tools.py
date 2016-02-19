@@ -15,11 +15,10 @@
 #
 
 import os
-import subprocess
 import pexpect
 import requests
 
-
+from test_utils import command as cmd
 from . import log_command, get_logger, log_http_request, log_http_response, UnexpectedResponseError, config,\
     AtkScriptException
 
@@ -85,12 +84,12 @@ class ATKtools(object):
     def create(self):
         command = ["virtualenv", "-p", self.system_interpreter, self.path]
         log_command(command)
-        subprocess.check_call(command)
+        cmd.run(command)
 
     def delete(self):
         command = ["rm", "-rf", self.path]
         log_command(command)
-        subprocess.check_call(command)
+        cmd.run(command)
 
     def pip_install(self, package_name, **pip_options):
         self.installed_packages += package_name
@@ -99,7 +98,7 @@ class ATKtools(object):
             command += ["--" + option_name.replace("_", "-"), value]
         command += [package_name]
         log_command(command)
-        subprocess.check_call(command)
+        cmd.run(command)
 
     def run_atk_script(self, script_path, atk_url, arguments=None, timeout=480):
         command = [self.interpreter, script_path]

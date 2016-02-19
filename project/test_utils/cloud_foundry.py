@@ -14,9 +14,7 @@
 # limitations under the License.
 #
 
-import functools
-import subprocess
-
+from test_utils import command as cmd
 from . import CfApiClient, get_logger, log_command, CONFIG, UaaApiClient, YouMustBeJokingException
 
 
@@ -33,16 +31,6 @@ __all__ = ["cf_login", "cf_push", "cf_create_service", "cf_delete", "cf_env", "c
 
 cli_logger = get_logger("CF CLI")
 
-def log_output_on_error(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except subprocess.SubprocessError as e:
-            cli_logger.error(e.output.decode("utf-8"))
-            raise
-    return wrapper
-
 
 def cf_login(organization_name, space_name):
     api_url = "api.{}".format(CONFIG["domain"])
@@ -52,40 +40,37 @@ def cf_login(organization_name, space_name):
     if not CONFIG["ssl_validation"]:
         command.append("--skip-ssl-validation")
     log_command(command, replace=(password, "[SECRET]"))
-    subprocess.check_call(command)
+    cmd.run(command)
 
 
-@log_output_on_error
 def cf_push(local_path, local_jar):
     command = ["cf", "push", "-f", local_path, "-p", local_jar]
     log_command(command)
-    return subprocess.check_output(command).decode()
+    return cmd.run(command)
 
 
-@log_output_on_error
 def cf_create_service(broker_name, plan, instance_name):
     command = ["cf", "create-service", broker_name, plan, instance_name]
     log_command(command)
-    return subprocess.check_output(command).decode()
+    return cmd.run(command)
 
 
 def cf_delete(app_name):
     command = ["cf", "delete", app_name, "-f"]
     log_command(command)
-    subprocess.check_call(command)
+    cmd.run(command)
 
 
-@log_output_on_error
 def cf_env(app_name):
     command = ["cf", "env", app_name]
     log_command(command)
-    return subprocess.check_output(command).decode()
+    return cmd.run(command)
 
 
 def cf_delete_service(service):
     command = ["cf", "delete-service", service, "-f"]
     log_command(command)
-    return subprocess.check_call(command)
+    return cmd.run(command)
 
 
 # ====================================================== uaa api ===================================================== #

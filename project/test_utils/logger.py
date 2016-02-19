@@ -23,6 +23,7 @@ import requests
 
 from datetime import datetime
 from teamcity import is_running_under_teamcity
+from constants.LoggerType import LoggerType
 
 
 __all__ = ["get_logger", "set_level", "log_command", "log_http_request", "log_http_response",
@@ -80,7 +81,7 @@ def get_logger(name):
 
 
 def log_command(command, replace=None):
-    logger = get_logger("shell command")
+    logger = get_logger(LoggerType.SHELL_COMMAND)
     msg = "Execute {}".format(" ".join(command))
     if replace is not None:
         msg = msg.replace(*replace)
