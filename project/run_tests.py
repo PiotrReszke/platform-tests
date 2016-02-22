@@ -24,6 +24,33 @@ from teamcity.unittestpy import TeamcityTestRunner
 from test_utils import config, get_logger, change_log_file_path
 
 
+
+def flatten_test_suite(test_suite, filter_method=None):
+    if not isinstance(test_suite, unittest.TestSuite):
+        raise TypeError("not a TestSuite", test_suite)
+    tests = []
+    for item in test_suite._tests:
+        if isinstance(item, unittest.TestSuite):
+            tests.extend(flatten_test_suite(item))
+        else:
+            tests.append(item)
+    suite = unittest.TestSuite()
+    suite.addTests(tests)
+    suite.flattened = True
+    return suite
+
+
+def filter_test_suite(test_suite, filter_method):
+    if not isinstance(test_suite, unittest.TestSuite):
+        raise TypeError("not a TestSuite", test_suite)
+    if not getattr(test_suite, "flattened", False):
+        test_suite = flatten_test_suite(test_suite)
+    tests = [t for t in test_suite._tests if filter_method(t)]
+    suite = unittest.TestSuite()
+    suite.addTests(tests)
+    return suite
+
+
 if __name__ == "__main__":
 
     logger = get_logger("run_tests")
@@ -80,4 +107,5 @@ if __name__ == "__main__":
         runner = unittest.TextTestRunner(verbosity=3)
     suite = unittest.TestSuite()
     suite.addTests(loaded_tests)
+    suite = filter_test_suite(suite, lambda x: x.priority <= args.priority)
     runner.run(suite)

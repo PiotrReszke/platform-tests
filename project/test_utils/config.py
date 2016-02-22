@@ -21,7 +21,7 @@ import os
 import re
 import socket
 
-from . import logger
+from . import logger, PRIORITY_LEVELS
 
 
 __all__ = ["update_test_config", "parse_arguments", "CONFIG", "is_test_object_name", "get_test_name"]
@@ -130,6 +130,10 @@ def parse_arguments():
     parser.add_argument("-v", "--platform-version",
                         default="master",
                         help="Platform version tag name")
+    parser.add_argument("-p", "--priority",
+                        default=PRIORITY_LEVELS[-1],
+                        choices=PRIORITY_LEVELS,
+                        help="Run subset of tests with priority <= p")
     parser.add_argument("--proxy",
                         default=None,
                         help="set proxy for api client")
