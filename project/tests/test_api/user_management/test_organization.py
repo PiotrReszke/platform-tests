@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+from constants.tap_components import TapComponent as tc
 from test_utils import ApiTestCase, get_logger, priority, components
 from objects import Organization, User
 
@@ -21,7 +22,7 @@ from objects import Organization, User
 logger = get_logger("test organization")
 
 
-@components("user-management", "auth-gateway")
+@components(tc.auth_gateway, tc.user_management)
 class TestOrganization(ApiTestCase):
 
     @classmethod

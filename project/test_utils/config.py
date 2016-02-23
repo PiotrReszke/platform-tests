@@ -21,6 +21,7 @@ import os
 import re
 import socket
 
+from constants.tap_components import TapComponent
 from . import logger, PRIORITY_LEVELS
 
 
@@ -134,6 +135,11 @@ def parse_arguments():
                         default=PRIORITY_LEVELS[-1],
                         choices=PRIORITY_LEVELS,
                         help="Run subset of tests with priority <= p")
+    parser.add_argument("-c", "--components",
+                        default=[],
+                        action="append",
+                        choices=TapComponent.names(),
+                        help="Limit tests to those which use specified components")
     parser.add_argument("--proxy",
                         default=None,
                         help="set proxy for api client")

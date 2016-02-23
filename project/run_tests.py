@@ -21,11 +21,16 @@ import requests
 from teamcity import is_running_under_teamcity
 from teamcity.unittestpy import TeamcityTestRunner
 
+from constants.tap_components import TapComponent
 from test_utils import config, get_logger, change_log_file_path
 
 
+def flatten_test_suite(test_suite):
+    """
+    Return unittest.TestSuite with flattened test list (i.e. not containing other TestSuites).
 
-def flatten_test_suite(test_suite, filter_method=None):
+    test_suite -- unittest.TestSuite object
+    """
     if not isinstance(test_suite, unittest.TestSuite):
         raise TypeError("not a TestSuite", test_suite)
     tests = []
@@ -41,6 +46,12 @@ def flatten_test_suite(test_suite, filter_method=None):
 
 
 def filter_test_suite(test_suite, filter_method):
+    """
+    Return unittest.TestSuite formed of those tests from test_suite for which filter_method returns True.
+
+    test_suite -- unittest.TestSuite object
+    filter_method -- callable which returns bool when applied to a ApiTestCase object
+    """
     if not isinstance(test_suite, unittest.TestSuite):
         raise TypeError("not a TestSuite", test_suite)
     if not getattr(test_suite, "flattened", False):
@@ -107,5 +118,11 @@ if __name__ == "__main__":
         runner = unittest.TextTestRunner(verbosity=3)
     suite = unittest.TestSuite()
     suite.addTests(loaded_tests)
+
+    # apply filters - priority and requested components
     suite = filter_test_suite(suite, lambda x: x.priority <= args.priority)
+    if args.components != []:
+        components = [getattr(TapComponent, c) for c in args.components]
+        suite = filter_test_suite(suite, lambda x: bool(set(x.components) & set(components)))
+
     runner.run(suite)
