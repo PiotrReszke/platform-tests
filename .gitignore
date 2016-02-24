@@ -5,3 +5,4 @@
 *.yml
 *__pycache__/
 *key.dat
+set_environment.py
