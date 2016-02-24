@@ -37,7 +37,7 @@ class TestScoringEngineInstance(ApiTestCase):
         cls.hdfs_path = ds.target_uri
 
     def test_create_and_delete_scoring_engine_service_instance(self):
-        """DPNG-4847 Creating scoring engine instance triggers creation of multiple se apps, hdfs instances, but no se instance"""
+        """DPNG-5389 User cannot create scoring-engine instance (permission denied for user vcap)"""
         self.step("Create test service instance")
         se_instance = ServiceInstance.api_create(
             org_guid=self.test_org.guid,
@@ -54,7 +54,7 @@ class TestScoringEngineInstance(ApiTestCase):
         self.assertNotInList(se_instance, instances, "Scoring engine instance was not deleted")
 
     def test_create_scoring_engine_service_instance_key(self):
-        """DPNG-4847 Creating scoring engine instance triggers creation of multiple se apps, hdfs instances, but no se instance"""
+        """DPNG-5389 User cannot create scoring-engine instance (permission denied for user vcap)"""
         self.step("Create test service instance")
         se_instance = ServiceInstance.api_create(
             org_guid=self.test_org.guid,

@@ -477,6 +477,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                 self.assert_user_in_org_and_roles(updated_user, org.guid, user_role)
 
     def test_org_manager_cannot_delete_own_role_while_being_the_only_org_manager(self):
+        """DPNG-5451 API tests fail due to features/fixes"""
         manager_role = User.ORG_ROLES["manager"]
         org, updated_user, client, _ = self._create_org_and_init_users("manager")
         self.step("As org manager try to delete self 'org manager' role")
@@ -485,6 +486,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         self.assert_user_in_org_and_roles(updated_user, org.guid, manager_role)
 
     def test_org_manager_remove_own_role_when_there_is_another_org_manager(self):
+        """DPNG-5451 API tests fail due to features/fixes"""
         manager_role = User.ORG_ROLES["manager"]
         org, updated_user, client, _ = self._create_org_and_init_users("manager", manager_role)
         self.step("As one of the org managers delete own 'org manager' role")
@@ -502,7 +504,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
             self.assert_user_in_org_and_roles(updated_user, org.guid, expected_role)
 
     def test_send_org_role_update_request_with_empty_body(self):
-        """DPNG-4279 sending space role update request with empty body deletes user roles and returns http 500"""
+        """DPNG-5451 API tests fail due to features/fixes"""
         expected_roles = User.ORG_ROLES["manager"]
         self.step("Create new platform user by adding to org")
         test_user = User.api_create_by_adding_to_organization(org_guid=TEST_ORG.guid, roles=expected_roles)

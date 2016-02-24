@@ -100,7 +100,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     @ApiTestCase.mark_prerequisite(is_first=True)
     def test_cf_app_step_1_push_ws2kafka_kafka2hdfs(self):
-        """DPNG-4511 Cannot push kafka2hdfs on environments with kerberos"""
+        """DPNG-5225 [hadoop-utils] remove the need for kerberos-service in non-kerberos envs"""
         postfix = str(int(time.time()))
         self.__class__.topic_name = "topic-{}".format(postfix)
         self.step("Push application ws2kafka")
