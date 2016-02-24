@@ -20,7 +20,7 @@ from objects import Organization, ServiceType, ServiceInstance, ServiceInstanceK
 
 
 class ServiceInstanceKeys(ApiTestCase):
-    SERVICES_TESTED_SEPARATELY = ['yarn', 'hdfs', 'hbase', "scoring-engine", "gearpump", "gearpump-dashboard"]
+    SERVICES_TESTED_SEPARATELY = ['yarn', 'hdfs', 'hbase', "scoring-engine", "gearpump-dashboard"]
 
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
@@ -67,16 +67,6 @@ class ServiceInstanceKeys(ApiTestCase):
             for plan in service_type.service_plans:
                 with self.subTest(service=service_type.label, plan=plan["name"]):
                     self._create_instance_and_key(service_type.label, plan["guid"], self.test_org, test_space)
-
-    @unittest.expectedFailure
-    def test_create_gearpump_service_instance_keys(self):
-        """DPNG-3832 Enable creating service key for services with large 'credentials' section"""
-        label = "gearpump"
-        gearpump = next(s for s in self.marketplace_services if s.label == label)
-        test_space = self.test_org.spaces[2]
-        for plan in gearpump.service_plans:
-            with self.subTest(service=label, plan=plan["name"]):
-                self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
 
     @unittest.expectedFailure
     def test_create_yarn_service_instance_keys(self):
