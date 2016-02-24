@@ -89,13 +89,11 @@ create_test_admin.sh <domain> <cf admin password> <reference org name> <referenc
 3. Run tests using `run_tests.sh` script (see below).
 
 To run smoke tests:
-`./run_tests.sh -e <domain, e.g. demotrustedanalytics.com> -s test_appstack > <log_file> 2>&1`
+`./run_tests.sh -e <domain, e.g. demotrustedanalytics.com> -s test_smoke > <log_file> 2>&1`
 
 To run api tests:
 `./run_tests.sh -e <domain, e.g. demotrustedanalytics.com> -s test_api > <log_file> 2>&1`
 
-To run application tests 
-`./run_tests.sh -e <domain, e.g. demotrustedanalytics.com> -s test_cf_applications > <log_file> 2>&1`
 
 **Parameters**
 
