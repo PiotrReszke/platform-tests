@@ -17,7 +17,7 @@
 import unittest
 import itertools
 
-from test_utils import ApiTestCase, get_logger, iPython
+from test_utils import ApiTestCase, get_logger, iPython, get_test_name
 from objects import ServiceInstance, ServiceType, Organization, User
 from constants.HttpStatus import ServiceCatalogHttpStatus as HttpStatus
 
@@ -36,6 +36,9 @@ class TestMarketplaceServices(ApiTestCase):
         cls.test_space = cls.test_org.spaces[0]
         cls.step("Get list of available services from Marketplace")
         cls.marketplace = ServiceType.api_get_list_from_marketplace(cls.test_space.guid)
+        cls.step("Create space developer client")
+        cls.space_developer_client = User.api_create_by_adding_to_space(cls.test_org.guid, cls.test_space.guid,
+                                                                        roles=User.SPACE_ROLES["developer"]).login()
         cls.step("Create space auditor client")
         cls.space_auditor_client = User.api_create_by_adding_to_space(cls.test_org.guid, cls.test_space.guid,
                                                                       roles=User.SPACE_ROLES["auditor"]).login()
@@ -120,6 +123,41 @@ class TestMarketplaceServices(ApiTestCase):
         terminal.send_input("env\n")
         output = "".join(terminal.get_output())
         self.assertIn("{}={}".format(param_key, param_value), output)
+
+    def test_cannot_create_service_instance_with_existing_name(self):
+        existing_name = get_test_name()
+        self.step("Create service instance")
+        instance = ServiceInstance.api_create(
+            org_guid=self.test_org.guid,
+            space_guid=self.test_space.guid,
+            service_label="kafka",
+            name=existing_name,
+            service_plan_name="shared"
+        )
+        service_list = ServiceInstance.api_get_list(space_guid=self.test_space.guid)
+        self.step("Check that the instance was created")
+        self.assertInList(instance, service_list, "Instance was not created")
+        for service_type in self.marketplace:
+            plan_guid = next(iter(service_type.service_plan_guids))
+            with self.subTest(service_type=service_type):
+                self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT,
+                                                    HttpStatus.MSG_SERVICE_NAME_TAKEN.format(existing_name),
+                                                    ServiceInstance.api_create, self.test_org.guid,
+                                                    self.test_space.guid, service_type.label, existing_name,
+                                                    service_plan_guid=plan_guid, client=self.space_developer_client)
+        self.assertUnorderedListEqual(service_list, ServiceInstance.api_get_list(space_guid=self.test_space.guid),
+                                      "Some new services were created")
+
+    @unittest.expectedFailure
+    def test_cannot_create_service_instance_without_name(self):
+        """DPNG-5154 Http status 500 when trying to create a service instance without a name"""
+        expected_instance_list = ServiceInstance.api_get_list(self.test_space.guid)
+        self.step("Check that gateway instance cannot be created with empty name")
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
+                                            ServiceInstance.api_create, self.test_org.guid, self.test_space.guid,
+                                            "kafka", "", service_plan_name="shared", client=self.space_developer_client)
+        self.assertUnorderedListEqual(expected_instance_list, ServiceInstance.api_get_list(self.test_space.guid),
+                                      "New instance was created")
 
     def test_cannot_create_service_instances_as_non_space_developer(self):
         test_clients = {"space_auditor": self.space_auditor_client, "space_manager": self.space_manager_client}
