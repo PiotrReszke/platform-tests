@@ -15,10 +15,7 @@
 #
 
 
-from . import get_logger, DataScience
-
-
-logger = get_logger("Gearpump")
+from . import DataScience
 
 
 class Gearpump(object):

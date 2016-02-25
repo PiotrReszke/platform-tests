@@ -22,7 +22,7 @@ from objects.service_instance_validator import ServiceInstanceValidator
 from objects import Organization, ServiceInstance, User
 
 
-@incremental(Priority.medium)
+@incremental(Priority.high)
 class Gateway(ApiTestCase):
     PLAN_NAME = "Simple"
     gateway_instance = None

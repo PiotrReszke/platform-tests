@@ -17,11 +17,9 @@
 import re
 import time
 
-from test_utils import config, gmail_api, get_logger, ApiTestCase, platform_api_calls as api, get_test_name
+from test_utils import config, gmail_api, ApiTestCase, platform_api_calls as api, get_test_name, priority
 from objects import User, Organization
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
-
-logger = get_logger("test onboarding")
 
 
 class Onboarding(ApiTestCase):
@@ -77,6 +75,7 @@ class Onboarding(ApiTestCase):
             for message in messages:
                 self._assert_message_correct(message["subject"], message["content"], message["sender"])
 
+    @priority.high
     def test_simple_onboarding(self):
         self.step("Send an invite to a new user")
         username = User.api_invite()
@@ -92,6 +91,7 @@ class Onboarding(ApiTestCase):
         self.assertIn(organization, organizations, "New organization was not found")
         self.assert_user_in_org_and_roles(user, organization.guid, User.ORG_ROLES["manager"])
 
+    @priority.medium
     def test_cannot_invite_existing_user(self):
         self.step("Invite a test user. The new user registers.")
         user, organization = User.api_onboard()
@@ -100,6 +100,7 @@ class Onboarding(ApiTestCase):
                                             HttpStatus.MSG_USER_ALREADY_EXISTS.format(user.username),
                                             User.api_invite, user.username)
 
+    @priority.high
     def test_non_admin_user_cannot_invite_another_user(self):
         self.step("Create a test user")
         non_admin_user = User.api_create_by_adding_to_organization(org_guid=self.test_org.guid)
@@ -110,6 +111,7 @@ class Onboarding(ApiTestCase):
                                             User.api_invite, username, inviting_client=non_admin_user_client)
         self._assert_user_received_messages(username, 0)
 
+    @priority.medium
     def test_cannot_create_an_account_with_invalid_code(self):
         self.step("An error is returned when user registers with invalid code")
         username = get_test_name(email=True)
@@ -117,6 +119,7 @@ class Onboarding(ApiTestCase):
                                             User.api_register_after_onboarding, "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
                                             username)
 
+    @priority.medium
     def test_cannot_use_the_same_activation_code_twice(self):
         self.step("Invite a user")
         username = User.api_invite()
@@ -127,14 +130,15 @@ class Onboarding(ApiTestCase):
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_EMPTY,
                                             User.api_register_after_onboarding, code, username)
 
+    @priority.low
     def test_invite_user_with_non_email_username(self):
         self.step("Check that passing invalid email results in error")
         username = "non_mail_username"
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_EMAIL_ADDRESS_NOT_VALID,
                                             User.api_invite, username)
 
+    @priority.medium
     def test_user_cannot_register_without_password(self):
-        """DPNG-2367 Registration without password - http 500"""
         self.step("Invite a new user")
         username = User.api_invite()
         code = gmail_api.get_invitation_code_for_user(username)
@@ -145,6 +149,7 @@ class Onboarding(ApiTestCase):
         username_list = [user.username for user in User.cf_api_get_all_users()]
         self.assertNotIn(username, username_list, "User was created")
 
+    @priority.medium
     def test_user_cannot_register_already_existing_organization(self):
         self.step("Invite a new user")
         username = User.api_invite()
@@ -158,6 +163,7 @@ class Onboarding(ApiTestCase):
         username_list = [user.username for user in User.cf_api_get_all_users()]
         self.assertNotIn(username, username_list, "User was created")
 
+    @priority.low
     def test_user_cannot_register_with_no_organization_name(self):
         self.step("Invite a new user")
         username = User.api_invite()
@@ -171,12 +177,15 @@ class Onboarding(ApiTestCase):
 
 
 class PendingInvitations(ApiTestCase):
+
+    @priority.high
     def test_add_new_pending_invitation(self):
         self.step("Invite new user")
         username = User.api_invite()
         self.step("Check that the user is in the pending invitation list")
         self.assertInWithRetry(username, User.api_get_pending_invitations)
 
+    @priority.medium
     def test_accepting_invitation_deletes_it_from_pending_list(self):
         self.step("Invite new user")
         username = User.api_invite()
@@ -187,6 +196,7 @@ class PendingInvitations(ApiTestCase):
         self.step("Check that invitation is no longer present in pending invitation list")
         self.assertNotInWithRetry(username, User.api_get_pending_invitations)
 
+    @priority.medium
     def test_add_new_pending_invitation_twice_for_the_same_user(self):
         self.step("Send invitation two times for a single user")
         username = User.api_invite()
@@ -195,6 +205,7 @@ class PendingInvitations(ApiTestCase):
         self.step("Check that there is only one invitation for the user")
         self.assertEqual(invitation_list.count(username), 1, "More than one invitation for user {}".format(username))
 
+    @priority.medium
     def test_resend_pending_invitation(self):
         self.step("Invite new user")
         username = User.api_invite()
@@ -211,17 +222,20 @@ class PendingInvitations(ApiTestCase):
         user, organization = User.api_register_after_onboarding(code, username)
         self.assert_user_in_org_and_roles(user, organization.guid, User.ORG_ROLES["manager"])
 
+    @priority.low
     def test_cannot_resend_not_existing_pending_invitation(self):
         username = "not_existing_user"
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND,
                                             HttpStatus.MSG_NO_PENDING_INVITATION_FOR.format(username),
                                             User.api_resend_user_invitation, username)
 
+    @priority.low
     def test_cannot_resend_invitation_providing_empty_name(self):
         """DPNG-4657 http 500 when trying to use unsupported api endpoints"""
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_NOT_FOUND,
                                             User.api_resend_user_invitation, "")
 
+    @priority.medium
     def test_delete_pending_invitation(self):
         self.step("Invite new user")
         username = User.api_invite()
@@ -235,6 +249,7 @@ class PendingInvitations(ApiTestCase):
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_EMPTY,
                                             User.api_register_after_onboarding, code, username)
 
+    @priority.low
     def test_cannot_delete_not_existing_pending_invitation(self):
         """DPNG-4654 Typo in 'DELETE /rest/invitations/ error message."""
         self.step("Try to delete not existing invitation")
@@ -243,11 +258,13 @@ class PendingInvitations(ApiTestCase):
                                             HttpStatus.MSG_NO_PENDING_INVITATION_FOR.format(username),
                                             User.api_delete_user_invitation, username)
 
+    @priority.low
     def test_cannot_delete_pending_invitation_providing_empty_name(self):
         """DPNG-4657 http 500 when trying to use unsupported api endpoints"""
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_NOT_FOUND,
                                             User.api_delete_user_invitation, "")
 
+    @priority.medium
     def test_cannot_get_pending_invitations_as_non_admin_user(self):
         self.step("Create new org and user")
         test_org = Organization.api_create()

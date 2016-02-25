@@ -13,12 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-import time
-import unittest
-
 from test_utils import ApiTestCase, cleanup_after_failed_setup, PlatformApiClient, platform_api_calls as api, \
-    get_test_name
+    get_test_name, priority
 from objects import User, Organization, Space
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
 
@@ -85,7 +81,8 @@ class GetSpaceUsers(BaseSpaceUserClass):
     def setUpClass(cls):
         cls.test_space = Space.api_create(TEST_ORG)
 
-    def test_get_user_list_from_deleted_space(self):
+    @priority.low
+    def test_cannot_get_user_list_from_deleted_space(self):
         self.step("Delete the space")
         self.test_space.cf_api_delete()
         self.step("Check that retrieving list of users in the deleted space returns an error")
@@ -95,6 +92,7 @@ class GetSpaceUsers(BaseSpaceUserClass):
 
 class AddNewUserToSpace(BaseSpaceUserClass):
 
+    @priority.high
     def test_add_non_existing_user_to_space(self):
         self.step("Create new platform user with each role by adding him to space")
         for space_role in self.ALL_SPACE_ROLES:
@@ -102,31 +100,34 @@ class AddNewUserToSpace(BaseSpaceUserClass):
                 new_user = User.api_create_by_adding_to_space(TEST_ORG.guid, TEST_SPACE.guid, roles=[space_role])
                 self._assert_user_in_space_with_roles(new_user, TEST_SPACE.guid)
 
+    @priority.low
     def test_cannot_add_new_user_with_no_roles(self):
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_MUST_HAVE_AT_LEAST_ONE_ROLE,
                                             User.api_create_by_adding_to_space, TEST_ORG.guid, TEST_SPACE.guid,
                                             roles=[])
 
+    @priority.low
     def test_cannot_create_new_user_with_long_username(self):
-        """DPNG-3363 Api email validation does not work properly"""
         long_username = "x" * 300 + get_test_name(email=True)
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_EMPTY,
                                             User.api_create_by_adding_to_space, TEST_ORG.guid, TEST_SPACE.guid,
                                             username=long_username)
 
+    @priority.low
     def test_cannot_create_new_user_with_non_email_username(self):
         non_email = "non_email_username"
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_EMAIL_ADDRESS_NOT_VALID,
                                             User.api_create_by_adding_to_space, TEST_ORG.guid, TEST_SPACE.guid,
                                             username=non_email)
 
+    @priority.medium
     def test_cannot_create_user_with_existing_username(self):
         test_user = User.api_create_by_adding_to_space(TEST_ORG.guid, TEST_SPACE.guid)
-        # api returns no error message
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_EMPTY,
                                             User.api_create_by_adding_to_space, TEST_ORG.guid, TEST_SPACE.guid,
                                             username=test_user.username)
 
+    @priority.low
     def test_cannot_create_user_with_special_characters_username(self):
         test_username = get_test_name(email=True)
         test_username = test_username.replace("@", "\n\t@")
@@ -134,6 +135,7 @@ class AddNewUserToSpace(BaseSpaceUserClass):
                                             User.api_create_by_adding_to_space, TEST_ORG.guid, TEST_SPACE.guid,
                                             username=test_username)
 
+    @priority.low
     def test_cannot_create_user_with_non_ascii_characters_username(self):
         """DPNG-3583 Http 500 when email contains non ascii characters"""
         test_username = get_test_name(email=True)
@@ -142,12 +144,14 @@ class AddNewUserToSpace(BaseSpaceUserClass):
                                             User.api_create_by_adding_to_space, TEST_ORG.guid, TEST_SPACE.guid,
                                             username=test_username)
 
+    @priority.low
     def test_cannot_add_new_user_to_non_existing_space(self):
         space_guid = "this-space-guid-is-not-correct"
         self.step("Check that an error is raised when trying to add user using incorrect space guid")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_WRONG_UUID_FORMAT_EXCEPTION,
                                             User.api_create_by_adding_to_space, TEST_ORG.guid, space_guid)
 
+    @priority.low
     def test_cannot_add_new_user_with_incorrect_role(self):
         space_users = User.api_get_list_via_space(TEST_SPACE.guid)
         roles = ["i-don't-exist"]
@@ -165,6 +169,7 @@ class AddExistingUserToSpace(BaseSpaceUserClass):
         self.step("Create test space")
         self.test_space = Space.api_create(TEST_ORG)
 
+    @priority.high
     def test_add_existing_users_with_one_role(self):
         for space_role in self.ALL_SPACE_ROLES:
             with self.subTest(space_role=space_role):
@@ -174,17 +179,20 @@ class AddExistingUserToSpace(BaseSpaceUserClass):
                 test_user.api_add_to_space(self.test_space.guid, TEST_ORG.guid, roles=[space_role])
                 self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
 
+    @priority.low
     def test_add_existing_user_without_roles(self):
         self.step("Check that attempt to add user to space with no roles returns an error")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_MUST_HAVE_AT_LEAST_ONE_ROLE,
                                             USER.api_add_to_space, self.test_space.guid, TEST_ORG.guid, roles=())
         self._assert_user_not_in_space(USER, self.test_space.guid)
 
+    @priority.low
     def test_add_existing_user_with_all_available_roles(self):
         self.step("Add the user to space with roles {}".format(self.ALL_SPACE_ROLES))
         USER.api_add_to_space(self.test_space.guid, TEST_ORG.guid, roles=self.ALL_SPACE_ROLES)
         self._assert_user_in_space_with_roles(USER, self.test_space.guid)
 
+    @priority.low
     def test_add_existing_user_by_updating_roles(self):
         user_not_in_space = USER
         self.step("Create test space")
@@ -193,6 +201,7 @@ class AddExistingUserToSpace(BaseSpaceUserClass):
         user_not_in_space.api_update_space_roles(space.guid, new_roles=User.SPACE_ROLES["auditor"])
         self._assert_user_in_space_with_roles(USER, space.guid)
 
+    @priority.low
     def test_cannot_add_existing_user_to_non_existing_space(self):
         invalid_space_guid = "invalid-space-guid"
         self.step("Check that it is not possible to add existing user to not existing space")
@@ -200,6 +209,7 @@ class AddExistingUserToSpace(BaseSpaceUserClass):
                                             USER.api_add_to_space, invalid_space_guid, TEST_ORG.guid,
                                             roles=self.ALL_SPACE_ROLES)
 
+    @priority.low
     def test_cannot_add_existing_user_with_incorrect_role(self):
         invalid_role = ["incorrect-role"]
         self.step("Check that it is not possible to add existing user to space with invalid space role")
@@ -213,6 +223,7 @@ class UpdateSpaceUser(BaseSpaceUserClass):
         self.step("Create test space")
         self.test_space = Space.api_create(TEST_ORG)
 
+    @priority.high
     def test_change_user_role(self):
         initial_roles = User.SPACE_ROLES["manager"]
         new_roles = User.SPACE_ROLES["auditor"]
@@ -222,6 +233,7 @@ class UpdateSpaceUser(BaseSpaceUserClass):
         USER.api_update_space_roles(self.test_space.guid, new_roles=new_roles)
         self._assert_user_in_space_with_roles(USER, self.test_space.guid)
 
+    @priority.low
     def test_cannot_change_role_to_invalid_one(self):
         initial_roles = User.SPACE_ROLES["manager"]
         new_roles = ("wrong_role",)
@@ -232,6 +244,7 @@ class UpdateSpaceUser(BaseSpaceUserClass):
                                             USER.api_update_space_roles, self.test_space.guid, new_roles=new_roles)
         self._assert_user_in_space_with_roles(USER, self.test_space.guid)
 
+    @priority.medium
     def test_cannot_delete_all_user_roles_while_in_space(self):
         self.step("Add user to space")
         USER.api_add_to_space(space_guid=self.test_space.guid, org_guid=TEST_ORG.guid)
@@ -240,6 +253,7 @@ class UpdateSpaceUser(BaseSpaceUserClass):
                                             USER.api_update_space_roles, self.test_space.guid, new_roles=())
         self._assert_user_in_space_with_roles(USER, self.test_space.guid)
 
+    @priority.low
     def test_cannot_update_non_existing_space_user(self):
         invalid_guid = "invalid-user-guid"
         roles = User.SPACE_ROLES["auditor"]
@@ -249,6 +263,7 @@ class UpdateSpaceUser(BaseSpaceUserClass):
                                             api.api_update_space_user_roles, self.test_space.guid, invalid_guid, roles)
         self.assertListEqual(User.api_get_list_via_space(self.test_space.guid), space_users)
 
+    @priority.low
     def test_cannot_update_space_user_in_not_existing_space(self):
         invalid_guid = "invalid-space_guid"
         roles = User.SPACE_ROLES["auditor"]
@@ -256,8 +271,8 @@ class UpdateSpaceUser(BaseSpaceUserClass):
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_WRONG_UUID_FORMAT_EXCEPTION,
                                             api.api_update_space_user_roles, invalid_guid, USER.guid, roles)
 
+    @priority.low
     def test_send_space_role_update_request_with_empty_body(self):
-        """DPNG-4278 sending space role update request with empty body deletes user roles and returns http 500"""
         self.step("Create new platform user by adding to the space")
         test_user = User.api_create_by_adding_to_space(org_guid=TEST_ORG.guid, space_guid=self.test_space.guid)
         self.step("Send request with empty body")
@@ -271,6 +286,7 @@ class DeleteSpaceUser(BaseSpaceUserClass):
         self.step("Create test space")
         self.test_space = Space.api_create(TEST_ORG)
 
+    @priority.high
     def test_delete_user_from_space(self):
         self.step("Add the user to space")
         USER.api_add_to_space(self.test_space.guid, TEST_ORG.guid)
@@ -281,8 +297,8 @@ class DeleteSpaceUser(BaseSpaceUserClass):
         org_users = User.api_get_list_via_organization(org_guid=TEST_ORG.guid)
         self.assertIn(USER, org_users, "User is not in the organization")
 
+    @priority.low
     def test_delete_user_which_is_not_in_space(self):
-        """DPNG-2293 Deleting from space a user which is not in this space does not return any error"""
         self.step("Check that deleting the user from space they are not in returns an error")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_USER_IS_NOT_IN_GIVEN_SPACE,
                                             USER.api_delete_from_space, self.test_space.guid)
@@ -300,6 +316,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
             "other_user": False
         }
 
+    @priority.medium
     def test_get_user_list(self):
         test_user = User.api_create_by_adding_to_space(TEST_ORG.guid, TEST_SPACE.guid)
         self.step("Try to get user list from space by using every client type.")
@@ -313,6 +330,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                                                         User.api_get_list_via_space, TEST_SPACE.guid,
                                                         client=USERS_CLIENTS[client])
 
+    @priority.medium
     def test_add_new_user(self):
         self.step("Try to add new user with every client type.")
         for client, is_authorized in self.client_permission.items():
@@ -329,6 +347,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                     self.assertUnorderedListEqual(User.api_get_list_via_space(TEST_SPACE.guid), user_list,
                                                   "User was added")
 
+    @priority.medium
     def test_add_existing_user(self):
         self.step("Try to add existing user to space with every client type.")
         for client, is_authorized in self.client_permission.items():
@@ -342,6 +361,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                                                         User.api_create_by_adding_to_space, TEST_ORG.guid,
                                                         TEST_SPACE.guid, inviting_client=USERS_CLIENTS[client])
 
+    @priority.medium
     def test_update_role(self):
         new_roles = User.SPACE_ROLES["auditor"]
         self.step("Try to change user space role using every client type.")
@@ -359,6 +379,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                     self.assertListEqual(test_user.space_roles.get(TEST_SPACE.guid),
                                          list(User.SPACE_ROLES["developer"]), "User roles were updated")
 
+    @priority.medium
     def test_delete_user(self):
         self.step("Try to delete user from space using every client type")
         for client, is_authorized in self.client_permission.items():
@@ -374,6 +395,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                                                         client=USERS_CLIENTS[client])
                     self.assertIn(test_user, User.api_get_list_via_space(TEST_SPACE.guid), "User was deleted")
 
+    @priority.medium
     def test_add_space(self):
         client_permission = {
             "admin": True,
@@ -396,6 +418,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                                                         Space.api_create, TEST_ORG, client=USERS_CLIENTS[client])
                     self.assertUnorderedListEqual(TEST_ORG.api_get_spaces(), space_list, "Space was created")
 
+    @priority.medium
     def test_delete_space(self):
         client_permission = {
             "admin": True,

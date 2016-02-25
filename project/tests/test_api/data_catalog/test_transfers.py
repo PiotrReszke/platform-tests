@@ -17,7 +17,7 @@
 import time
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, platform_api_calls as api, \
-    generate_csv_file, tear_down_test_files, get_test_name, generate_empty_file
+    generate_csv_file, tear_down_test_files, get_test_name, generate_empty_file, priority
 from objects import Organization, Transfer, DataSet, User
 from constants.HttpStatus import DataCatalogHttpStatus as HttpStatus
 
@@ -42,12 +42,14 @@ class SubmitTransfer(SubmitTransferBase):
         transfer.ensure_finished()
         return transfer
 
+    @priority.high
     def test_submit_transfer(self):
         transfer = self._create_transfer(category="other")
         self.step("Get transfers and check if they are the same as the uploaded ones")
         retrieved_transfer = Transfer.api_get(transfer.id)
         self.assertEqual(transfer, retrieved_transfer, "The transfer is not the same")
 
+    @priority.low
     def test_create_transfer_with_new_category(self):
         new_category = "user_category"
         transfer = self._create_transfer(category=new_category)
@@ -55,6 +57,7 @@ class SubmitTransfer(SubmitTransferBase):
         retrieved_transfer = Transfer.api_get(transfer.id)
         self.assertEqual(retrieved_transfer.category, new_category, "Created transfer has different category")
 
+    @priority.low
     def test_cannot_create_transfer_when_providing_invalid_org_guid(self):
         org_guid = "wrong_guid"
         self.step("Try create a transfer by providing invalid org guid")
@@ -63,12 +66,14 @@ class SubmitTransfer(SubmitTransferBase):
                                             title="test-transfer-{}".format(time.time()), is_public=False,
                                             org_guid=org_guid, category="other")
 
+    @priority.low
     def test_create_transfer_without_category(self):
         transfer = self._create_transfer(category=None)
         self.step("Get transfer and check it's category")
         transfer_list = Transfer.api_get_list([self.org])
         self.assertIn(transfer, transfer_list, "Transfer was not found")
 
+    @priority.medium
     def test_no_token_in_create_transfer_response(self):
         self.step("Create new transfer and check that 'token' field was not returned in response")
         response = api.api_create_transfer(
@@ -93,11 +98,13 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
     def tearDown(self):
         tear_down_test_files()
 
+    @priority.medium
     def test_submit_transfer_from_large_file(self):
         transfer = self._create_transfer(size=20 * 1024 * 1024)
         self.step("Get data set matching to transfer {}".format(transfer.title))
         DataSet.api_get_matching_to_transfer([self.org], transfer.title)
 
+    @priority.low
     def test_cannot_create_transfer_when_providing_wrong_org_guid(self):
         """DPNG-3896 Wrong response when trying to create transfer by file upload in non existing org"""
         org_guid = "wrong_guid"
@@ -110,10 +117,12 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
                                             title="test-transfer-{}".format(time.time()), is_public=False,
                                             org_guid=org_guid, category=category)
 
+    @priority.low
     def test_create_transfer_without_category(self):
         """DPNG-3678 Create transfer by file upload without category - http 500"""
-        return super(SubmitTransferFromLocalFile, self).test_create_transfer_without_category()
+        return super().test_create_transfer_without_category()
 
+    @priority.medium
     def test_no_token_in_create_transfer_response(self):
         self.step("Generate sample csv file")
         file_path = generate_csv_file(column_count=10, row_count=10)
@@ -127,11 +136,13 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
         )
         self.assertTrue("token" not in response, "token field was returned in response")
 
+    @priority.low
     def test_submit_transfer_from_file_with_space_in_name(self):
         transfer = self._create_transfer(file_name="test file with space in name {}.csv")
         self.step("Get data set matching to transfer {}".format(transfer.title))
         DataSet.api_get_matching_to_transfer([self.org], transfer.title)
 
+    @priority.low
     def test_submit_transfer_from_empty_file(self):
         """DPNG-5182 Adding empty file to data catalog trigger transfer error"""
         self.step("Generate sample csv file")
@@ -144,6 +155,7 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
 
 
 class GetTransfers(SubmitTransferBase):
+    @priority.high
     def test_admin_can_get_transfer_list(self):
         self.step("Check if the list of transfers can be retrieved")
         Transfer.api_get_list(org_list=[self.org])

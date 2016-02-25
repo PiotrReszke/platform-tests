@@ -16,11 +16,11 @@
 
 from retry import retry
 
-from test_utils import ApiTestCase
+from test_utils import ApiTestCase, priority
 from objects import ServiceInstance, ServiceType, Organization, Application, AtkInstance
 
 
-class TestServiceInstancesDeletion(ApiTestCase):
+class ServiceInstances(ApiTestCase):
     @classmethod
     def setUpClass(cls):
         cls.step("Create test organization and test space")
@@ -53,6 +53,7 @@ class TestServiceInstancesDeletion(ApiTestCase):
                                                                               label)
         self.assertIn(instance_name, ds_instances.keys())
 
+    @priority.high
     def test_create_and_delete_service_instances(self):
         services = ["ipython", "rstudio"]
         for service_type in [s for s in self.marketplace if s.label in services]:
@@ -65,6 +66,7 @@ class TestServiceInstancesDeletion(ApiTestCase):
                 self.step("Delete service instance and check it does not show on the list")
                 self._delete_service_instance(instance)
 
+    @priority.high
     def test_create_and_delete_atk_instance(self):
         service_name = "atk"
         self.step("Get reference bound services")

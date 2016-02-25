@@ -61,11 +61,10 @@ class SeparatorMeta(type):
 
 
 class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
-    STEP_NO = 0
-    SUB_TEST_NO = 0
+    step_number = 0
+    sub_test_number = 0
     incremental = False
     prerequisite_failed = False
-    failure_and_error_count = 0
     maxDiff = None
     components = tuple()
 
@@ -88,22 +87,22 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         """Log message as nth test step"""
         separator = "=" * 20
         step_logger = get_logger("STEP")
-        step_logger.info("{0} Step {1} {2} {0}".format(separator, cls.STEP_NO, message))
-        cls.STEP_NO += 1
+        step_logger.info("{0} Step {1} {2} {0}".format(separator, cls.step_number, message))
+        cls.step_number += 1
 
     def subTest(self, msg=None, **params):
         separator = "*" * 20
         logged_params = ",".join(["{}={}".format(k, v) for k, v in params.items()])
-        logger.info("{0} Sub test {1} ({2})".format(separator, self.SUB_TEST_NO, logged_params))
+        logger.info("{0} Sub test {1} ({2})".format(separator, self.sub_test_number, logged_params))
         sub_test_returns = super().subTest(msg, **params)
-        self.__class__.STEP_NO = 0
-        self.__class__.SUB_TEST_NO += 1
+        self.__class__.step_number = 0
+        self.__class__.sub_test_number += 1
         return sub_test_returns
 
     def run(self, result=None):
         test_name = "{}.{}".format(self.__class__.__name__, self._testMethodName)
         separator = "*" * len(test_name)
-        self.__class__.STEP_NO = self.__class__.SUB_TEST_NO = 0
+        self.__class__.step_number = self.__class__.sub_test_number = 0
         logger.debug("\n{0}\n\n{1}\n\n{0}\n".format(separator, test_name))
         current_result = super().run(result=result)
         if self.incremental and (len(current_result.failures) > 0 or len(current_result.errors) > 0):

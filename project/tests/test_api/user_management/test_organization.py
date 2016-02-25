@@ -76,7 +76,7 @@ class TestOrganization(ApiTestCase):
         missing_orgs = [o for o in expected_orgs if o not in orgs]
         self.assertEqual(missing_orgs, [], "Not all test orgs are present on org list")
 
-    @priority.medium
+    @priority.low
     def test_delete_organization_with_user(self):
         self.step("Create an organization")
         org = Organization.api_create()

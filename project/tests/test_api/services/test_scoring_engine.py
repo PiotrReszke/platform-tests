@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from test_utils import ApiTestCase, cleanup_after_failed_setup
+from test_utils import ApiTestCase, cleanup_after_failed_setup, priority
 from objects import Organization, ServiceInstance, ServiceInstanceKey, Transfer, DataSet, User
 
 
@@ -36,6 +36,7 @@ class TestScoringEngineInstance(ApiTestCase):
         ds = DataSet.api_get_matching_to_transfer([cls.test_org], transfer.title)
         cls.hdfs_path = ds.target_uri
 
+    @priority.high
     def test_create_and_delete_scoring_engine_service_instance(self):
         """DPNG-5389 User cannot create scoring-engine instance (permission denied for user vcap)"""
         self.step("Create test service instance")
@@ -53,6 +54,7 @@ class TestScoringEngineInstance(ApiTestCase):
         instances = ServiceInstance.api_get_list(space_guid=self.test_space.guid)
         self.assertNotIn(se_instance, instances, "Scoring engine instance was not deleted")
 
+    @priority.medium
     def test_create_scoring_engine_service_instance_key(self):
         """DPNG-5389 User cannot create scoring-engine instance (permission denied for user vcap)"""
         self.step("Create test service instance")

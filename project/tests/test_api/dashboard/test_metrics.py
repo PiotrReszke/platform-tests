@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, config
+from test_utils import ApiTestCase, config, priority
 from objects import Organization, DataSet, User
 
 
@@ -30,16 +30,19 @@ class Metrics(ApiTestCase):
         cls.ref_org, _ = Organization.get_ref_org_and_space()
         cls.ref_org.api_get_metrics()
 
+    @priority.high
     def test_metrics_contains_all_keys(self):
         self.step("Check that metrics response contains all expected fields")
         keys = list(self.ref_org.metrics.keys())
         self.assertUnorderedListEqual(keys, expected_metrics_keys)
 
+    @priority.low
     def test_service_count(self):
         self.step("Get apps and services from cf and check that serviceUsage metrics is correct")
         apps, services = self.ref_org.cf_api_get_apps_and_services()
         self.assertEqual(self.ref_org.metrics["serviceUsage"], len(services))
 
+    @priority.low
     def test_application_metrics(self):
         self.step("Get apps from cf and check that appsRunning and appsDown metrics are correct")
         cf_apps_up = []
@@ -61,6 +64,7 @@ class Metrics(ApiTestCase):
                                                                       cf_apps_up, dashboard_apps_down,
                                                                       len(cf_apps_down), cf_apps_down))
 
+    @priority.low
     def test_user_count(self):
         self.step("Get org users from cf and check that totalUsers metrics is correct")
         cf_user_list = User.cf_api_get_list_in_organization(org_guid=self.ref_org.guid)
@@ -68,6 +72,7 @@ class Metrics(ApiTestCase):
         self.assertEqual(len(cf_user_list), dashboard_total_users,
                          "\nUsers: {} - expected: {}".format(dashboard_total_users, len(cf_user_list)))
 
+    @priority.low
     def test_data_metrics(self):
         self.step("Get datasets and check datasetCount, privateDatasets, publicDatasets metrics are correct")
         public_datasets = []

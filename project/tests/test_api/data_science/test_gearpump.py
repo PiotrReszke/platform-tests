@@ -15,11 +15,8 @@
 #
 
 
-from test_utils import ApiTestCase, get_logger, download_file, Gearpump
+from test_utils import ApiTestCase, download_file, Gearpump, priority
 from objects import Organization, ServiceInstance
-
-
-logger = get_logger("test Gearpump")
 
 
 class GearpumpConsole(ApiTestCase):
@@ -42,7 +39,6 @@ class GearpumpConsole(ApiTestCase):
         cls.step("Log into gearpump UI")
         cls.gearpump.login()
 
-    @classmethod
     def _assert_gearpump_instance_created(cls, gearpump_data_science, space_guid):
         cls.step("Check that gearpump instance has been created")
         instances = ServiceInstance.api_get_list(space_guid=space_guid)
@@ -50,6 +46,7 @@ class GearpumpConsole(ApiTestCase):
             raise AssertionError("gearpump instance is not on list of instances")
         gearpump_data_science.get_credentials()
 
+    @priority.high
     def test_submit_complexdag_app_to_gearpump_dashboard(self):
         self.step("Submit application complexdag to gearpump dashboard")
         dag_app = self.gearpump.submit_application_jar(self.complexdag_app_path, self.COMPLEXDAG_APP_NAME)

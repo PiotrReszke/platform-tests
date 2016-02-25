@@ -32,7 +32,7 @@ class Priority(Enum):
 
     @classmethod
     def default(cls):
-        return cls.high
+        return cls.medium
 
     @classmethod
     def names(cls):

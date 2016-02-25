@@ -18,11 +18,8 @@ import re
 
 from retry import retry
 
-from test_utils import ApiTestCase, get_logger, iPython, cleanup_after_failed_setup, config, ATKtools
+from test_utils import ApiTestCase, iPython, cleanup_after_failed_setup, config, priority
 from objects import Organization, ServiceInstance, Application, User
-
-
-logger = get_logger("iPython test")
 
 
 class iPythonConsole(ApiTestCase):
@@ -74,6 +71,7 @@ class iPythonConsole(ApiTestCase):
         self.assertIsNotNone(re.search(success_pattern, output[-2]))
         self.assertIn("#", output[-1])
 
+    @priority.high
     def test_iPython_terminal(self):
         self.step("Create new ipython terminal")
         terminal = self.ipython.connect_to_terminal(terminal_no=self.terminal_no)
@@ -85,6 +83,7 @@ class iPythonConsole(ApiTestCase):
         self.assertIn("Python", output[-2])
         self.assertIn(">>>", output[-1])
 
+    @priority.high
     def test_iPython_interactive_mode_hello_world(self):
         self.step("Create new notebook in iPython")
         notebook = self.ipython.create_notebook()
@@ -93,6 +92,7 @@ class iPythonConsole(ApiTestCase):
         output = notebook.get_stream_result()
         self.assertEqual(output, "Hello, world!\n")
 
+    @priority.medium
     def test_iPython_connect_to_atk_client(self):
         self.step("Get atk app from seedspace")
         atk_app = next((app for app in Application.cf_api_get_list_by_space(self.ref_space.guid) if app.name == "atk"), None)

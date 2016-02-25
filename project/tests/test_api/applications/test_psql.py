@@ -17,9 +17,8 @@
 from collections import namedtuple
 from datetime import datetime
 import os
-import shutil
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, cloud_foundry as cf, app_source_utils, config
+from test_utils import ApiTestCase, cleanup_after_failed_setup, cloud_foundry as cf, app_source_utils, config, priority
 from objects import Organization, Application, ServiceInstance, ServiceType
 
 
@@ -76,17 +75,20 @@ class Postgres(ApiTestCase):
         for table in PsqlTable.TEST_TABLES:
             table.delete()
 
+    @priority.medium
     def test_create_table(self):
         test_table = PsqlTable.post(self.psql_app, self.test_table_name, self.test_columns)
         table_list = PsqlTable.get_list(self.psql_app)
         self.assertIn(test_table, table_list)
 
+    @priority.medium
     def test_delete_table(self):
         test_table = PsqlTable.post(self.psql_app, self.test_table_name, self.test_columns)
         test_table.delete()
         table_list = PsqlTable.get_list(self.psql_app)
         self.assertNotIn(test_table, table_list)
 
+    @priority.medium
     def test_get_table_columns(self):
         test_table = PsqlTable.post(self.psql_app, self.test_table_name, self.test_columns)
         expected_columns = [PsqlColumn.from_json_definition(c) for c in self.test_columns]
@@ -96,6 +98,7 @@ class Postgres(ApiTestCase):
         for column in expected_columns:
             self.assertIn(column, columns)
 
+    @priority.medium
     def test_post_row(self):
         PsqlTable.post(self.psql_app, self.test_table_name, self.test_columns)
         for row_id, row_values in list(enumerate(self.row_value_list)):
@@ -107,12 +110,14 @@ class Postgres(ApiTestCase):
                 row = PsqlRow.get(self.psql_app, self.test_table_name, row_id)
                 self.assertEqual(row, new_row)
 
+    @priority.low
     def test_post_multiple_rows(self):
         PsqlTable.post(self.psql_app, self.test_table_name, self.test_columns)
         expected_rows = [PsqlRow.post(self.psql_app, self.test_table_name, rv) for rv in self.row_value_list]
         rows = PsqlRow.get_list(self.psql_app, self.test_table_name)
         self.assertListEqual(rows, expected_rows)
 
+    @priority.medium
     def test_put_row(self):
         PsqlTable.post(self.psql_app, self.test_table_name, self.test_columns)
         rows = [PsqlRow.post(self.psql_app, self.test_table_name, rv) for rv in self.row_value_list]
@@ -121,6 +126,7 @@ class Postgres(ApiTestCase):
         row = PsqlRow.get(self.psql_app, self.test_table_name, row_id=2)
         self.assertEqual(rows[1], row)
 
+    @priority.medium
     def test_delete_row(self):
         PsqlTable.post(self.psql_app, self.test_table_name, self.test_columns)
         posted_rows = [PsqlRow.post(self.psql_app, self.test_table_name, rv) for rv in self.row_value_list]

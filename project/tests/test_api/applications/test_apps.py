@@ -14,13 +14,8 @@
 # limitations under the License.
 #
 
-from datetime import datetime
-
-from test_utils import get_logger, ApiTestCase, app_source_utils, cleanup_after_failed_setup, cloud_foundry as cf
+from test_utils import ApiTestCase, app_source_utils, cleanup_after_failed_setup, cloud_foundry as cf, priority
 from objects import Organization, Application, Space
-
-
-logger = get_logger("test_api_apps")
 
 
 class Apps(ApiTestCase):
@@ -50,8 +45,8 @@ class Apps(ApiTestCase):
         self.step("Check the application is running")
         self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
 
-    def test_api_push_stop_start_delete(self):
-        """DPNG-3037 when stopping application app name changes name to \"STOPPED\" """
+    @priority.high
+    def test_api_push_stop_start_restage_delete(self):
         self.step("Stop the application and check that it is stopped")
         self.test_app.api_stop()
         self.assertEqualWithinTimeout(120, False, self.test_app.cf_api_app_is_running)
@@ -62,16 +57,7 @@ class Apps(ApiTestCase):
         self.test_app.api_delete()
         self.assertNotIn(self.test_app, Application.cf_api_get_list_by_space(self.test_space.guid))
 
-    def test_api_push_restage_delete(self):
-        self.step("Restage the application and check that it is running")
-        self.test_app.api_restage()
-        self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
-        self.step("Delete the application and check that it doesn't exist")
-        self.test_app.api_delete()
-        self.assertNotIn(self.test_app, Application.cf_api_get_list_by_space(self.test_space.guid))
-
     def test_delete_space_and_org_after_app_creation_and_deletion(self):
-        """DPNG-2683 Cannot delete space where an app used to be"""
         self.step("Delete the test application")
         self.test_app.api_delete()
         self.step("Delete the space using platform api")
@@ -83,8 +69,8 @@ class Apps(ApiTestCase):
         self.step("Check that the organization is gone")
         self.assertNotInWithRetry(self.test_org, Organization.api_get_list)
 
+    @priority.low
     def test_delete_space_and_org_without_deleting_an_app(self):
-        """DPNG-2694 Cannot delete space with an running app"""
         self.step("Delete the space using platform api")
         self.test_space.api_delete()
         self.step("Check that the space is gone")

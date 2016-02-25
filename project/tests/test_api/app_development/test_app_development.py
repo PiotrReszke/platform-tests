@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from test_utils import ApiTestCase, ConsoleClient, platform_api_calls as api, cleanup_after_failed_setup
+from test_utils import ApiTestCase, ConsoleClient, platform_api_calls as api, cleanup_after_failed_setup, priority
 from objects import User, Organization
 
 
@@ -25,11 +25,12 @@ class AppDevelopmentPage(ApiTestCase):
     def setUpClass(cls):
         cls.step("Create organization and get test user and admin client")
         test_org = Organization.api_create()
-        cls.test_user_client = User.api_create_by_adding_to_organization(test_org.guid).login()
+        cls.non_admin_client = User.api_create_by_adding_to_organization(test_org.guid).login()
         cls.admin_client = ConsoleClient.get_admin_client()
 
+    @priority.medium
     def test_get_app_development_page(self):
-        clients = {"non_admin": self.test_user_client, "admin": self.admin_client}
+        clients = {"non_admin": self.non_admin_client, "admin": self.admin_client}
         for name, client in clients.items():
             with self.subTest(client=name):
                 self.step("Get 'App development' page")

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup
+from test_utils import ApiTestCase, cleanup_after_failed_setup, priority
 from objects import LatestEvent, Organization, Transfer, User
 
 
@@ -25,7 +25,6 @@ class DashboardLatestEvents(ApiTestCase):
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
-        """DPNG-3365 Transfer submission fails with 500 Internal Server Error right after deployment"""
         cls.step("Create test organization")
         cls.tested_org = Organization.api_create()
         cls.step("Add admin to the organization")
@@ -42,8 +41,8 @@ class DashboardLatestEvents(ApiTestCase):
         cls.step("Retrieve latest events from dashboard")
         cls.dashboard_latest_events = LatestEvent.api_get_latest_events_from_org_metrics(cls.tested_org.guid)
 
+    @priority.high
     def test_10_latest_events_on_dashboard_the_same_as_in_LES(self):
-        """DPNG-2091 There's no organisations distinction on dashboard in latest events section"""
         self.step("Retrieve latest events from the LES, filtering with tested organization")
         latest_events_response = LatestEvent.api_get_latest_events(org_guid=self.tested_org.guid)
         self.step("Check that dashboard contains 10 latest events from LES")

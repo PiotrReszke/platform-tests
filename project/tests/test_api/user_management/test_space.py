@@ -14,13 +14,9 @@
 # limitations under the License.
 #
 
-import unittest
-
-from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup
+from test_utils import ApiTestCase, cleanup_after_failed_setup, priority
 from objects import Organization, Space, User
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
-
-logger = get_logger("test spaces")
 
 
 class Spaces(ApiTestCase):
@@ -30,12 +26,7 @@ class Spaces(ApiTestCase):
         cls.step("Create an organization")
         cls.test_org = Organization.api_create()
 
-    @classmethod
-    def tearDownClass(cls):
-        User.cf_api_tear_down_test_users()
-        User.api_tear_down_test_invitations()
-        Organization.cf_api_tear_down_test_orgs()
-
+    @priority.medium
     def test_get_spaces_list_in_new_org(self):
         self.step("Create new organization")
         org = Organization.api_create()
@@ -43,6 +34,7 @@ class Spaces(ApiTestCase):
         spaces = org.api_get_spaces()
         self.assertEqual(len(spaces), 0, "There are spaces in a new organization")
 
+    @priority.high
     def test_create_space(self):
         self.step("Create new space in the organization")
         space = Space.api_create(org=self.test_org)
@@ -50,6 +42,7 @@ class Spaces(ApiTestCase):
         spaces = Space.api_get_list()
         self.assertIn(space, spaces)
 
+    @priority.medium
     def test_cannot_create_space_with_existing_name(self):
         self.step("Create a space")
         space = Space.api_create(org=self.test_org)
@@ -57,6 +50,7 @@ class Spaces(ApiTestCase):
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST, Space.api_create,
                                             org=self.test_org, name=space.name)
 
+    @priority.low
     def test_create_space_with_long_name(self):
         self.step("Create space with name 400 char long")
         long_name = Space.NAME_PREFIX + "t" * 400
@@ -65,11 +59,13 @@ class Spaces(ApiTestCase):
         spaces = Space.api_get_list()
         self.assertIn(space, spaces)
 
+    @priority.low
     def test_create_space_with_empty_name(self):
         self.step("Check that attempt to create space with empty name returns an error")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST, Space.api_create,
                                             name="", org=self.test_org)
 
+    @priority.high
     def test_delete_space(self):
         self.step("Create a space")
         space = Space.api_create(org=self.test_org)
@@ -78,6 +74,7 @@ class Spaces(ApiTestCase):
         self.step("Check that the deleted space is not present on the space list")
         self.assertNotInWithRetry(space, Space.api_get_list)
 
+    @priority.low
     def test_cannot_delete_not_existing_space(self):
         self.step("Create a space")
         space = Space.api_create(org=self.test_org)
@@ -87,6 +84,7 @@ class Spaces(ApiTestCase):
         self.step("Check that attempt to delete the space again returns an error")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_NOT_FOUND, space.api_delete)
 
+    @priority.low
     def test_cannot_delete_space_with_user(self):
         self.step("Create a space")
         space = Space.api_create(org=self.test_org)

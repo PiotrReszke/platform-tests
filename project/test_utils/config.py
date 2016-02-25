@@ -143,7 +143,7 @@ def parse_arguments():
                         default="master",
                         help="Platform version tag name")
     parser.add_argument("-p", "--priority",
-                        default=Priority.low,
+                        default=Priority.low.name,
                         choices=Priority.names(),
                         help="Run subset of tests with priority equal to or higher than passed priority")
     parser.add_argument("-c", "--components",

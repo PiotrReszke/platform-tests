@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup
+from test_utils import ApiTestCase, cleanup_after_failed_setup, priority
 from objects import Organization, ServiceType, ServiceInstance, ServiceInstanceKey
 
 
@@ -46,6 +46,7 @@ class ServiceInstanceKeys(ApiTestCase):
         summary = ServiceInstance.api_get_keys(test_space.guid)
         self.assertEqual(summary[instance][0], instance_key)
 
+    @priority.low
     def test_get_service_instance_summary_from_empty_space(self):
         self.step("Create a service instance in one space")
         service_type = next(iter([s for s in self.marketplace_services
@@ -59,6 +60,7 @@ class ServiceInstanceKeys(ApiTestCase):
         self.step("Check that service instance summary is empty in the second space")
         self.assertEqual(summary, {})
 
+    @priority.medium
     def test_create_service_instance_keys(self):
         working_services = [s for s in self.marketplace_services if s.label not in self.SERVICES_TESTED_SEPARATELY]
         test_space = self.test_org.spaces[2]
@@ -67,6 +69,7 @@ class ServiceInstanceKeys(ApiTestCase):
                 with self.subTest(service=service_type.label, plan=plan["name"]):
                     self._create_instance_and_key(service_type.label, plan["guid"], self.test_org, test_space)
 
+    @priority.low
     def test_create_yarn_service_instance_keys(self):
         """DPNG-3474 Command cf create-service-key does not work for yarn broker"""
         label = 'yarn'
@@ -76,6 +79,7 @@ class ServiceInstanceKeys(ApiTestCase):
             with self.subTest(service=label, plan=plan["name"]):
                 self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
 
+    @priority.low
     def test_create_hdfs_service_instance_keys(self):
         """TASK DPNG-3273 Enable HDFS broker to use Service Keys"""
         label = "hdfs"
@@ -85,6 +89,7 @@ class ServiceInstanceKeys(ApiTestCase):
             with self.subTest(service=label, plan=plan["name"]):
                 self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
 
+    @priority.low
     def test_create_hbase_service_instance_keys(self):
         """TASK DPNG-2798 Enable HBase broker to use Service Keys"""
         label = "hbase"

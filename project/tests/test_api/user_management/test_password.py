@@ -14,12 +14,9 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, gmail_api, get_logger, PasswordAPI
+from test_utils import ApiTestCase, gmail_api, get_logger, PasswordAPI, priority
 from objects import User
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
-
-
-logger = get_logger("test org users")
 
 
 class PasswordTests(ApiTestCase):
@@ -28,9 +25,10 @@ class PasswordTests(ApiTestCase):
 
     @classmethod
     def setUpClass(cls):
-        logger.debug("Create users for password tests")
+        cls.step("Create users for password tests")
         cls.users, _ = User.api_create_users_for_tests(2)
 
+    @priority.high
     def test_reset_password(self):
         user = self.users.pop()
 
@@ -61,6 +59,7 @@ class PasswordTests(ApiTestCase):
         user.password=self.NEW_PASSWORD
         user.login()
 
+    @priority.high
     def test_change_pass(self):
         user = self.users.pop()
 

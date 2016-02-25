@@ -13,15 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-from test_utils import ApiTestCase
-from objects import ExternalTools
-
 import unittest
 
+from test_utils import ApiTestCase, priority
+from objects import ExternalTools
 
-class TestExternalTools(ApiTestCase):
 
+class ExternalToolsStatus(ApiTestCase):
+
+    @priority.medium
     @unittest.skip("Fix me! DPNG-5105")
     def test_check_status_code_of_external_tools(self):
         """DPNG-2306 Availability of Arcadia and Hue should be discovered automatically"""

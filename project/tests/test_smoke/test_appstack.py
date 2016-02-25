@@ -17,6 +17,7 @@
 import yaml
 
 from test_utils import ApiTestCase, get_logger, CONFIG, github_get_file_content, AppClient, UnexpectedResponseError
+from test_utils import priority
 from objects import Application, ServiceInstance, ServiceBroker, Organization
 
 
@@ -45,12 +46,14 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
         cls.platform_apps = Application.api_get_list(ref_space_guid)
         cls.platform_instances = ServiceInstance.api_get_list(ref_space_guid)
 
+    @priority.high
     def test_all_required_apps_are_present_in_cf(self):
         self.step("Check that all expected apps are present in cf")
         cf_app_names = {a.name for a in self.cf_apps}
         missing_apps = self.expected_app_names - cf_app_names
         self.assertEqual(missing_apps, set(), "Apps missing in cf")
 
+    @priority.high
     def test_all_required_apps_are_running_in_cf(self):
         excluded_names = {"atk"}
         self.step("Check that all expected apps have running instances in cf")
@@ -64,6 +67,7 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
         missing_apps = self.expected_app_names - app_names
         self.assertEqual(missing_apps, set(), "Apps missing on the Platform")
 
+    @priority.high
     def test_all_required_apps_are_running_on_platform(self):
         excluded_names = {"atk"}
         self.step("Check that all expected apps have running instances on the Platform")
@@ -71,6 +75,7 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
                             if a.name in self.expected_app_names - excluded_names and not a.is_running}
         self.assertEqual(apps_not_running, set(), "Apps with no running instances on the Platform")
 
+    @priority.high
     def test_apps_have_the_same_details_in_cf_and_on_platform(self):
         only_expected_platform_apps = {app for app in self.platform_apps if app.name in self.expected_app_names}
         for app in only_expected_platform_apps:
@@ -80,24 +85,28 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
                 platform_details = app.api_get_summary()
                 self.assertEqual(cf_details, platform_details, "Different details for {}".format(app.name))
 
+    @priority.high
     def test_all_required_service_instances_are_present_in_cf(self):
         self.step("Check that all expected services are present in cf")
         excluded_names = {s.name for s in self.cf_upsi + self.cf_apps}
         missing_services = self.expected_upsi_names - excluded_names
         self.assertEqual(missing_services, set(), "Services missing in cf")
 
+    @priority.high
     def test_all_required_service_instances_are_present_on_platform(self):
         self.step("Check that all expected services are present on the Platform")
         excluded_names = {s.name for s in self.platform_instances + self.platform_apps}
         missing_services = self.expected_upsi_names - excluded_names
         self.assertEqual(missing_services, set(), "Services missing on the Platform")
 
+    @priority.high
     def test_all_required_brokers_are_present_in_cf(self):
         self.step("Check that all expected service brokers are present in cf")
         cf_broker_names = {b.name for b in self.cf_brokers}
         missing_brokers = self.expected_broker_names - cf_broker_names
         self.assertEqual(missing_brokers, set(), "Brokers missing in cf")
 
+    @priority.low
     def test_spring_services_dont_expose_sensitive_endpoints(self):
         SENSITIVE_ENDPOINTS = ["actuator", "autoconfig", "beans", "configprops", "docs", "dump", "env", "flyway",
                                "info", "liquidbase", "logfile", "metrics", "mappings", "shutdown", "trace"]

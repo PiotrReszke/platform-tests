@@ -22,12 +22,8 @@ import time
 
 import paho.mqtt.client as mqtt
 
-from test_utils import ApiTestCase, get_logger, config, app_source_utils, cloud_foundry as cf, \
-    cleanup_after_failed_setup
+from test_utils import ApiTestCase, config, app_source_utils, cloud_foundry as cf, cleanup_after_failed_setup, priority
 from objects import Application, Organization, ServiceInstance
-
-
-logger = get_logger("test_mqtt")
 
 
 class Mqtt(ApiTestCase):
@@ -85,6 +81,7 @@ class Mqtt(ApiTestCase):
         self.step("Retrieve credentials for mqtt service instance")
         self.credentials = mqtt_demo_app.get_credentials(service_name=self.MQTT_LABEL)
 
+    @priority.medium
     def test_mqtt_demo(self):
         """DPNG-3929 Mosquitto crendentials support"""
         mqtt_port = self.credentials.get("port")

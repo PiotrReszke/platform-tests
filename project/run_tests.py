@@ -21,8 +21,8 @@ import requests
 from teamcity import is_running_under_teamcity
 from teamcity.unittestpy import TeamcityTestRunner
 
-from constants.tap_components import TapComponent
 from constants.priority_levels import Priority
+from constants.tap_components import TapComponent
 from test_utils import config, get_logger, change_log_file_path
 
 

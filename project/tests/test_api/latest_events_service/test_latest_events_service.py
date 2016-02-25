@@ -14,12 +14,13 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase
+from test_utils import ApiTestCase, priority
 from objects import LatestEvent
 
 
 class LatestEventsService(ApiTestCase):
 
+    @priority.low
     def test_latest_events(self):
         self.step("Check that latest events service does not crash after basic request")
         event_summary = LatestEvent.api_get_latest_events()

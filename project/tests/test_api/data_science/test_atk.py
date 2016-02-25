@@ -17,7 +17,7 @@
 import os
 
 from constants.priority_levels import Priority
-from test_utils import ApiTestCase, cleanup_after_failed_setup, ATKtools, get_test_name, incremental, priority
+from test_utils import ApiTestCase, cleanup_after_failed_setup, ATKtools, get_test_name, incremental
 from objects import Organization, Transfer, DataSet, ServiceType, ServiceInstance, Application, User
 
 

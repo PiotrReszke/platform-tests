@@ -20,7 +20,7 @@ import unittest
 from retry import retry
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, generate_csv_file, get_csv_record_count, \
-    tear_down_test_files, get_csv_data, download_file, ATKtools
+    tear_down_test_files, get_csv_data, download_file, ATKtools, priority
 from objects import Organization, Transfer, DataSet, User, Application
 from constants.HttpStatus import HttpStatus
 
@@ -28,7 +28,7 @@ from constants.HttpStatus import HttpStatus
 EXAMPLE_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
 
 
-class GetDataSets(ApiTestCase):
+class GetDataSetsFromLink(ApiTestCase):
     @classmethod
     def _get_source(cls):
         return EXAMPLE_LINK
@@ -67,8 +67,9 @@ class GetDataSets(ApiTestCase):
     @classmethod
     def tearDownClass(cls):
         tear_down_test_files()
-        super(GetDataSets, cls).tearDownClass()
+        super().tearDownClass()
 
+    @priority.high
     def test_match_dataset_to_transfer(self):
         self.step("Check if a data set was created for each transfer")
         missing_ds = []
@@ -78,6 +79,7 @@ class GetDataSets(ApiTestCase):
                 missing_ds.append(tr.title)
         self.assertEqual(missing_ds, [], "Missing datasets: {}".format(missing_ds))
 
+    @priority.medium
     def test_get_datasets_by_category(self):
         self.step("Retrieve datasets by categories")
         for category in DataSet.CATEGORIES:
@@ -86,6 +88,7 @@ class GetDataSets(ApiTestCase):
                 expected_datasets = [d for d in self.datasets if d.category == category]
                 self.assertListEqual(filtered_datasets, expected_datasets)
 
+    @priority.medium
     def test_get_datasets_by_creation_date(self):
         self.step("Sort datasets by creation time and retrieve first two")
         time_range = sorted([dataset.creation_time for dataset in self.datasets][:2])
@@ -94,6 +97,7 @@ class GetDataSets(ApiTestCase):
         expected_datasets = [d for d in self.datasets if time_range[0] <= d.creation_time <= time_range[1]]
         self.assertUnorderedListEqual(filtered_datasets, expected_datasets)
 
+    @priority.medium
     def test_get_datasets_by_file_format(self):
         # Test should be updated when we will receive answer about supported file formats.
         self.step("Retrieve datasets by file format")
@@ -103,18 +107,21 @@ class GetDataSets(ApiTestCase):
                 expected_datasets = [d for d in self.datasets if d.format == file_format]
                 self.assertUnorderedListEqual(filtered_datasets, expected_datasets)
 
+    @priority.medium
     def test_get_public_datasets_from_current_org(self):
         self.step("Retrieve only public datasets")
         filtered_datasets = self._filter_datasets(self.org, only_public=True)
         expected_datasets = [d for d in self.datasets if d.is_public]
         self.assertUnorderedListEqual(filtered_datasets, expected_datasets)
 
+    @priority.medium
     def test_get_private_datasets_from_current_org(self):
         self.step("Retrieve only private datasets")
         filtered_datasets = self._filter_datasets(self.org, only_private=True)
         expected_datasets = [d for d in self.datasets if not d.is_public]
         self.assertUnorderedListEqual(filtered_datasets, expected_datasets)
 
+    @priority.medium
     def test_dataset_details(self):
         self.step("Get transfer and matching dataset")
         transfer = self.transfers[0]
@@ -132,6 +139,7 @@ class GetDataSets(ApiTestCase):
         self.step("Check dataset and transfer source uri")
         self.assertEqual(dataset.source_uri, transfer.source)
 
+    @priority.medium
     def test_get_data_sets_from_another_org(self):
         self.step("Create another test organization")
         org = Organization.api_create()
@@ -147,7 +155,7 @@ class GetDataSets(ApiTestCase):
         self.assertUnorderedListEqual(self.missing_public_ds, [], "Not all public data sets from another org returned")
 
 
-class GetDataSetsFromFile(GetDataSets):
+class GetDataSetsCreatedFromFile(GetDataSetsFromLink):
     @classmethod
     def _get_source(cls):
         return generate_csv_file(column_count=10, row_count=10)
@@ -157,7 +165,7 @@ class GetDataSetsFromFile(GetDataSets):
         return Transfer.api_create_by_file_upload(org, source, category, is_public)
 
 
-class UpdateDeleteDataSet(ApiTestCase):
+class UpdateDeleteDataSetFromLink(ApiTestCase):
     @classmethod
     def _get_source(cls):
         return EXAMPLE_LINK
@@ -175,7 +183,7 @@ class UpdateDeleteDataSet(ApiTestCase):
     @classmethod
     def tearDownClass(cls):
         tear_down_test_files()
-        super(UpdateDeleteDataSet, cls).tearDownClass()
+        super().tearDownClass()
 
     def _create_dataset(self, org, source, is_public=False, category=DataSet.CATEGORIES[0]):
         self.step("Create new transfer")
@@ -193,6 +201,7 @@ class UpdateDeleteDataSet(ApiTestCase):
             raise AssertionError("Data set was not updated")
         return updated_dataset
 
+    @priority.high
     def test_delete_dataset(self):
         dataset = self._create_dataset(self.org, self.source)
         self.step("Delete the dataset")
@@ -201,6 +210,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         dataset_list = DataSet.api_get_list(org_list=[self.org])
         self.assertNotIn(dataset, dataset_list)
 
+    @priority.low
     def test_cannot_delete_not_existing_dataset(self):
         dataset = self._create_dataset(self.org, self.source)
         self.step("Delete dataset")
@@ -208,6 +218,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         self.step("Try to delete the dataset again")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_EMPTY, dataset.api_delete)
 
+    @priority.medium
     def test_change_private_dataset_to_public(self):
         dataset = self._create_dataset(self.org, self.source)
         self.step("Update dataset from private to public")
@@ -216,6 +227,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         self.step("Check that private dataset was changed to public")
         self.assertTrue(updated_dataset.is_public, "Dataset was not changed to public.")
 
+    @priority.medium
     def test_change_public_dataset_to_private(self):
         dataset = self._create_dataset(self.org, self.source, is_public=True)
         self.step("Update dataset from public to private")
@@ -224,6 +236,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         self.step("Check that public dataset was changed to private")
         self.assertFalse(updated_dataset.is_public, "Dataset was not changed to private.")
 
+    @priority.low
     def test_update_dataset_category(self):
         old_category = DataSet.CATEGORIES[0]
         new_category = DataSet.CATEGORIES[1]
@@ -234,6 +247,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         self.step("Check if dataset category was changed")
         self.assertEqual(updated_dataset.category, new_category, "Dataset category was not updated.")
 
+    @priority.low
     def test_update_dataset_to_non_existing_category(self):
         new_category = "user_category"
         dataset = self._create_dataset(self.org, self.source)
@@ -244,7 +258,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         self.assertEqual(updated_dataset.category, new_category, "Dataset category was not updated.")
 
 
-class UpdateDeleteDataSetFromFile(UpdateDeleteDataSet):
+class UpdateDeleteDataSetFromFile(UpdateDeleteDataSetFromLink):
     @classmethod
     def _get_source(cls):
         return generate_csv_file(column_count=10, row_count=10)
@@ -308,8 +322,8 @@ class CreateDatasets(ApiTestCase):
         data_set = DataSet.api_get_matching_to_transfer([self.org], transfer.title)
         return transfer, data_set
 
+    @priority.medium
     def test_create_dataset(self):
-        """DPNG-3156 DAS can't be found by uploader sometimes"""
         for is_public, access in self.ACCESSIBILITIES.items():
             transfer, dataset = self._get_transfer_and_dataset(self.source, is_public)
             self.step("Generate expected dataset summary and get real dataset summary")
@@ -321,6 +335,7 @@ class CreateDatasets(ApiTestCase):
                 with self.subTest(accessibility=access, detail=key):
                     self.assertEqual(expected_details[key], ds_details[key])
 
+    @priority.medium
     def test_create_dataset_recordcount(self):
         """DPNG-3656 Wrong record count for csv file in dataset details"""
         label = "recordCount"
@@ -378,6 +393,7 @@ class DataSetFromHdfs(ApiTestCase):
         self.step("Get data set matching to transfer")
         return DataSet.api_get_matching_to_transfer([org], transfer.title)
 
+    @priority.medium
     def test_create_dataset_from_hdfs_uri(self):
         self.step("Create source dataset")
         source_dataset = self._create_dataset(self.org, EXAMPLE_LINK)
@@ -385,6 +401,7 @@ class DataSetFromHdfs(ApiTestCase):
         dataset = self._create_dataset(self.org, source_dataset.target_uri)
         self.assertEqual(dataset.source_uri, source_dataset.target_uri)
 
+    @priority.low
     @unittest.skip("We don't know how this should work")
     def test_create_transfer_from_atk_model_file(self):
         model_path = os.path.join("test_utils", "models", "lda.csv")

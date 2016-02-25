@@ -16,14 +16,14 @@
 
 import itertools
 
-from test_utils import ApiTestCase, iPython, get_test_name
+from test_utils import ApiTestCase, iPython, get_test_name, priority
 from objects import ServiceInstance, ServiceType, Organization, User
 from constants.HttpStatus import ServiceCatalogHttpStatus as HttpStatus
 
 
-class TestMarketplaceServices(ApiTestCase):
+class MarketplaceServices(ApiTestCase):
 
-    SERVICES_TESTED_SEPARATELY = ("atk", "gateway", "hdfs", "scoring-engine", "gearpump-dashboard")
+    SERVICES_TESTED_SEPARATELY = ("atk", "hdfs", "scoring-engine", "gearpump-dashboard")
 
     @classmethod
     def setUpClass(cls):
@@ -71,11 +71,13 @@ class TestMarketplaceServices(ApiTestCase):
         _ = terminal.get_output()
         return terminal
 
+    @priority.medium
     def test_check_marketplace_services_list_vs_cloudfoundry(self):
         self.step("Check that services in cf are the same as in Marketplace")
         cf_marketplace = ServiceType.cf_api_get_list_from_marketplace_by_space(self.test_space.guid)
         self.assertUnorderedListEqual(self.marketplace, cf_marketplace)
 
+    @priority.high
     def test_create_and_delete_service_instance(self):
         tested_service_types = [st for st in self.marketplace if st.label not in self.SERVICES_TESTED_SEPARATELY]
         for service_type in tested_service_types:
@@ -84,15 +86,7 @@ class TestMarketplaceServices(ApiTestCase):
                     self._create_and_delete_service_instance(self.test_org.guid, self.test_space.guid,
                                                              service_type.label, plan["guid"])
 
-    def test_create_gateway_instance(self):
-        label = "gateway"
-        self.step("Check that {} service is available in Marketplace".format(label))
-        service_type = next((st for st in self.marketplace if st.label == label), None)
-        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
-        for plan in service_type.service_plans:
-            with self.subTest(service=label, plan=plan["name"]):
-                self._create_and_delete_service_instance(self.test_org.guid, self.test_space.guid, label, plan["guid"])
-
+    @priority.medium
     def test_create_hdfs_instance(self):
         """DPNG-2580 Creating instance of hdfs with plan encrypted fails with 502 Bad Gateway"""
         label = "hdfs"
@@ -103,15 +97,7 @@ class TestMarketplaceServices(ApiTestCase):
             with self.subTest(service=label, plan=plan["name"]):
                 self._create_and_delete_service_instance(self.test_org.guid, self.test_space.guid, label, plan["guid"])
 
-    def test_create_atk_instance(self):
-        label = "atk"
-        self.step("Check that {} service is available in Marketplace".format(label))
-        service_type = next((st for st in self.marketplace if st.label == label), None)
-        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
-        for plan in service_type.service_plans:
-            with self.subTest(service=label, plan=plan["name"]):
-                self._create_and_delete_service_instance(self.test_org.guid, self.test_space.guid, label, plan["guid"])
-
+    @priority.low
     def test_create_instance_with_extra_parameter(self):
         param_key = "test_param"
         param_value = "test_value"
@@ -120,6 +106,7 @@ class TestMarketplaceServices(ApiTestCase):
         output = "".join(terminal.get_output())
         self.assertIn("{}={}".format(param_key, param_value), output)
 
+    @priority.medium
     def test_cannot_create_service_instance_with_existing_name(self):
         existing_name = get_test_name()
         self.step("Create service instance")
@@ -144,6 +131,7 @@ class TestMarketplaceServices(ApiTestCase):
         self.assertUnorderedListEqual(service_list, ServiceInstance.api_get_list(space_guid=self.test_space.guid),
                                       "Some new services were created")
 
+    @priority.low
     def test_cannot_create_service_instance_without_name(self):
         """DPNG-5154 Http status 500 when trying to create a service instance without a name"""
         expected_instance_list = ServiceInstance.api_get_list(self.test_space.guid)
@@ -154,6 +142,7 @@ class TestMarketplaceServices(ApiTestCase):
         self.assertUnorderedListEqual(expected_instance_list, ServiceInstance.api_get_list(self.test_space.guid),
                                       "New instance was created")
 
+    @priority.medium
     def test_cannot_create_service_instances_as_non_space_developer(self):
         test_clients = {"space_auditor": self.space_auditor_client, "space_manager": self.space_manager_client}
         for service_type, (name, client) in itertools.product(self.marketplace, test_clients.items()):

@@ -27,7 +27,6 @@ from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils
 from objects import Application, Organization, ServiceInstance
 
 
-
 @incremental(Priority.medium)
 class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 

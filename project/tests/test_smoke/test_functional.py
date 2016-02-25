@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import unittest
 
-from test_utils import ApiTestCase, PlatformApiClient, CfApiClient, generate_csv_file
+from test_utils import ApiTestCase, PlatformApiClient, generate_csv_file, priority
 from objects import Organization, User, Space, Transfer, DataSet, ServiceType, ServiceInstance
 
 
@@ -27,9 +26,11 @@ class FunctionalSmokeTests(ApiTestCase):
         cls.step("Get reference organization and space")
         cls.ref_org, cls.ref_space = Organization.get_ref_org_and_space()
 
+    @priority.high
     def test_0_test_admin_can_login_to_platform(self):
         PlatformApiClient.get_admin_client()
 
+    @priority.high
     def test_create_and_delete_organization(self):
         self.step("Create organization")
         test_org = Organization.api_create()
@@ -41,6 +42,7 @@ class FunctionalSmokeTests(ApiTestCase):
         self.step("Check that the organization is not on the list")
         self.assertNotInWithRetry(test_org, Organization.api_get_list)
 
+    @priority.high
     def test_onboarding(self):
         self.step("Onboard new user")
         test_user, test_org = User.api_onboard()
@@ -51,6 +53,7 @@ class FunctionalSmokeTests(ApiTestCase):
         orgs = Organization.api_get_list()
         self.assertIn(test_org, orgs)
 
+    @priority.high
     def test_add_new_user_to_and_delete_from_org(self):
         self.step("Add new user to organization")
         test_user = User.api_create_by_adding_to_organization(org_guid=self.ref_org.guid,
@@ -64,6 +67,7 @@ class FunctionalSmokeTests(ApiTestCase):
         users = User.api_get_list_via_organization(org_guid=self.ref_org.guid)
         self.assertNotIn(test_user, users)
 
+    @priority.high
     def test_create_and_delete_space(self):
         self.step("Create new space")
         test_space = Space.api_create(org=self.ref_org)
@@ -75,6 +79,7 @@ class FunctionalSmokeTests(ApiTestCase):
         self.step("Check that the space was deleted")
         self.assertNotInWithRetry(test_space, Space.api_get_list)
 
+    @priority.high
     def test_add_new_user_to_and_delete_from_space(self):
         self.step("Add new user to space")
         test_user = User.api_create_by_adding_to_space(org_guid=self.ref_org.guid, space_guid=self.ref_space.guid)
@@ -87,6 +92,7 @@ class FunctionalSmokeTests(ApiTestCase):
         users = User.api_get_list_via_space(space_guid=self.ref_space.guid)
         self.assertNotIn(test_user, users)
 
+    @priority.high
     def test_add_and_delete_transfer_from_link(self):
         self.step("Create a transfer and check it has finished")
         transfer = Transfer.api_create(category="other", source=self.TRANSFER_LINK, org=self.ref_org)
@@ -107,6 +113,7 @@ class FunctionalSmokeTests(ApiTestCase):
         transfers = Transfer.api_get_list(org_list=[self.ref_org])
         self.assertNotIn(transfer, transfers)
 
+    @priority.high
     def test_add_and_delete_transfer_from_file(self):
         self.step("Generate a test csv file")
         file_path = generate_csv_file(column_count=10, row_count=100)
@@ -129,8 +136,8 @@ class FunctionalSmokeTests(ApiTestCase):
         transfers = Transfer.api_get_list(org_list=[self.ref_org])
         self.assertNotIn(transfer, transfers)
 
+    @priority.high
     def test_create_and_delete_marketplace_service_instances(self):
-        """gearpump: DPNG-4582 [GEARPUMP] after-review fixes - ensure prerequisities on startup"""
         self.step("Get list of services in marketplace")
         marketplace = ServiceType.api_get_list_from_marketplace(space_guid=self.ref_space.guid)
         marketplace = [s for s in marketplace if s.label not in ("scoring-engine", "gearpump-dashboard")]

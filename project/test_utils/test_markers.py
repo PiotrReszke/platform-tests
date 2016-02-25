@@ -70,23 +70,26 @@ class IncrementalTestDecorator(object):
             raise TypeError("Only members of Priority Enum are allowed")
         self.priority = priority
 
-    def __call__(self, c):
-        if not inspect.isclass(c):
+    def __call__(self, wrapped_class):
+        if not inspect.isclass(wrapped_class):
             raise TypeError("Incremental decorator should be used on an ApiTestCase class.")
-        self.c = c
-        self.c.incremental = True
-        test_method_names = [t for t in dir(self.c) if t.startswith("test")]
-        for tmn in test_method_names:
-            test_method = getattr(self.c, tmn)
-            test_method.priority = self.priority
-            wrapped_test_method = self._test_method_wrapper(test_method)
-            setattr(self.c, tmn, wrapped_test_method)
-        return self.c
+        self.wrapped_class = wrapped_class
+        self.wrapped_class.incremental = True
+        self.__wrap_test_methods()
+        return self.wrapped_class
 
-    def _test_method_wrapper(self, func):
+    def __wrap_test_methods(self):
+        test_method_names = [t for t in dir(self.wrapped_class) if t.startswith("test")]
+        for test_method_name in test_method_names:
+            test_method = getattr(self.wrapped_class, test_method_name)
+            test_method.priority = self.priority
+            wrapped_test_method = self.__test_method_wrapper(test_method)
+            setattr(self.wrapped_class, test_method_name, wrapped_test_method)
+
+    def __test_method_wrapper(self, func):
         @functools.wraps(func)
         def wrap(*args, **kwargs):
-            if self.c.prerequisite_failed:
+            if self.wrapped_class.prerequisite_failed:
                 raise unittest.SkipTest("Skipped due to failed prerequisite\n")
             func(*args, **kwargs)
         return wrap

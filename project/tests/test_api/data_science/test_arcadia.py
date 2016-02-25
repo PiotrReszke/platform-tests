@@ -13,10 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from test_utils import ApiTestCase, cleanup_after_failed_setup, Arcadia
+from constants.priority_levels import Priority
+from test_utils import ApiTestCase, cleanup_after_failed_setup, Arcadia, incremental
 from objects import Organization, User, Transfer, DataSet
 
 
+@incremental(Priority.high)
 class ArcadiaTest(ApiTestCase):
     LINK_TO_CSV = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     arcadia = None
@@ -43,7 +45,6 @@ class ArcadiaTest(ApiTestCase):
         cls.arcadia.teardown_test_datasets()
         super().tearDownClass()
 
-    @ApiTestCase.mark_prerequisite(is_first=True)
     def test_0_create_new_dataset_and_import_it_to_arcadia(self):
         self.step("Publish created dataset")
         self.dataset.api_publish()
@@ -57,7 +58,6 @@ class ArcadiaTest(ApiTestCase):
         arcadia_dataset = self.arcadia.create_dataset(self.test_org.name, self.dataset.title)
         self.assertInWithRetry(arcadia_dataset, self.arcadia.get_dataset_list)
 
-    @ApiTestCase.mark_prerequisite()
     def test_1_change_dataset_to_public_and_import_it_to_arcadia(self):
         self.step("Change dataset to public")
         self.dataset.api_update(is_public=True)
