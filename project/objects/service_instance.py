@@ -30,12 +30,13 @@ __all__ = ["ServiceInstance", "AtkInstance"]
 class ServiceInstance(object):
     COMPARABLE_ATTRS = ["guid", "name", "space_guid", "service_label"]
 
-    def __init__(self, guid, name, space_guid, service_label, bound_apps=None):
+    def __init__(self, guid, name, space_guid, service_label, bound_apps=None, credentials=None):
         self.guid = guid
         self.name = name
         self.space_guid = space_guid
         self.service_label = service_label
         self.bound_apps = bound_apps or []
+        self.credentials = credentials
 
     def __eq__(self, other):
         return all((getattr(self, a) == getattr(other, a) for a in self.COMPARABLE_ATTRS))
@@ -161,12 +162,19 @@ class ServiceInstance(object):
         return cls(guid=response["metadata"]["guid"], service_label=service_label, name=name, space_guid=space_guid)
 
     @classmethod
+    def cf_api_create_upsi(cls, instance_name, credentials, space_guid):
+        response = cf.cf_api_create_user_provided_service_instance(instance_name=instance_name, space_guid=space_guid,
+                                                                   credentials=credentials)
+        return cls(guid=response["metadata"]["guid"], name=instance_name, service_label=None,
+                   space_guid=space_guid, credentials=credentials)
+
+    @classmethod
     def cf_api_get_upsi_list(cls):
         upsi_data = cf.cf_api_get_user_provided_service_instances()
         upsi = []
         for data in upsi_data:
             upsi.append(cls(guid=data["metadata"]["guid"], name=data["entity"]["name"], service_label=None,
-                            space_guid=data["entity"]["space_guid"]))
+                            space_guid=data["entity"]["space_guid"], credentials=data["entity"]["credentials"]))
         return upsi
 
     @classmethod
@@ -209,3 +217,4 @@ class AtkInstance(ServiceInstance):
                                org_guid=org_guid, scoring_engine=data["scoring_engine"], state=data["state"])
                 atk_instances.append(instance)
         return atk_instances
+

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import json
 import os
 import ssl
 import time
@@ -28,12 +29,13 @@ from objects import Application, Organization, ServiceInstance
 
 
 @incremental(Priority.medium)
-class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
+class Ws2kafka2hdfs(ApiTestCase):
 
     MESSAGE_COUNT = 10
     APP_REPO_PATH = "../../{}/ingestion-ws-kafka-hdfs".format(config.CONFIG["repository"])
     WS2KAFKA_PATH = APP_REPO_PATH + "/ws2kafka"
     KAFKA2HDFS_PATH = APP_REPO_PATH + "/kafka2hdfs"
+    KERBEROS_SERVICE = "kerberos-service"
     ENDPOINT_APP_STATS = "status/stats"
     messages = ["Test-{}".format(n) for n in range(MESSAGE_COUNT)]
     app_ws2kafka = None
@@ -83,12 +85,30 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         )
 
     @classmethod
+    def _get_credentials(cls):
+        cls.step("Get credentials for kerberos-service")
+        user_provided_services = ServiceInstance.cf_api_get_upsi_list()
+        kerb_upsi = next((upsi for upsi in user_provided_services if upsi.name == cls.KERBEROS_SERVICE), None)
+        cls.assertIsNotNone(kerb_upsi, "{} not found".format(cls.KERBEROS_SERVICE))
+        credentials = kerb_upsi.credentials
+        return credentials
+
+    @classmethod
+    def _create_user_provided_service(cls, space_guid, credentials):
+        cls.step("Create user-provided service instance for kerberos-service")
+        ServiceInstance.cf_api_create_upsi(instance_name=cls.KERBEROS_SERVICE,
+                                           space_guid=space_guid,
+                                           credentials=credentials)
+
+    @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
         cls._clone_and_compile_sources()
         test_org = Organization.api_create(space_names=("test-space",))
         cls.test_space = test_org.spaces[0]
         cls._create_service_instances(test_org.guid, cls.test_space.guid)
+        credentials = cls._get_credentials()
+        cls._create_user_provided_service(cls.test_space.guid, credentials)
         cls.step("Login to cf, targeting created org and space")
         cf.cf_login(test_org.name, cls.test_space.name)
         cls.ws_opts = {"cert_reqs": ssl.CERT_NONE}
@@ -97,7 +117,7 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
             cls.ws_opts = {}
             cls.ws_protocol = "wss://"
 
-    def test_cf_app_step_1_push_ws2kafka_kafka2hdfs(self):
+    def test_step_1_push_ws2kafka2hdfs(self):
         """DPNG-5225 [hadoop-utils] remove the need for kerberos-service in non-kerberos envs"""
         postfix = str(int(time.time()))
         self.__class__.topic_name = "topic-{}".format(postfix)
@@ -112,46 +132,21 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
             space_guid=self.test_space.guid,
             source_directory=self.KAFKA2HDFS_PATH,
             name="kafka2hdfs-{}".format(postfix),
+            bound_services= ("kafka-inst", "zookeeper-inst", "hdfs-inst",  self.KERBEROS_SERVICE,),
             env={"TOPICS": self.topic_name, "CONSUMER_GROUP": "group-{}".format(postfix)}
         )
         self.assertTrue(self.app_ws2kafka.is_started, "ws2kafka app is not started")
         self.assertTrue(self.app_kafka2hdfs.is_started, "kafka2hdfs app is not started")
 
-    def test_cf_app_step_2_send_from_ws2kafka_to_kafka2hdfs(self):
+    def test_step_2_send_from_ws2kafka2hdfs(self):
         connection_string = "{}/{}".format(self.app_ws2kafka.urls[0], self.topic_name)
         self._send_ws_messages(connection_string)
         self._assert_message_count_in_app_stats(self.app_kafka2hdfs, self.MESSAGE_COUNT)
 
-    def test_cf_app_step_3_check_messages_in_hdfs(self):
+    def test_step_3_check_messages_in_hdfs(self):
         """DPNG-5173 Cannot access hdfs directories using ec2-user"""
         self.step("Get details of broker guid")
         broker_guid = self.app_kafka2hdfs.get_credentials("hdfs")["uri"].split("/", 3)[3]
-        self.step("Get messages from hdfs")
-        hdfs_messages = self._get_messages_from_hdfs("/" + os.path.join(broker_guid, "from_kafka", self.topic_name))
-        self.step("Check that all sent messages are on hdfs")
-        self.assertUnorderedListEqual(hdfs_messages, self.messages)
-
-    @unittest.skip
-    def test_cf_app_ws2kafka_gearpump_kafka2hdfs(self):
-        """On hold until gearpump instance creation is possible"""
-        postfix = str(int(time.time()))
-        topic_name = "topic-{}".format(postfix)
-        app_ws2kafka = Application.push(
-            space_guid=self.test_space.guid,
-            source_directory=self.WS2KAFKA_PATH,
-            name="ws2kafka-{}".format(postfix)
-        )
-        self.step("Push application kafka2hdfs")
-        app_kafka2hdfs = Application.push(
-            space_guid=self.test_space.guid,
-            source_directory=self.KAFKA2HDFS_PATH,
-            name="kafka2hdfs-{}".format(postfix),
-            env={"TOPICS": topic_name, "CONSUMER_GROUP": "group-{}".format(postfix)}
-        )
-        connection_string = "{}/{}".format(app_ws2kafka.urls[0], app_ws2kafka.topic)
-        self._send_ws_messages(connection_string)
-        self.step("Get details of broker guid")
-        broker_guid = app_kafka2hdfs.get_credentials("hdfs")["uri"].split("/", 3)[3]
         self.step("Get messages from hdfs")
         hdfs_messages = self._get_messages_from_hdfs("/" + os.path.join(broker_guid, "from_kafka", self.topic_name))
         self.step("Check that all sent messages are on hdfs")

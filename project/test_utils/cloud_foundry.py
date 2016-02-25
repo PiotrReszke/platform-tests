@@ -55,18 +55,15 @@ def cf_create_service(broker_name, plan, instance_name):
     log_command(command)
     return cmd.run(command)
 
-
 def cf_delete(app_name):
     command = ["cf", "delete", app_name, "-f"]
     log_command(command)
     cmd.run(command)
 
-
 def cf_env(app_name):
     command = ["cf", "env", app_name]
     log_command(command)
     return cmd.run(command)
-
 
 def cf_delete_service(service):
     command = ["cf", "delete-service", service, "-f"]
@@ -211,6 +208,14 @@ def cf_api_create_service_instance(instance_name, space_guid, service_plan_guid)
         log_msg="CF: create service instance"
     )
 
+def cf_api_create_user_provided_service_instance(instance_name, space_guid, credentials):
+    """POST /v2/user_provided_service_instances"""
+    return CfApiClient.get_client().request(
+        method="POST",
+        endpoint="user_provided_service_instances",
+        body={"name": instance_name, "space_guid": space_guid, "credentials": credentials},
+        log_msg="CF: create user provided service instance"
+    )
 
 def cf_api_get_user_provided_service_instances():
     """GET /v2/user_provided_service_instances"""
