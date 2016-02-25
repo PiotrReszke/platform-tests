@@ -20,8 +20,9 @@ import unittest
 
 from retry import retry
 
+from constants.priority_levels import Priority
 from objects import organization as org, user as usr, transfer as tr, dataset as ds
-from . import get_logger, UnexpectedResponseError, DEFAULT_PRIORITY
+from . import get_logger, UnexpectedResponseError
 
 
 __all__ = ["ApiTestCase", "cleanup_after_failed_setup"]
@@ -72,7 +73,7 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         test_method = getattr(self.__class__, methodName)
         priority = getattr(test_method, "priority", None)
         super().__init__(methodName=methodName)
-        self.priority = DEFAULT_PRIORITY if priority is None else priority
+        self.priority = Priority.default() if priority is None else priority
 
     @classmethod
     def tearDownClass(cls):

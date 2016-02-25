@@ -18,38 +18,31 @@ import functools
 import inspect
 import unittest
 
+from constants.priority_levels import Priority
 
-__all__ = ["components", "incremental", "priority", "PRIORITY_LEVELS", "DEFAULT_PRIORITY"]
 
-PRIORITY_LEVELS = ("p0", "p1", "p2")
-DEFAULT_PRIORITY = PRIORITY_LEVELS[0]
+__all__ = ["components", "incremental", "priority"]
 
 
 class PriorityDecorator(object):
 
     def __init__(self, priority_level):
-        if priority_level not in PRIORITY_LEVELS:
-            raise TypeError("{} not in allowed priorities {}".format(priority_level, PRIORITY_LEVELS))
+        if not isinstance(priority_level, Priority):
+            raise TypeError("Only members of Priority Enum are allowed")
         self.priority_level = priority_level
 
     def __call__(self, f):
-        if inspect.isfunction(f):
-            if not f.__name__.startswith("test"):
-                raise TypeError("Priority decorator can only be used on a test method.")
-            f.priority = self.priority_level
-        elif inspect.isclass(f):
-            if not f.incremental:
-                raise ValueError("Priority decorator can only be used on classes which are incremental.")
-            test_method_names = [t for t in dir(f) if t.startswith("test")]
-            for tmn in test_method_names:
-                getattr(f, tmn).priority = self.priority_level
+        if not inspect.isfunction(f) or not f.__name__.startswith("test"):
+            raise TypeError("Priority decorator can only be used on a test method.")
+        f.priority = self.priority_level
         return f
 
 
 class PriorityGenerator(object):
 
     def __getattr__(self, priority_level):
-        return PriorityDecorator(priority_level)
+        priority = getattr(Priority, priority_level)
+        return PriorityDecorator(priority)
 
 
 class ComponentDecorator(object):
@@ -69,7 +62,13 @@ class IncrementalTestDecorator(object):
     """
     For wrapping test classes which contain incremental tests.
     Tests will be run in alphabetical order. If there is an error or failure in a test, next ones will be skipped.
+    Decorator takes an obligatory parameter of type Priority.
     """
+
+    def __init__(self, priority):
+        if not isinstance(priority, Priority):
+            raise TypeError("Only members of Priority Enum are allowed")
+        self.priority = priority
 
     def __call__(self, c):
         if not inspect.isclass(c):
@@ -79,6 +78,7 @@ class IncrementalTestDecorator(object):
         test_method_names = [t for t in dir(self.c) if t.startswith("test")]
         for tmn in test_method_names:
             test_method = getattr(self.c, tmn)
+            test_method.priority = self.priority
             wrapped_test_method = self._test_method_wrapper(test_method)
             setattr(self.c, tmn, wrapped_test_method)
         return self.c

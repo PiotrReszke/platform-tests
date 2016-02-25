@@ -22,7 +22,8 @@ import re
 import socket
 
 from constants.tap_components import TapComponent
-from . import logger, PRIORITY_LEVELS
+from constants.priority_levels import Priority
+from . import logger
 
 
 __all__ = ["update_test_config", "parse_arguments", "CONFIG", "is_test_object_name", "get_test_name"]
@@ -142,9 +143,9 @@ def parse_arguments():
                         default="master",
                         help="Platform version tag name")
     parser.add_argument("-p", "--priority",
-                        default=PRIORITY_LEVELS[-1],
-                        choices=PRIORITY_LEVELS,
-                        help="Run subset of tests with priority <= p")
+                        default=Priority.low,
+                        choices=Priority.names(),
+                        help="Run subset of tests with priority equal to or higher than passed priority")
     parser.add_argument("-c", "--components",
                         default=[],
                         action="append",

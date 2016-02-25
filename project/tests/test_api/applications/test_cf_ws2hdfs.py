@@ -21,13 +21,14 @@ import unittest
 from retry import retry
 import websocket
 
+from constants.priority_levels import Priority
 from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils, Hdfs, config, cloud_foundry as cf, \
     incremental
 from objects import Application, Organization, ServiceInstance
 
 
 
-@incremental()
+@incremental(Priority.medium)
 class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     MESSAGE_COUNT = 10

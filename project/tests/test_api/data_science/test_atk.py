@@ -16,12 +16,12 @@
 
 import os
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, ATKtools, get_test_name, incremental
+from constants.priority_levels import Priority
+from test_utils import ApiTestCase, cleanup_after_failed_setup, ATKtools, get_test_name, incremental, priority
 from objects import Organization, Transfer, DataSet, ServiceType, ServiceInstance, Application, User
 
 
-
-@incremental()
+@incremental(Priority.high)
 class Atk(ApiTestCase):
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     ATK_SERVICE_LABEL = "atk"

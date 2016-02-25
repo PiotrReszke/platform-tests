@@ -22,6 +22,7 @@ from teamcity import is_running_under_teamcity
 from teamcity.unittestpy import TeamcityTestRunner
 
 from constants.tap_components import TapComponent
+from constants.priority_levels import Priority
 from test_utils import config, get_logger, change_log_file_path
 
 
@@ -121,7 +122,7 @@ if __name__ == "__main__":
     suite.addTests(loaded_tests)
 
     # apply filters - priority and requested components
-    suite = filter_test_suite(suite, lambda x: x.priority <= args.priority)
+    suite = filter_test_suite(suite, lambda x: x.priority <= getattr(Priority, args.priority))
     if args.components != []:
         components = [getattr(TapComponent, c) for c in args.components]
         suite = filter_test_suite(suite, lambda x: bool(set(x.components) & set(components)))

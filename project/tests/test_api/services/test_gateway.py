@@ -15,11 +15,14 @@
 #
 import websocket
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, CfApiClient
+from constants.priority_levels import Priority
+from constants.services import ServiceLabels
+from test_utils import ApiTestCase, cleanup_after_failed_setup, CfApiClient, incremental
 from objects.service_instance_validator import ServiceInstanceValidator
 from objects import Organization, ServiceInstance, User
 
 
+@incremental(Priority.medium)
 class Gateway(ApiTestCase):
     PLAN_NAME = "Simple"
     gateway_instance = None
