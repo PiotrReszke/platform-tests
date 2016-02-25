@@ -76,7 +76,7 @@ CONFIG = {
 
 
 def update_test_config(domain=None, proxy=None, client_type=None, logged_response_body_length=None,
-                       logging_level=None, platform_version="master"):
+                       logging_level=None, repository=None, platform_version="master"):
     defaults = __CONFIG.defaults()
     defaults.update(__SECRETS.defaults())
     CONFIG["platform_version"] = platform_version
@@ -101,6 +101,8 @@ def update_test_config(domain=None, proxy=None, client_type=None, logged_respons
         CONFIG["client_type"] = client_type
     if logging_level is not None:
         logger.set_level(logging_level)
+    if repository is not None:
+        CONFIG["repository"] = repository
 
 
 # update settings using default values
@@ -108,7 +110,8 @@ update_test_config(domain="daily.gotapaas.com",
                    proxy="proxy-mu.intel.com:911",
                    client_type="console",
                    logged_response_body_length=1024,
-                   logging_level="DEBUG")
+                   logging_level="DEBUG",
+                   repository="intel-data")
 # update settings using environment variables (when tests are run with PyCharm runner)
 update_test_config(domain=os.environ.get("TEST_ENVIRONMENT"),
                    proxy=os.environ.get("TEST_PROXY"),
@@ -156,4 +159,8 @@ def parse_arguments():
     parser.add_argument("-d", "--log-file-directory",
                         default="/tmp",
                         help="Change default log file directory.")
+    parser.add_argument("--repository",
+                        choices=["intel-data", "trustedanalytics"],
+                        default="intel-data",
+                        help="Repository from which the applications source code is cloned.")
     return parser.parse_args()

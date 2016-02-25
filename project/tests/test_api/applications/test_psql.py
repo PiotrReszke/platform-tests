@@ -19,7 +19,7 @@ from datetime import datetime
 import os
 import shutil
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, cloud_foundry as cf, app_source_utils
+from test_utils import ApiTestCase, cleanup_after_failed_setup, cloud_foundry as cf, app_source_utils, config
 from objects import Organization, Application, ServiceInstance, ServiceType
 
 
@@ -27,7 +27,7 @@ class Postgres(ApiTestCase):
 
     DB_SERVICE_LABEL = "postgresql93"
     APP_REPO_NAME = "psql-api-example"
-    PSQL_APP_DIR = os.path.normpath(os.path.join("../../psql-api-example"))
+    PSQL_APP_DIR = os.path.normpath(os.path.join("../../{}/psql-api-example".format(config.CONFIG["repository"])))
     NAME_PREFIX = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     test_table_name = "oh_hai"

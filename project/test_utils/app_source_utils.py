@@ -32,7 +32,8 @@ logger = get_logger(__name__)
 url = "\"http://nexus.sclab.intel.com:8080/content/groups/public\""
 
 
-def github_get_file_content(repository, file_path, owner="intel-data", ref=None):
+def github_get_file_content(repository, file_path, owner=None, ref=None):
+    owner = owner or config.CONFIG["repository"]
     url = "https://api.github.com/repos/{}/{}/contents/{}".format(owner, repository, file_path)
     session = requests.session()
     proxy = config.CONFIG["proxy"]
@@ -50,17 +51,19 @@ def github_get_file_content(repository, file_path, owner="intel-data", ref=None)
     return base64.b64decode(json.loads(response_content)["content"])
 
 
-def clone_repository(repository_name, target_directory, owner="intel-data"):
+def clone_repository(repository_name, target_directory, owner=None):
+    owner = owner or config.CONFIG["repository"]
     repo_url = get_repo_url(repository_name, owner)
     logger.info("Clone from {} to {}".format(repo_url, target_directory))
     if os.path.exists(target_directory):
         shutil.rmtree(target_directory)
-    os.mkdir(target_directory)
+    os.makedirs(target_directory, exist_ok=True)
     Repo.clone_from(repo_url, target_directory)
 
 
-def clone_or_pull_repository(repository_name, target_directory, owner="intel-data"):
+def clone_or_pull_repository(repository_name, target_directory, owner=None):
     """Pull changes into repository if repository exists otherwise clone it"""
+    owner = owner or config.CONFIG["repository"]
     if os.path.exists(target_directory):
         repo_url = get_repo_url(repository_name, owner)
         logger.info("Pull from {} into {}".format(repo_url, target_directory))
@@ -120,6 +123,7 @@ def checkout_branch_pointing_to_commit(repo_path, commit_id):
         repo.git.checkout(commit_id, B=branch_name)
 
 
-def get_repo_url(repository_name, owner="intel-data"):
+def get_repo_url(repository_name, owner=None):
     """Returns repository url address"""
+    owner = owner or config.CONFIG["repository"]
     return "https://{2}:{3}@github.com/{0}/{1}.git".format(owner, repository_name, *config.CONFIG["github_auth"])

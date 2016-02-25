@@ -32,7 +32,7 @@ logger = get_logger("cf_ws2kafka_kafka2hdfs")
 class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     MESSAGE_COUNT = 10
-    APP_REPO_PATH = "../../ingestion-ws-kafka-hdfs"
+    APP_REPO_PATH = "../../{}/ingestion-ws-kafka-hdfs".format(config.CONFIG["repository"])
     WS2KAFKA_PATH = APP_REPO_PATH + "/ws2kafka"
     KAFKA2HDFS_PATH = APP_REPO_PATH + "/kafka2hdfs"
     ENDPOINT_APP_STATS = "status/stats"

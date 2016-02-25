@@ -77,7 +77,8 @@ if __name__ == "__main__":
                               proxy=args.proxy,
                               logged_response_body_length=args.logged_response_body_length,
                               logging_level=args.logging_level,
-                              platform_version=args.platform_version)
+                              platform_version=args.platform_version,
+                              repository=args.repository)
     for key in ["domain", "admin_username", "client_type", "proxy", "ssl_validation", "platfom_version"]:
         logger.info("{}={}".format(key, config.CONFIG.get(key)))
 

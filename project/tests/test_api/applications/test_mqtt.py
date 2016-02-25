@@ -37,7 +37,7 @@ class TestMqtt(ApiTestCase):
     INFLUX_INSTANCE_NAME = "mqtt-demo-db"
     MQTT_LABEL = "mosquitto14"
     MQTT_INSTANCE_NAME = "mqtt-demo-messages"
-    APP_REPO_PATH = "../../mqtt-demo"
+    APP_REPO_PATH = "../../{}/mqtt-demo".format(config.CONFIG["repository"])
     TEST_DATA_FILE = os.path.join(os.path.dirname(__file__), "shuttle_scale_cut_val.csv")
     APP_NAME = "mqtt-demo"
     MQTT_SERVER = "{}.{}".format(APP_NAME, config.CONFIG["domain"])
