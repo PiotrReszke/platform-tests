@@ -13,13 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 import websocket
-from constants.services import ServiceLabels
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, CfApiClient
-from objects import Organization, ServiceInstance, User
 from objects.service_instance_validator import ServiceInstanceValidator
+from objects import Organization, ServiceInstance, User
 
 
 class Gateway(ApiTestCase):
@@ -42,7 +40,6 @@ class Gateway(ApiTestCase):
         cf_api_client = CfApiClient.get_client()
         cls.token = cf_api_client.get_oauth_token()
 
-    @ApiTestCase.mark_prerequisite(is_first=True)
     def test_0_create_gateway_instance(self):
         self.step("Create gateway instance")
         gateway_instance = ServiceInstance.api_create(
@@ -54,7 +51,6 @@ class Gateway(ApiTestCase):
         self.__class__.gateway_app = validator.application
         self.__class__.kafka_instance = validator.application_bindings[ServiceLabels.KAFKA]
 
-    @ApiTestCase.mark_prerequisite()
     def test_1_send_message_to_gateway_app_instance(self):
         self.step("Check communication with gateway app")
         header = ["Authorization: Bearer{}".format(self.token)]
@@ -67,7 +63,6 @@ class Gateway(ApiTestCase):
         except websocket.WebSocketException as e:
             raise AssertionError(str(e))
 
-    @ApiTestCase.mark_prerequisite()
     def test_2_delete_gateway_instance(self):
         self.step("Delete gateway instance")
         self.gateway_instance.api_delete(client=self.space_developer_client)

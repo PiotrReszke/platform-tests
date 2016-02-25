@@ -21,14 +21,13 @@ import unittest
 from retry import retry
 import websocket
 
-from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, app_source_utils, Hdfs, config, \
-    cloud_foundry as cf
-from objects import Application, Organization, ServiceType, ServiceInstance
+from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils, Hdfs, config, cloud_foundry as cf, \
+    incremental
+from objects import Application, Organization, ServiceInstance
 
 
-logger = get_logger("cf_ws2kafka_kafka2hdfs")
 
-
+@incremental()
 class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
 
     MESSAGE_COUNT = 10
@@ -98,7 +97,6 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
             cls.ws_opts = {}
             cls.ws_protocol = "wss://"
 
-    @ApiTestCase.mark_prerequisite(is_first=True)
     def test_cf_app_step_1_push_ws2kafka_kafka2hdfs(self):
         """DPNG-5225 [hadoop-utils] remove the need for kerberos-service in non-kerberos envs"""
         postfix = str(int(time.time()))
@@ -119,13 +117,11 @@ class CFApp_ws2kafka_kafka2hdfs(ApiTestCase):
         self.assertTrue(self.app_ws2kafka.is_started, "ws2kafka app is not started")
         self.assertTrue(self.app_kafka2hdfs.is_started, "kafka2hdfs app is not started")
 
-    @ApiTestCase.mark_prerequisite()
     def test_cf_app_step_2_send_from_ws2kafka_to_kafka2hdfs(self):
         connection_string = "{}/{}".format(self.app_ws2kafka.urls[0], self.topic_name)
         self._send_ws_messages(connection_string)
         self._assert_message_count_in_app_stats(self.app_kafka2hdfs, self.MESSAGE_COUNT)
 
-    @ApiTestCase.mark_prerequisite()
     def test_cf_app_step_3_check_messages_in_hdfs(self):
         """DPNG-5173 Cannot access hdfs directories using ec2-user"""
         self.step("Get details of broker guid")

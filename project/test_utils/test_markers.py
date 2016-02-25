@@ -14,10 +14,12 @@
 # limitations under the License.
 #
 
+import functools
 import inspect
+import unittest
 
 
-__all__ = ["components", "priority", "PRIORITY_LEVELS", "DEFAULT_PRIORITY"]
+__all__ = ["components", "incremental", "priority", "PRIORITY_LEVELS", "DEFAULT_PRIORITY"]
 
 PRIORITY_LEVELS = ("p0", "p1", "p2")
 DEFAULT_PRIORITY = PRIORITY_LEVELS[0]
@@ -44,16 +46,45 @@ class PriorityGenerator(object):
 
 
 class ComponentDecorator(object):
+    """For wrapping test classes. Specify a list of components tested by this class."""
 
     def __init__(self, *args):
         self.components = args
 
     def __call__(self, c):
         if not inspect.isclass(c):
-            raise TypeError("Component decorator should be used on a class.")
+            raise TypeError("Component decorator should be used on an ApiTestCase class.")
         c.components = self.components
         return c
 
 
+class IncrementalTestDecorator(object):
+    """
+    For wrapping test classes which contain incremental tests.
+    Tests will be run in alphabetical order. If there is an error or failure in a test, next ones will be skipped.
+    """
+
+    def __call__(self, c):
+        if not inspect.isclass(c):
+            raise TypeError("Incremental decorator should be used on an ApiTestCase class.")
+        self.c = c
+        self.c.incremental = True
+        test_method_names = [t for t in dir(self.c) if t.startswith("test")]
+        for tmn in test_method_names:
+            test_method = getattr(self.c, tmn)
+            wrapped_test_method = self._test_method_wrapper(test_method)
+            setattr(self.c, tmn, wrapped_test_method)
+        return self.c
+
+    def _test_method_wrapper(self, func):
+        @functools.wraps(func)
+        def wrap(*args, **kwargs):
+            if self.c.prerequisite_failed:
+                raise unittest.SkipTest("Skipped due to failed prerequisite\n")
+            func(*args, **kwargs)
+        return wrap
+
+
 priority = PriorityGenerator()
 components = ComponentDecorator
+incremental = IncrementalTestDecorator

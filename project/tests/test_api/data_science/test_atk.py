@@ -15,15 +15,13 @@
 #
 
 import os
-import unittest
 
-from test_utils import ApiTestCase, get_logger, cleanup_after_failed_setup, ATKtools, get_test_name
+from test_utils import ApiTestCase, cleanup_after_failed_setup, ATKtools, get_test_name, incremental
 from objects import Organization, Transfer, DataSet, ServiceType, ServiceInstance, Application, User
 
 
-logger = get_logger("test ATK")
 
-
+@incremental()
 class Atk(ApiTestCase):
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     ATK_SERVICE_LABEL = "atk"
@@ -52,12 +50,10 @@ class Atk(ApiTestCase):
         cls.atk_virtualenv.teardown(atk_url=cls.atk_url)
         super().tearDownClass()
 
-    @ApiTestCase.mark_prerequisite(is_first=True)
     def test_0_check_atk_uaac_credentials(self):
         self.step("Check if atk has correct credentials and is able to download uaac token")
         ATKtools.check_uaac_token()
 
-    @ApiTestCase.mark_prerequisite()
     def test_1_create_atk_instance(self):
         self.step("Check that atk service is available in Marketplace")
         marketplace = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
@@ -85,18 +81,15 @@ class Atk(ApiTestCase):
         atk_app.ensure_started()
         self.__class__.atk_url = atk_app.urls[0]
 
-    @ApiTestCase.mark_prerequisite()
     def test_2_install_atk_client(self):
         self.step("Install atk client package")
         self.atk_virtualenv.pip_install(ATKtools.get_atk_client_url(self.atk_url))
 
-    @ApiTestCase.mark_prerequisite()
     def test_3_check_atk_client_connection(self):
         self.step("Run atk connection test")
         atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "atk_client_connection_test.py")
         self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_url)
 
-    @ApiTestCase.mark_prerequisite()
     def test_4_create_data_set_and_publish_it_in_hive(self):
         """DPNG-2010 Cannot get JDBC connection when publishing dataset to Hive"""
         self.step("Create transfer and check it's finished")
@@ -106,7 +99,6 @@ class Atk(ApiTestCase):
         data_set.api_publish()
         self.__class__.data_set_hdfs_path = data_set.target_uri
 
-    @ApiTestCase.mark_prerequisite()
     def test_5_frame_csv_file(self):
         """kerberos: DPNG-4525, non-kerberos: DPNG-5171"""
         self.step("Run atk csv file test")
@@ -114,7 +106,6 @@ class Atk(ApiTestCase):
         self.atk_virtualenv.run_atk_script(atk_test_script_path, self.atk_url,
                                            arguments={"--target_uri": self.data_set_hdfs_path})
 
-    @ApiTestCase.mark_prerequisite()
     def test_6_simple_hive_query(self):
         self.step("Run atk connection test")
         atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "hive_simple_query_test.py")
@@ -122,7 +113,6 @@ class Atk(ApiTestCase):
                                            arguments={"--organization": self.test_org.name,
                                                       "--transfer": self.transfer_title})
 
-    @ApiTestCase.mark_prerequisite()
     def test_7_export_to_hive(self):
         self.step("Run atk export to hive test")
         atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "hive_export_test.py")
@@ -130,7 +120,6 @@ class Atk(ApiTestCase):
                                            arguments={"--organization": self.test_org.name,
                                                       "--transfer": self.transfer_title})
 
-    @ApiTestCase.mark_prerequisite()
     def test_8_hive_table_manipulation(self):
         self.step("Run atk table manipulation test")
         atk_test_script_path = os.path.join(ATKtools.TEST_SCRIPTS_DIRECTORY, "hive_table_manipulation_test.py")

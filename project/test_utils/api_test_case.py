@@ -62,8 +62,9 @@ class SeparatorMeta(type):
 class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
     STEP_NO = 0
     SUB_TEST_NO = 0
-    PREREQUISITE_FAILED = False
-    FAILS_AND_ERRORS = 0
+    incremental = False
+    prerequisite_failed = False
+    failure_and_error_count = 0
     maxDiff = None
     components = tuple()
 
@@ -103,7 +104,10 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         separator = "*" * len(test_name)
         self.__class__.STEP_NO = self.__class__.SUB_TEST_NO = 0
         logger.debug("\n{0}\n\n{1}\n\n{0}\n".format(separator, test_name))
-        return super().run(result=result)
+        current_result = super().run(result=result)
+        if self.incremental and (len(current_result.failures) > 0 or len(current_result.errors) > 0):
+            self.__class__.prerequisite_failed = True
+        return current_result
 
     def assertUnorderedListEqual(self, list1, list2, msg=None):
         self.assertListEqual(sorted(list1), sorted(list2), msg=msg)
@@ -195,26 +199,6 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         thing = next((i for i in items if getattr(i, attr_name) == attr_value), None)
         self.assertIsNotNone(thing)
         return thing
-
-    @classmethod
-    def mark_prerequisite(cls, is_first=False):
-        """For wrapping test methods which should be skipped based on previous failures"""
-        def wrapper(func):
-            @functools.wraps(func)
-            def wrapped(self, *args, **kwargs):
-                if is_first:
-                    cls.PREREQUISITE_FAILED = False
-                    cls.FAILS_AND_ERRORS = (len(self._outcome.result.failures) or len(self._outcome.result.errors))
-                if not isinstance(self, cls):
-                    raise TypeError("This decorator can only be used for unittest.TestCase methods")
-                if cls.PREREQUISITE_FAILED or \
-                        ((len(self._outcome.result.failures) or len(self._outcome.result.errors)) > cls.FAILS_AND_ERRORS):
-                    cls.PREREQUISITE_FAILED = True
-                    raise unittest.SkipTest("Skipped due to failed prerequisite\n")
-                else:
-                   func(self, *args, **kwargs)
-            return wrapped
-        return wrapper
 
 
 def cleanup_after_failed_setup(*cleanup_methods):
