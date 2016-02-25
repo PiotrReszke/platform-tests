@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-__all__ = ["HttpStatus", "UserManagementHttpStatus", "DataCatalogHttpStatus"]
+__all__ = ["HttpStatus", "UserManagementHttpStatus", "DataCatalogHttpStatus", "ServiceCatalogHttpStatus"]
 
 
 class HttpStatus(object):
@@ -154,3 +154,9 @@ class DataCatalogHttpStatus(HttpStatus):
 
     MSG_NOT_VALID_UUID = "not a valid UUID"
     MSG_ORGANIZATION_NOT_EXIST = "org does not exist"
+
+
+class ServiceCatalogHttpStatus(HttpStatus):
+    """Services http status messages"""
+
+    MSG_FORBIDDEN = "You do not have permission to perform this action!"

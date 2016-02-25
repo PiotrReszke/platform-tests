@@ -15,9 +15,11 @@
 #
 
 import unittest
+import itertools
 
-from test_utils import ApiTestCase, get_logger, get_test_name, iPython
-from objects import ServiceInstance, ServiceType, Organization
+from test_utils import ApiTestCase, get_logger, iPython
+from objects import ServiceInstance, ServiceType, Organization, User
+from constants.HttpStatus import ServiceCatalogHttpStatus as HttpStatus
 
 
 logger = get_logger("test marketplace")
@@ -34,6 +36,12 @@ class TestMarketplaceServices(ApiTestCase):
         cls.test_space = cls.test_org.spaces[0]
         cls.step("Get list of available services from Marketplace")
         cls.marketplace = ServiceType.api_get_list_from_marketplace(cls.test_space.guid)
+        cls.step("Create space auditor client")
+        cls.space_auditor_client = User.api_create_by_adding_to_space(cls.test_org.guid, cls.test_space.guid,
+                                                                      roles=User.SPACE_ROLES["auditor"]).login()
+        cls.step("Create space manager client")
+        cls.space_manager_client = User.api_create_by_adding_to_space(cls.test_org.guid, cls.test_space.guid,
+                                                                      roles=User.SPACE_ROLES["manager"]).login()
 
     def _create_and_delete_service_instance(self, org_guid, space_guid, service_label, plan_guid):
         self.step("Create service instance")
@@ -112,4 +120,16 @@ class TestMarketplaceServices(ApiTestCase):
         terminal.send_input("env\n")
         output = "".join(terminal.get_output())
         self.assertIn("{}={}".format(param_key, param_value), output)
+
+    def test_cannot_create_service_instances_as_non_space_developer(self):
+        test_clients = {"space_auditor": self.space_auditor_client, "space_manager": self.space_manager_client}
+        for service_type, (name, client) in itertools.product(self.marketplace, test_clients.items()):
+            for plan in service_type.service_plans:
+                with self.subTest(service=service_type.label, plan=plan["name"]):
+                    self.step("Try to create new gateway instance")
+                    self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
+                                                        ServiceInstance.api_create, self.test_org.guid,
+                                                        self.test_space.guid, service_type.label,
+                                                        service_plan_guid=plan["guid"], client=client)
+
 
