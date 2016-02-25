@@ -33,9 +33,16 @@ class PriorityDecorator(object):
         self.priority_level = priority_level
 
     def __call__(self, f):
-        if not inspect.isfunction(f) and not f.__name__.startswith("test_"):
-            raise TypeError("Priority decorator can only be used on a test method.")
-        f.priority = self.priority_level
+        if inspect.isfunction(f):
+            if not f.__name__.startswith("test"):
+                raise TypeError("Priority decorator can only be used on a test method.")
+            f.priority = self.priority_level
+        elif inspect.isclass(f):
+            if not f.incremental:
+                raise ValueError("Priority decorator can only be used on classes which are incremental.")
+            test_method_names = [t for t in dir(f) if t.startswith("test")]
+            for tmn in test_method_names:
+                getattr(f, tmn).priority = self.priority_level
         return f
 
 
