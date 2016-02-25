@@ -64,6 +64,9 @@ __CONFIG.read_string("""
     [demo-gotapaas.com]
         ssl_validation = True
         cdh_key_path = ~/.ssh/demo-gotapaas.pem
+    [52.8.224.149.xip.io]
+        ref_org_name = trustedanalytics
+        ref_space_name = platform
 """)
 
 
