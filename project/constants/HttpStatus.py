@@ -160,4 +160,3 @@ class ServiceCatalogHttpStatus(HttpStatus):
     """Services http status messages"""
 
     MSG_SERVICE_NAME_TAKEN = "Provided name {} is already in use by other instance."
-    MSG_FORBIDDEN = "You do not have permission to perform this action!"
