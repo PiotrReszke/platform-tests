@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import unittest
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup
 from objects import Organization, ServiceType, ServiceInstance, ServiceInstanceKey
@@ -68,7 +67,6 @@ class ServiceInstanceKeys(ApiTestCase):
                 with self.subTest(service=service_type.label, plan=plan["name"]):
                     self._create_instance_and_key(service_type.label, plan["guid"], self.test_org, test_space)
 
-    @unittest.expectedFailure
     def test_create_yarn_service_instance_keys(self):
         """DPNG-3474 Command cf create-service-key does not work for yarn broker"""
         label = 'yarn'
@@ -78,9 +76,8 @@ class ServiceInstanceKeys(ApiTestCase):
             with self.subTest(service=label, plan=plan["name"]):
                 self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
 
-    @unittest.expectedFailure
     def test_create_hdfs_service_instance_keys(self):
-        """DPNG-3273 Enable HDFS broker to use Service Keys"""
+        """TASK DPNG-3273 Enable HDFS broker to use Service Keys"""
         label = "hdfs"
         hdfs = next(iter(s for s in self.marketplace_services if s.label == label))
         test_space = self.test_org.spaces[2]
@@ -88,9 +85,8 @@ class ServiceInstanceKeys(ApiTestCase):
             with self.subTest(service=label, plan=plan["name"]):
                 self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
 
-    @unittest.expectedFailure
     def test_create_hbase_service_instance_keys(self):
-        """DPNG-2798 Enable HBase broker to use Service Keys"""
+        """TASK DPNG-2798 Enable HBase broker to use Service Keys"""
         label = "hbase"
         hbase = next(iter(s for s in self.marketplace_services if s.label == label))
         test_space = self.test_org.spaces[2]

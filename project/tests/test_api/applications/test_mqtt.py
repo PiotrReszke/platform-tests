@@ -19,19 +19,18 @@ import signal
 import ssl
 import subprocess
 import time
-import unittest
 
 import paho.mqtt.client as mqtt
 
 from test_utils import ApiTestCase, get_logger, config, app_source_utils, cloud_foundry as cf, \
     cleanup_after_failed_setup
-from objects import Application, Organization, ServiceType, ServiceInstance
+from objects import Application, Organization, ServiceInstance
 
 
 logger = get_logger("test_mqtt")
 
 
-class TestMqtt(ApiTestCase):
+class Mqtt(ApiTestCase):
 
     INFLUX_LABEL = "influxdb088"
     INFLUX_INSTANCE_NAME = "mqtt-demo-db"
@@ -86,8 +85,7 @@ class TestMqtt(ApiTestCase):
         self.step("Retrieve credentials for mqtt service instance")
         self.credentials = mqtt_demo_app.get_credentials(service_name=self.MQTT_LABEL)
 
-    @unittest.expectedFailure
-    def test_connection(self):
+    def test_mqtt_demo(self):
         """DPNG-3929 Mosquitto crendentials support"""
         mqtt_port = self.credentials.get("port")
         self.assertIsNotNone(mqtt_port)

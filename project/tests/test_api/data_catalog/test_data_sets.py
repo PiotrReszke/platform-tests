@@ -21,7 +21,7 @@ from retry import retry
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, generate_csv_file, get_csv_record_count, \
     tear_down_test_files, get_csv_data, download_file, ATKtools
-from objects import Organization, Transfer, DataSet, User, Application, ServiceInstance
+from objects import Organization, Transfer, DataSet, User, Application
 from constants.HttpStatus import HttpStatus
 
 
@@ -385,9 +385,8 @@ class DataSetFromHdfs(ApiTestCase):
         dataset = self._create_dataset(self.org, source_dataset.target_uri)
         self.assertEqual(dataset.source_uri, source_dataset.target_uri)
 
-    @unittest.expectedFailure
+    @unittest.skip("We don't know how this should work")
     def test_create_transfer_from_atk_model_file(self):
-        """We don't know how this should work"""
         model_path = os.path.join("test_utils", "models", "lda.csv")
         test_data_directory = os.path.join("test_utils", "atk_test_scripts")
         self.step("Create transfer")

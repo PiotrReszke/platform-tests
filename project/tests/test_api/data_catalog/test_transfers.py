@@ -15,14 +15,11 @@
 #
 
 import time
-import unittest
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, get_logger, platform_api_calls as api, \
+from test_utils import ApiTestCase, cleanup_after_failed_setup, platform_api_calls as api, \
     generate_csv_file, tear_down_test_files, get_test_name, generate_empty_file
 from objects import Organization, Transfer, DataSet, User
 from constants.HttpStatus import DataCatalogHttpStatus as HttpStatus
-
-logger = get_logger("test data transfer")
 
 
 class SubmitTransferBase(ApiTestCase):
@@ -101,7 +98,6 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
         self.step("Get data set matching to transfer {}".format(transfer.title))
         DataSet.api_get_matching_to_transfer([self.org], transfer.title)
 
-    @unittest.expectedFailure
     def test_cannot_create_transfer_when_providing_wrong_org_guid(self):
         """DPNG-3896 Wrong response when trying to create transfer by file upload in non existing org"""
         org_guid = "wrong_guid"
@@ -114,7 +110,6 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
                                             title="test-transfer-{}".format(time.time()), is_public=False,
                                             org_guid=org_guid, category=category)
 
-    @unittest.expectedFailure
     def test_create_transfer_without_category(self):
         """DPNG-3678 Create transfer by file upload without category - http 500"""
         return super(SubmitTransferFromLocalFile, self).test_create_transfer_without_category()
@@ -137,7 +132,6 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
         self.step("Get data set matching to transfer {}".format(transfer.title))
         DataSet.api_get_matching_to_transfer([self.org], transfer.title)
 
-    @unittest.expectedFailure
     def test_submit_transfer_from_empty_file(self):
         """DPNG-5182 Adding empty file to data catalog trigger transfer error"""
         self.step("Generate sample csv file")
@@ -149,8 +143,7 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
                                             org_guid=self.org.guid, category="other")
 
 
-class OtherTransferTests(SubmitTransferBase):
+class GetTransfers(SubmitTransferBase):
     def test_admin_can_get_transfer_list(self):
         self.step("Check if the list of transfers can be retrieved")
-        transfers = Transfer.api_get_list(org_list=[self.org])
-        logger.info("{} transfers".format(len(transfers)))
+        Transfer.api_get_list(org_list=[self.org])

@@ -1,4 +1,19 @@
-import unittest
+#
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import re
 import time
 
@@ -78,7 +93,6 @@ class Onboarding(ApiTestCase):
         self.assert_user_in_org_and_roles(user, organization.guid, User.ORG_ROLES["manager"])
 
     def test_cannot_invite_existing_user(self):
-        """DPNG-2364 Onboarding existing user sends a new email invitation"""
         self.step("Invite a test user. The new user registers.")
         user, organization = User.api_onboard()
         self.step("Check that sending invitation to the same user causes an error.")
@@ -87,7 +101,6 @@ class Onboarding(ApiTestCase):
                                             User.api_invite, user.username)
 
     def test_non_admin_user_cannot_invite_another_user(self):
-        """DPNG-2366 Non admin user invites another user - http 500"""
         self.step("Create a test user")
         non_admin_user = User.api_create_by_adding_to_organization(org_guid=self.test_org.guid)
         non_admin_user_client = non_admin_user.login()
@@ -115,7 +128,6 @@ class Onboarding(ApiTestCase):
                                             User.api_register_after_onboarding, code, username)
 
     def test_invite_user_with_non_email_username(self):
-        """DPNG-2625 Onboarding user with invalid e-mail as username results in Internal Server Error"""
         self.step("Check that passing invalid email results in error")
         username = "non_mail_username"
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_EMAIL_ADDRESS_NOT_VALID,
@@ -147,7 +159,6 @@ class Onboarding(ApiTestCase):
         self.assertNotInList(username, username_list, "User was created")
 
     def test_user_cannot_register_with_no_organization_name(self):
-        """DPNG-2458 It's possible to create user without organization after onboarding"""
         self.step("Invite a new user")
         username = User.api_invite()
         code = gmail_api.get_invitation_code_for_user(username)
@@ -206,7 +217,6 @@ class PendingInvitations(ApiTestCase):
                                             HttpStatus.MSG_NO_PENDING_INVITATION_FOR.format(username),
                                             User.api_resend_user_invitation, username)
 
-    @unittest.expectedFailure
     def test_cannot_resend_invitation_providing_empty_name(self):
         """DPNG-4657 http 500 when trying to use unsupported api endpoints"""
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_NOT_FOUND,
@@ -225,7 +235,6 @@ class PendingInvitations(ApiTestCase):
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_EMPTY,
                                             User.api_register_after_onboarding, code, username)
 
-    @unittest.expectedFailure
     def test_cannot_delete_not_existing_pending_invitation(self):
         """DPNG-4654 Typo in 'DELETE /rest/invitations/ error message."""
         self.step("Try to delete not existing invitation")
@@ -234,7 +243,6 @@ class PendingInvitations(ApiTestCase):
                                             HttpStatus.MSG_NO_PENDING_INVITATION_FOR.format(username),
                                             User.api_delete_user_invitation, username)
 
-    @unittest.expectedFailure
     def test_cannot_delete_pending_invitation_providing_empty_name(self):
         """DPNG-4657 http 500 when trying to use unsupported api endpoints"""
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_NOT_FOUND,

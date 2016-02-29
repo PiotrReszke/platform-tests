@@ -14,15 +14,11 @@
 # limitations under the License.
 #
 
-import unittest
 import itertools
 
-from test_utils import ApiTestCase, get_logger, iPython, get_test_name
+from test_utils import ApiTestCase, iPython, get_test_name
 from objects import ServiceInstance, ServiceType, Organization, User
 from constants.HttpStatus import ServiceCatalogHttpStatus as HttpStatus
-
-
-logger = get_logger("test marketplace")
 
 
 class TestMarketplaceServices(ApiTestCase):
@@ -148,7 +144,6 @@ class TestMarketplaceServices(ApiTestCase):
         self.assertUnorderedListEqual(service_list, ServiceInstance.api_get_list(space_guid=self.test_space.guid),
                                       "Some new services were created")
 
-    @unittest.expectedFailure
     def test_cannot_create_service_instance_without_name(self):
         """DPNG-5154 Http status 500 when trying to create a service instance without a name"""
         expected_instance_list = ServiceInstance.api_get_list(self.test_space.guid)

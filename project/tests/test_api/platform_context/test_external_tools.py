@@ -14,18 +14,15 @@
 # limitations under the License.
 #
 
-import unittest
-
-from test_utils import ApiTestCase, get_logger
+from test_utils import ApiTestCase
 from objects import ExternalTools
 
-
-logger = get_logger("test_external_tools")
+import unittest
 
 
 class TestExternalTools(ApiTestCase):
 
-    @unittest.expectedFailure
+    @unittest.skip("Fix me! DPNG-5105")
     def test_check_status_code_of_external_tools(self):
         """DPNG-2306 Availability of Arcadia and Hue should be discovered automatically"""
         self.step("Get list of external tools")
