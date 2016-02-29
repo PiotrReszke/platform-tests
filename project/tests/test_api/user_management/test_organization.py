@@ -61,7 +61,7 @@ class TestOrganization(ApiTestCase):
         deleted_org.api_delete()
         self.step("Check that the organization is not on org list")
         orgs = Organization.api_get_list()
-        self.assertNotInList(deleted_org, orgs)
+        self.assertNotInListWithRetry(deleted_org, orgs)
 
     @priority.p1
     def test_get_more_than_50_organizations(self):
@@ -87,4 +87,4 @@ class TestOrganization(ApiTestCase):
         org.api_delete()
         self.step("Check that the organization is not on org list")
         org_list = Organization.api_get_list()
-        self.assertNotInList(org, org_list, "Organization with user was not deleted.")
+        self.assertNotInListWithRetry(org, org_list, "Organization with user was not deleted.")
