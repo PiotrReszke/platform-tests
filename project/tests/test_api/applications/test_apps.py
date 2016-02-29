@@ -82,7 +82,7 @@ class Apps(ApiTestCase):
         self.test_org.api_delete()
         self.step("Check that the organization is gone")
         org_list = Organization.api_get_list()
-        self.assertNotInList(self.test_org, org_list, "Organization {} has not been deleted".format(self.test_org.name))
+        self.assertNotInListWithRetry(self.test_org, Organization.api_get_list)
 
     def test_delete_space_and_org_without_deleting_an_app(self):
         """DPNG-2694 Cannot delete space with an running app"""
@@ -94,4 +94,4 @@ class Apps(ApiTestCase):
         self.test_org.api_delete()
         self.step("Check that the organization is gone")
         org_list = Organization.api_get_list()
-        self.assertNotInList(self.test_org, org_list, "Organization {} has not been deleted".format(self.test_org.name))
+        self.assertNotInListWithRetry(self.test_org, Organization.api_get_list)
