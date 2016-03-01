@@ -107,10 +107,9 @@ class AddNewUserToSpace(BaseSpaceUserClass):
                                             User.api_create_by_adding_to_space, TEST_ORG.guid, TEST_SPACE.guid,
                                             roles=[])
 
-    @unittest.skip("Fix me! DPNG-5593")
     def test_cannot_create_new_user_with_long_username(self):
         """DPNG-3363 Api email validation does not work properly"""
-        long_username = User.TEST_EMAIL_FORM.format(str(time.time()) + "x" * 300)
+        long_username = "x" * 300 + get_test_name(email=True)
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_EMPTY,
                                             User.api_create_by_adding_to_space, TEST_ORG.guid, TEST_SPACE.guid,
                                             username=long_username)
@@ -257,13 +256,12 @@ class UpdateSpaceUser(BaseSpaceUserClass):
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_WRONG_UUID_FORMAT_EXCEPTION,
                                             api.api_update_space_user_roles, invalid_guid, USER.guid, roles)
 
-    @unittest.skip("Fix me! DPNG-5593")
     def test_send_space_role_update_request_with_empty_body(self):
         """DPNG-4278 sending space role update request with empty body deletes user roles and returns http 500"""
         self.step("Create new platform user by adding to the space")
         test_user = User.api_create_by_adding_to_space(org_guid=TEST_ORG.guid, space_guid=self.test_space.guid)
         self.step("Send request with empty body")
-        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_MUST_HAVE_AT_LEAST_ONE_ROLE,
                                             api.api_update_space_user_roles, self.test_space.guid, test_user.guid)
         self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
 
