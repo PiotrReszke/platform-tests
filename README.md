@@ -127,3 +127,50 @@ Appstack tests `./project/run_tests.sh -s "test_appstack" -e %test_platform%`
 API tests: `./project/run_tests.sh -s %test_type% -e %test_platform% --client-type "$client_type"`
 
 Application tests: `./project/run_tests.sh -s "test_cf_applications" -e %test_platform%`
+
+### Run smoke tests on bastion
+
+Ssh to your bastion using most likely auto-deploy-virginia.pem key (if you don't know bastion address, but you know the environment is deployed automatically on TeamCity, you'll find bastion address in platform-deployment-tests/deployment-init configuration, step Update domain IP addresses)
+
+Required packages (```sudo apt-get install python3 python3-dev git```) should be installed on the bastion.
+
+Install git-crypt and decrypt repository secrets:
+```
+wget https://github.com/AGWA/git-crypt/archive/0.5.0.zip
+unzip 0.5.0.zip
+cd git-crypt-0.5.0
+make git-crypt
+sudo make install git-crypt
+```
+
+Copy your github private key to bastion and add it to shh:
+```
+scp -i ./auto-deploy-virginia.pem [your_private_key] [user]@[bastion_address]:/[path_to_ssh]/.ssh/[your_private_key]
+eval `ssh-agent`
+ssh-add .ssh/[your_private_key]
+```
+Check if it works: `ssh -vT git@github.com`
+
+Create folder for tests 
+```
+mkdir [tests_folder_name]
+cd [tests_folder_name]
+```
+Clone repository: `git clone git@github.com:intel-data/api-tests.git`
+
+Copy key.dat into api-tests folder: `scp -i ./auto-deploy-virginia.pem [path_to_key]/key.dat  [user]@bastion_address:/[path_to_tests_folder]/api-tests`
+
+Decrypt repository secrets:
+```
+cd [tests_folder_name]/api-test
+./deploy/unlock.sh
+```
+Check that secrets are decrypted correctly: `cat api-tests/project/test_utils/secrets/.secret.ini`
+
+Create virtualenv: `./deploy/create_virtualenv.sh`. 
+New Folder virtualenvs/ should be visible in home directory
+Run smoke tests
+```
+cd [tests_folder_name]/api-test
+./project/run_tests.sh -s test_smoke -e [platform_address] > [log_file] 2>&1
+```
