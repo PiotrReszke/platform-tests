@@ -21,19 +21,38 @@ from objects import ExternalTools
 
 class ExternalToolsStatus(ApiTestCase):
 
+<<<<<<< HEAD
     @priority.medium
     @unittest.skip("Fix me! DPNG-5105")
+=======
+    @classmethod
+    def setUpClass(cls):
+        cls.step("Get list of external tools")
+        cls.tools_list = ExternalTools.api_get_external_tools()
+
+<<<<<<< HEAD
+>>>>>>> 1958c9c... DPNG-5105 Fix external tools test
+=======
+    @priority.medium
+>>>>>>> f605b47... DPNG-5105 after review
     def test_check_status_code_of_external_tools(self):
         """DPNG-2306 Availability of Arcadia and Hue should be discovered automatically"""
-        self.step("Get list of external tools")
-        tools_list = ExternalTools.api_get_external_tools()
-        self.assertGreater(len(tools_list), 0)
-        for tool in tools_list:
-            with self.subTest(tool=tool.name):
-                if tool.available:
-                    self.step("Check that request to {} returns OK status".format(tool.name))
-                    tool.send_request()
-                else:
-                    self.step("Check that request to {} returns fails with 4XX or 5XX".format(tool.name))
-                    self.assertReturnsError(tool.send_request)
+        for tool in self.tools_list:
+            if tool.should_have_url:
+                with self.subTest(tool=tool.name, available=tool.available):
+                    if tool.available and tool.url:
+                        self.step("Check that request to {} returns OK status".format(tool.name))
+                        tool.send_request()
+                    elif tool.url:
+                        self.step("Check that request to {} returns fails with 4XX or 5XX".format(tool.name))
+                        self.assertReturnsError(tool.send_request)
 
+    @priority.medium
+    def test_check_tools_urls(self):
+        self.step("Check URL availability of tools")
+        for tool in self.tools_list:
+            with self.subTest(tool=tool.name, url_present=tool.should_have_url):
+                if tool.should_have_url:
+                    self.assertIsNotNone(tool.url)
+                else:
+                    self.assertIsNone(tool.url)

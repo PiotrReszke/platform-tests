@@ -28,10 +28,11 @@ logger = get_logger("external_tools")
 @functools.total_ordering
 class ExternalTools(object):
 
-    def __init__(self, name, url, available):
+    def __init__(self, name, url, available, category):
         self.name = name
         self.url = url
         self.available = available
+        self.category = category
         self._session = requests.session()
         self._session.verify = CONFIG["ssl_validation"]
 
@@ -47,14 +48,19 @@ class ExternalTools(object):
     def __repr__(self):
         return "{} {}".format(self.__class__.__name__, self.name)
 
+    @property
+    def should_have_url(self):
+        return self.category == "visualizations"
+
     @classmethod
     def api_get_external_tools(cls, client=None):
         response = api.api_get_external_tools(client)
         tools_list = []
-        response = response["externalTools"]["list"]
-        if response is not None:
-            for tool_data in response:
-                tool = cls(name=tool_data["name"], url=tool_data["url"], available=tool_data["available"])
+        tools = response["external_tools"]
+        for tool_category, tool_list in tools.items():
+            for tool_data in tool_list:
+                tool = cls(name=tool_data["name"], url=tool_data["url"], available=tool_data["available"],
+                           category=tool_category)
                 tools_list.append(tool)
         return tools_list
 
