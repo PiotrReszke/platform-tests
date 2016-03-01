@@ -140,6 +140,7 @@ class UserManagementHttpStatus(HttpStatus):
     MSG_WRONG_UUID_FORMAT_EXCEPTION = "Wrong uuid format exception"
     MSG_EMAIL_ADDRESS_NOT_VALID = "That email address is not valid"
     MSG_MUST_HAVE_AT_LEAST_ONE_ROLE = "You must have at least one role"
+    MSG_CANNOT_PERFORM_REQ_WITHOUT_ROLES = "You cannot perform request without specified roles"
     MSG_USER_NOT_EXIST_IN_ORGANIZATION = "User {} does not exist in organization {}."
     MSG_USER_ALREADY_EXISTS = "User {} already exists"
     MSG_USER_IS_NOT_IN_GIVEN_SPACE = "The user is not in given space"

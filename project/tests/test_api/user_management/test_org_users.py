@@ -477,22 +477,19 @@ class UpdateOrganizationUser(BaseOrgUserClass):
                 self.assert_user_in_org_and_roles(updated_user, org.guid, user_role)
 
     def test_org_manager_cannot_delete_own_role_while_being_the_only_org_manager(self):
-        """DPNG-5451 API tests fail due to features/fixes"""
         manager_role = User.ORG_ROLES["manager"]
         org, updated_user, client, _ = self._create_org_and_init_users("manager")
         self.step("As org manager try to delete self 'org manager' role")
-        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_MUST_HAVE_AT_LEAST_ONE_ROLE,
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
                                             updated_user.api_update_org_roles, org.guid, new_roles={}, client=client)
         self.assert_user_in_org_and_roles(updated_user, org.guid, manager_role)
 
     def test_org_manager_remove_own_role_when_there_is_another_org_manager(self):
-        """DPNG-5451 API tests fail due to features/fixes"""
         manager_role = User.ORG_ROLES["manager"]
         org, updated_user, client, _ = self._create_org_and_init_users("manager", manager_role)
         self.step("As one of the org managers delete own 'org manager' role")
-        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_MUST_HAVE_AT_LEAST_ONE_ROLE,
-                                            updated_user.api_update_org_roles, org.guid, new_roles={}, client=client)
-        self.assert_user_in_org_and_roles(updated_user, org.guid, manager_role)
+        updated_user.api_update_org_roles(org.guid, new_roles={}, client=client)
+        self.assert_user_in_org_and_roles(updated_user, org.guid, {})
 
     def test_org_manager_add_roles_to_self(self):
         expected_role = User.ORG_ROLES["manager"]
@@ -504,12 +501,11 @@ class UpdateOrganizationUser(BaseOrgUserClass):
             self.assert_user_in_org_and_roles(updated_user, org.guid, expected_role)
 
     def test_send_org_role_update_request_with_empty_body(self):
-        """DPNG-5451 API tests fail due to features/fixes"""
         expected_roles = User.ORG_ROLES["manager"]
         self.step("Create new platform user by adding to org")
         test_user = User.api_create_by_adding_to_organization(org_guid=TEST_ORG.guid, roles=expected_roles)
         self.step("Send request with empty body")
-        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_MUST_HAVE_AT_LEAST_ONE_ROLE,
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_CANNOT_PERFORM_REQ_WITHOUT_ROLES,
                                             api.api_update_org_user_roles, TEST_ORG.guid, test_user.guid)
         self.assert_user_in_org_and_roles(test_user, TEST_ORG.guid, expected_roles)
 
