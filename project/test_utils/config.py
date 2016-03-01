@@ -97,6 +97,8 @@ def update_test_config(domain=None, proxy=None, client_type=None, logged_respons
         CONFIG["ref_org_name"] = __CONFIG.get(domain, "ref_org_name", fallback=defaults["ref_org_name"])
         CONFIG["ref_space_name"] = __CONFIG.get(domain, "ref_space_name", fallback=defaults["ref_space_name"])
         CONFIG["cdh_key_path"] = __CONFIG.get(domain, "cdh_key_path", fallback=defaults["cdh_key_path"])
+        CONFIG["arcadia_username"] = __SECRETS.get(domain, "arcadia_username", fallback=defaults["arcadia_username"])
+        CONFIG["arcadia_password"] = __SECRETS.get(domain, "arcadia_password", fallback=defaults["arcadia_password"])
     CONFIG["proxy"] = proxy
     if logged_response_body_length is not None:
         logger.LOGGED_RESPONSE_BODY_LENGTH = logged_response_body_length
@@ -167,3 +169,11 @@ def parse_arguments():
                         default="intel-data",
                         help="Repository from which the applications source code is cloned.")
     return parser.parse_args()
+
+
+def get_proxy():
+    if CONFIG["proxy"] is not None:
+        return {"https": CONFIG["proxy"], "http": CONFIG["proxy"]}
+    env_http_proxy = os.environ.get("http_proxy") or os.environ.get("HTTP_PROXY")
+    env_https_proxy = os.environ.get("https_proxy") or os.environ.get("HTTPS_PROXY")
+    return {"https": env_https_proxy or env_http_proxy, "http": env_http_proxy}

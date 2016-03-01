@@ -167,7 +167,7 @@ class iPython(object):
         self.password = None
         self.instance_url = None
         self.http_session = requests.Session()
-        self.http_session.proxies = {"https": os.environ.get("HTTPS_PROXY"), "http": os.environ.get("HTTP_PROXY")}
+        self.http_session.proxies = config.get_proxy()
         self.ws_sslopt = {}
         if not config.CONFIG["ssl_validation"]:
             self.http_session.verify = False

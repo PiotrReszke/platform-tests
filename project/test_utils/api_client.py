@@ -39,9 +39,7 @@ class PlatformApiClient(metaclass=abc.ABCMeta):
         self._domain = config.CONFIG["domain"]
         self._login_endpoint = "login.{}".format(self._domain)
         self._session = requests.Session()
-        proxy = config.CONFIG["proxy"]
-        if proxy is not None:
-            self._session.proxies = {"https": proxy, "http": proxy}
+        self._session.proxies = config.get_proxy()
         self._session.verify = config.CONFIG["ssl_validation"]
 
     def __repr__(self):

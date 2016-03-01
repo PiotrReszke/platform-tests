@@ -103,7 +103,7 @@ class Atk(ApiTestCase):
         Transfer.api_create(source=self.DATA_SOURCE, org=self.test_org, title=self.transfer_title).ensure_finished()
         self.step("Publish in hive the data set created based on the submitted transfer")
         data_set = DataSet.api_get_matching_to_transfer(org_list=[self.test_org], transfer_title=self.transfer_title)
-        data_set.publish_in_hive()
+        data_set.api_publish()
         self.__class__.data_set_hdfs_path = data_set.target_uri
 
     @ApiTestCase.mark_prerequisite()

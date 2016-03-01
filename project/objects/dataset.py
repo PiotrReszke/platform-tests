@@ -89,7 +89,7 @@ class DataSet(object):
                    data_sample=source["dataSample"], record_count=source["recordCount"], size=source["size"],
                    source_uri=source["sourceUri"], target_uri=source["targetUri"])
 
-    def publish_in_hive(self, client=None):
+    def api_publish(self, client=None):
         return api.api_publish_dataset(category=self.category, creation_time=self.creation_time,
                                        data_sample=self.data_sample, format=self.format, is_public=self.is_public,
                                        org_guid=self.org_guid, record_count=self.record_count, size=self.size,

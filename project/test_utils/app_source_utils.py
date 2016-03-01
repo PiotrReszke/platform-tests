@@ -36,9 +36,7 @@ def github_get_file_content(repository, file_path, owner=None, ref=None):
     owner = owner or config.CONFIG["repository"]
     url = "https://api.github.com/repos/{}/{}/contents/{}".format(owner, repository, file_path)
     session = requests.session()
-    proxy = config.CONFIG["proxy"]
-    if proxy is not None:
-        session.proxies = {"https": proxy, "http": proxy}
+    session.proxies = config.get_proxy()
     request = session.prepare_request(requests.Request(method="GET", url=url, params={"ref": ref},
                                                        auth=config.CONFIG["github_auth"]))
     log_http_request(request, "")
