@@ -169,6 +169,9 @@ Check that secrets are decrypted correctly: `cat api-tests/project/test_utils/se
 
 Create virtualenv: `./deploy/create_virtualenv.sh`. 
 New Folder virtualenvs/ should be visible in home directory
+
+Create test user if not already present: `trusted.analytics.tester@gmail.com` (see above for details)
+
 Run smoke tests
 ```
 cd [tests_folder_name]/api-test
