@@ -39,8 +39,7 @@ class FunctionalSmokeTests(ApiTestCase):
         self.step("Delete organization")
         test_org.api_delete()
         self.step("Check that the organization is not on the list")
-        orgs = Organization.api_get_list()
-        self.assertNotInList(test_org, orgs)
+        self.assertNotInListWithRetry(test_org, Organization.api_get_list)
 
     def test_onboarding(self):
         self.step("Onboard new user")
