@@ -26,7 +26,6 @@ from . import config, log_http_request, log_http_response, UnexpectedResponseErr
 __all__ = ["PlatformApiClient", "ConsoleClient", "AppClient", "CfApiClient", "UaaApiClient"]
 
 
-
 class PlatformApiClient(metaclass=abc.ABCMeta):
     """Base class for HTTP clients"""
 

@@ -65,7 +65,7 @@ class BaseSpaceUserClass(ApiTestCase):
     def _assert_user_in_space_with_roles(self, expected_user, space_guid):
         self.step("Check that the user is on the list of space users")
         space_users = User.api_get_list_via_space(space_guid)
-        self.assertInList(expected_user, space_users)
+        self.assertIn(expected_user, space_users)
         space_user = next(user for user in space_users if user.guid == expected_user.guid)
         self.step("Check that the user has expected space roles")
         space_user_roles = space_user.space_roles.get(space_guid)
@@ -279,7 +279,7 @@ class DeleteSpaceUser(BaseSpaceUserClass):
         self._assert_user_not_in_space(USER, self.test_space.guid)
         self.step("Check that the user is still in the organization")
         org_users = User.api_get_list_via_organization(org_guid=TEST_ORG.guid)
-        self.assertInList(USER, org_users, "User is not in the organization")
+        self.assertIn(USER, org_users, "User is not in the organization")
 
     def test_delete_user_which_is_not_in_space(self):
         """DPNG-2293 Deleting from space a user which is not in this space does not return any error"""
@@ -307,7 +307,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
             with self.subTest(user_type=client):
                 if is_authorized:
                     user_list = User.api_get_list_via_space(TEST_SPACE.guid, client=USERS_CLIENTS[client])
-                    self.assertInList(test_user, user_list, "User {} was not found in list".format(test_user))
+                    self.assertIn(test_user, user_list, "User {} was not found in list".format(test_user))
                 else:
                     self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
                                                         User.api_get_list_via_space, TEST_SPACE.guid,
@@ -372,7 +372,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                     self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
                                                         test_user.api_delete_from_space, TEST_SPACE.guid,
                                                         client=USERS_CLIENTS[client])
-                    self.assertInList(test_user, User.api_get_list_via_space(TEST_SPACE.guid), "User was deleted")
+                    self.assertIn(test_user, User.api_get_list_via_space(TEST_SPACE.guid), "User was deleted")
 
     def test_add_space(self):
         client_permission = {
@@ -390,7 +390,7 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                 if client_permission[client]:
                     new_space = Space.api_create(TEST_ORG, client=USERS_CLIENTS[client])
                     space_list = Space.api_get_list()
-                    self.assertInList(new_space, space_list, "Space was not created.")
+                    self.assertIn(new_space, space_list, "Space was not created.")
                 else:
                     self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
                                                         Space.api_create, TEST_ORG, client=USERS_CLIENTS[client])
@@ -411,8 +411,8 @@ class SpaceUserPermissions(BaseSpaceUserClass):
                 new_space = Space.api_create(TEST_ORG)
                 if client_permission[client]:
                     new_space.api_delete(TEST_ORG, client=USERS_CLIENTS[client])
-                    self.assertNotInListWithRetry(new_space, Space.api_get_list)
+                    self.assertNotInWithRetry(new_space, Space.api_get_list)
                 else:
                     self.assertRaisesUnexpectedResponse(HttpStatus.CODE_FORBIDDEN, HttpStatus.MSG_FORBIDDEN,
                                                         new_space.api_delete, TEST_ORG, client=USERS_CLIENTS[client])
-                    self.assertInList(new_space, TEST_ORG.api_get_spaces(), "Space was not deleted")
+                    self.assertIn(new_space, TEST_ORG.api_get_spaces(), "Space was not deleted")

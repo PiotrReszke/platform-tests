@@ -49,7 +49,7 @@ class Gateway(ApiTestCase):
                                                                      self.LABEL, service_plan_name=self.PLAN_NAME,
                                                                      client=self.space_developer_client)
         self.step("Check that instance was created")
-        self.assertInListWithRetry(self.gateway_instance, ServiceInstance.api_get_list, self.test_space.guid)
+        self.assertInWithRetry(self.gateway_instance, ServiceInstance.api_get_list, self.test_space.guid)
         app_list = Application.api_get_list(self.test_space.guid)
         self.__class__.gateway_app = next((app for app in app_list if app.name.startswith(self.gateway_instance.name)),
                                           None)
@@ -82,7 +82,7 @@ class Gateway(ApiTestCase):
     def test_2_delete_gateway_instance(self):
         self.step("Delete gateway instance")
         self.gateway_instance.api_delete(client=self.space_developer_client)
-        self.assertNotInListWithRetry(self.gateway_instance, ServiceInstance.api_get_list, self.test_space.guid)
+        self.assertNotInWithRetry(self.gateway_instance, ServiceInstance.api_get_list, self.test_space.guid)
         self.step("Check that bound kafka instance was also deleted")
         service_instances = ServiceInstance.api_get_list(self.test_space.guid)
-        self.assertNotInList(self.kafka_instance, service_instances, "Kafka instance was not deleted")
+        self.assertNotIn(self.kafka_instance, service_instances, "Kafka instance was not deleted")

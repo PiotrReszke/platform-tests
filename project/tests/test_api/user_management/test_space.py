@@ -48,7 +48,7 @@ class Spaces(ApiTestCase):
         space = Space.api_create(org=self.test_org)
         self.step("Check that the space is on the org space list")
         spaces = Space.api_get_list()
-        self.assertInList(space, spaces)
+        self.assertIn(space, spaces)
 
     def test_cannot_create_space_with_existing_name(self):
         self.step("Create a space")
@@ -63,7 +63,7 @@ class Spaces(ApiTestCase):
         space = Space.api_create(org=self.test_org, name=long_name)
         self.step("Check that the space with long name is present on space list")
         spaces = Space.api_get_list()
-        self.assertInList(space, spaces)
+        self.assertIn(space, spaces)
 
     def test_create_space_with_empty_name(self):
         self.step("Check that attempt to create space with empty name returns an error")
@@ -76,14 +76,14 @@ class Spaces(ApiTestCase):
         self.step("Delete the space")
         space.api_delete(org=self.test_org)
         self.step("Check that the deleted space is not present on the space list")
-        self.assertNotInListWithRetry(space, Space.api_get_list)
+        self.assertNotInWithRetry(space, Space.api_get_list)
 
     def test_cannot_delete_not_existing_space(self):
         self.step("Create a space")
         space = Space.api_create(org=self.test_org)
         self.step("Delete the space")
         space.api_delete(org=self.test_org)
-        self.assertNotInListWithRetry(space, Space.api_get_list)
+        self.assertNotInWithRetry(space, Space.api_get_list)
         self.step("Check that attempt to delete the space again returns an error")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_NOT_FOUND, space.api_delete)
 
@@ -95,4 +95,4 @@ class Spaces(ApiTestCase):
         self.step("Delete the space")
         space.api_delete(org=self.test_org)
         self.step("Check that the space is not on the space list")
-        self.assertNotInListWithRetry(space, Space.api_get_list)
+        self.assertNotInWithRetry(space, Space.api_get_list)

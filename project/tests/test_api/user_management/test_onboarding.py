@@ -89,7 +89,7 @@ class Onboarding(ApiTestCase):
         user, organization = User.api_register_after_onboarding(code, username)
         self.step("Check that the user and their organization exist")
         organizations = Organization.api_get_list()
-        self.assertInList(organization, organizations, "New organization was not found")
+        self.assertIn(organization, organizations, "New organization was not found")
         self.assert_user_in_org_and_roles(user, organization.guid, User.ORG_ROLES["manager"])
 
     def test_cannot_invite_existing_user(self):
@@ -143,7 +143,7 @@ class Onboarding(ApiTestCase):
                                             api.api_register_new_user, code=code, org_name=get_test_name())
         self.step("Check that the user was not created")
         username_list = [user.username for user in User.cf_api_get_all_users()]
-        self.assertNotInList(username, username_list, "User was created")
+        self.assertNotIn(username, username_list, "User was created")
 
     def test_user_cannot_register_already_existing_organization(self):
         self.step("Invite a new user")
@@ -156,7 +156,7 @@ class Onboarding(ApiTestCase):
                                             org_name=self.test_org.name)
         self.step("Check that the user was not created")
         username_list = [user.username for user in User.cf_api_get_all_users()]
-        self.assertNotInList(username, username_list, "User was created")
+        self.assertNotIn(username, username_list, "User was created")
 
     def test_user_cannot_register_with_no_organization_name(self):
         self.step("Invite a new user")
@@ -167,7 +167,7 @@ class Onboarding(ApiTestCase):
                                             api.api_register_new_user, code=code, password="testPassw0rd")
         self.step("Check that the user was not created")
         username_list = [user.username for user in User.cf_api_get_all_users()]
-        self.assertNotInList(username, username_list, "User was created")
+        self.assertNotIn(username, username_list, "User was created")
 
 
 class PendingInvitations(ApiTestCase):
@@ -175,7 +175,7 @@ class PendingInvitations(ApiTestCase):
         self.step("Invite new user")
         username = User.api_invite()
         self.step("Check that the user is in the pending invitation list")
-        self.assertInListWithRetry(username, User.api_get_pending_invitations)
+        self.assertInWithRetry(username, User.api_get_pending_invitations)
 
     def test_accepting_invitation_deletes_it_from_pending_list(self):
         self.step("Invite new user")
@@ -185,7 +185,7 @@ class PendingInvitations(ApiTestCase):
         self.step("Register user with the received code")
         User.api_register_after_onboarding(code, username)
         self.step("Check that invitation is no longer present in pending invitation list")
-        self.assertNotInListWithRetry(username, User.api_get_pending_invitations)
+        self.assertNotInWithRetry(username, User.api_get_pending_invitations)
 
     def test_add_new_pending_invitation_twice_for_the_same_user(self):
         self.step("Send invitation two times for a single user")
@@ -225,10 +225,10 @@ class PendingInvitations(ApiTestCase):
     def test_delete_pending_invitation(self):
         self.step("Invite new user")
         username = User.api_invite()
-        self.assertInListWithRetry(username, User.api_get_pending_invitations)
+        self.assertInWithRetry(username, User.api_get_pending_invitations)
         self.step("Delete pending user invitation")
         User.api_delete_user_invitation(username)
-        self.assertNotInListWithRetry(username, User.api_get_pending_invitations)
+        self.assertNotInWithRetry(username, User.api_get_pending_invitations)
         self.step("Get registration code from received message")
         code = gmail_api.get_invitation_code_for_user(username)
         self.step("Check that the user cannot register after deletion of pending invitation")

@@ -74,7 +74,7 @@ class Atk(ApiTestCase):
         )
         self.step("Check that atk instance has been created")
         instances = ServiceInstance.api_get_list(space_guid=self.test_space.guid, service_type_guid=atk_service.guid)
-        self.assertInList(atk_instance, instances)
+        self.assertIn(atk_instance, instances)
         self.step("Check that atk application is created and started")
         atk_app = self.get_from_list_by_attribute_with_retry(
             attr_name="name",

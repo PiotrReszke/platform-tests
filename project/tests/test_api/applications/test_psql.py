@@ -79,13 +79,13 @@ class Postgres(ApiTestCase):
     def test_create_table(self):
         test_table = PsqlTable.post(self.psql_app, self.test_table_name, self.test_columns)
         table_list = PsqlTable.get_list(self.psql_app)
-        self.assertInList(test_table, table_list)
+        self.assertIn(test_table, table_list)
 
     def test_delete_table(self):
         test_table = PsqlTable.post(self.psql_app, self.test_table_name, self.test_columns)
         test_table.delete()
         table_list = PsqlTable.get_list(self.psql_app)
-        self.assertNotInList(test_table, table_list)
+        self.assertNotIn(test_table, table_list)
 
     def test_get_table_columns(self):
         test_table = PsqlTable.post(self.psql_app, self.test_table_name, self.test_columns)
@@ -94,7 +94,7 @@ class Postgres(ApiTestCase):
         columns = test_table.get_columns()
         self.assertEqual(len(columns), len(expected_columns))
         for column in expected_columns:
-            self.assertInList(column, columns)
+            self.assertIn(column, columns)
 
     def test_post_row(self):
         PsqlTable.post(self.psql_app, self.test_table_name, self.test_columns)
@@ -103,7 +103,7 @@ class Postgres(ApiTestCase):
                 row_id += 1  # psql's 1-based indexing
                 new_row = PsqlRow.post(self.psql_app, self.test_table_name, row_values)
                 row_list = PsqlRow.get_list(self.psql_app, self.test_table_name)
-                self.assertInList(new_row, row_list)
+                self.assertIn(new_row, row_list)
                 row = PsqlRow.get(self.psql_app, self.test_table_name, row_id)
                 self.assertEqual(row, new_row)
 
@@ -126,7 +126,7 @@ class Postgres(ApiTestCase):
         posted_rows = [PsqlRow.post(self.psql_app, self.test_table_name, rv) for rv in self.row_value_list]
         posted_rows[1].delete()
         rows = PsqlRow.get_list(self.psql_app, self.test_table_name)
-        self.assertNotInList(posted_rows[1], rows)
+        self.assertNotIn(posted_rows[1], rows)
 
 
 

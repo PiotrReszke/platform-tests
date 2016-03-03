@@ -52,18 +52,18 @@ class TestMarketplaceServices(ApiTestCase):
         )
         self.step("Check that the instance was created")
         instances = ServiceInstance.api_get_list(space_guid=space_guid)
-        self.assertInList(instance, instances)
+        self.assertIn(instance, instances)
         self.step("Delete the instance")
         instance.api_delete()
         self.step("Check that the instance was deleted")
         instances = ServiceInstance.api_get_list(space_guid=space_guid)
-        self.assertNotInList(instance, instances)
+        self.assertNotIn(instance, instances)
 
     def _create_ipython_instance_and_login(self, param_key, param_value):
         param = {param_key: param_value}
         self.step("Create service instance and check it exist in list")
         ipython = iPython(self.test_org.guid, self.test_space.guid, params=param)
-        self.assertInListWithRetry(ipython.instance, ServiceInstance.api_get_list, self.test_space.guid)
+        self.assertInWithRetry(ipython.instance, ServiceInstance.api_get_list, self.test_space.guid)
         self.step("Get credentials for the new ipython service instance")
         ipython.get_credentials()
         ipython.login()
@@ -132,7 +132,7 @@ class TestMarketplaceServices(ApiTestCase):
         )
         service_list = ServiceInstance.api_get_list(space_guid=self.test_space.guid)
         self.step("Check that the instance was created")
-        self.assertInList(instance, service_list, "Instance was not created")
+        self.assertIn(instance, service_list, "Instance was not created")
         for service_type in self.marketplace:
             plan_guid = next(iter(service_type.service_plan_guids))
             with self.subTest(service_type=service_type):

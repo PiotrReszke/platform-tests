@@ -67,7 +67,7 @@ class SubmitTransfer(SubmitTransferBase):
         transfer = self._create_transfer(category=None)
         self.step("Get transfer and check it's category")
         transfer_list = Transfer.api_get_list([self.org])
-        self.assertInList(transfer, transfer_list, "Transfer was not found")
+        self.assertIn(transfer, transfer_list, "Transfer was not found")
 
     def test_no_token_in_create_transfer_response(self):
         self.step("Create new transfer and check that 'token' field was not returned in response")

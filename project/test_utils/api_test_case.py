@@ -105,21 +105,6 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         logger.debug("\n{0}\n\n{1}\n\n{0}\n".format(separator, test_name))
         return super().run(result=result)
 
-    def assertInList(self, member, container, msg=None):
-        """Modeled after TestCase.assertIn(), but testing for equality, not identity."""
-        for item in container:
-            if member == item:
-                return
-        standard_msg = "{} not found in list".format(member, container)
-        self.fail(self._formatMessage(msg, standard_msg))
-
-    def assertNotInList(self, member, container, msg=None):
-        """Reverse to assertInList"""
-        for item in container:
-            if member == item:
-                standard_msg = "{} found in list".format(member, container)
-                raise AssertionError(self._formatMessage(msg, standard_msg))
-
     def assertUnorderedListEqual(self, list1, list2, msg=None):
         self.assertListEqual(sorted(list1), sorted(list2), msg=msg)
 
@@ -185,23 +170,23 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
     def assert_user_in_org_and_roles(self, invited_user, org_guid, expected_roles):
         self.step("Check that the user is in the organization with expected roles ({}).".format(expected_roles))
         org_users = usr.User.api_get_list_via_organization(org_guid)
-        self.assertInList(invited_user, org_users, "Invited user is not on org users list")
+        self.assertIn(invited_user, org_users, "Invited user is not on org users list")
         invited_user_roles = list(invited_user.org_roles.get(org_guid, []))
         self.assertUnorderedListEqual(invited_user_roles, list(expected_roles),
                                       "User's roles in org: {}, expected {}".format(invited_user_roles,
                                                                                     list(expected_roles)))
 
     @retry(AssertionError, tries=10, delay=2)
-    def assertNotInListWithRetry(self, something, get_list_method, *args, **kwargs):
+    def assertNotInWithRetry(self, something, get_list_method, *args, **kwargs):
         """Use when deleting something takes longer"""
         obj_list = get_list_method(*args, **kwargs)
-        self.assertNotInList(something, obj_list)
+        self.assertNotIn(something, obj_list)
 
     @retry(AssertionError, tries=10, delay=2)
-    def assertInListWithRetry(self, something, get_list_method, *args, **kwargs):
+    def assertInWithRetry(self, something, get_list_method, *args, **kwargs):
         """Use when adding something takes longer"""
         obj_list = get_list_method(*args, **kwargs)
-        self.assertInList(something, obj_list)
+        self.assertIn(something, obj_list)
 
     @retry(AssertionError, tries=60, delay=2)
     def get_from_list_by_attribute_with_retry(self, attr_name, attr_value, get_list_method, *args, **kwargs):

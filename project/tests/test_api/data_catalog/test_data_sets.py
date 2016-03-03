@@ -199,7 +199,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         dataset.api_delete()
         self.step("Get dataset list and check the deleted one is not on it")
         dataset_list = DataSet.api_get_list(org_list=[self.org])
-        self.assertNotInList(dataset, dataset_list)
+        self.assertNotIn(dataset, dataset_list)
 
     def test_cannot_delete_not_existing_dataset(self):
         dataset = self._create_dataset(self.org, self.source)

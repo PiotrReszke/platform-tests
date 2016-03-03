@@ -60,7 +60,7 @@ class Apps(ApiTestCase):
         self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
         self.step("Delete the application and check that it doesn't exist")
         self.test_app.api_delete()
-        self.assertNotInList(self.test_app, Application.cf_api_get_list_by_space(self.test_space.guid))
+        self.assertNotIn(self.test_app, Application.cf_api_get_list(self.test_space.guid))
 
     def test_api_push_restage_delete(self):
         self.step("Restage the application and check that it is running")
@@ -68,7 +68,7 @@ class Apps(ApiTestCase):
         self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
         self.step("Delete the application and check that it doesn't exist")
         self.test_app.api_delete()
-        self.assertNotInList(self.test_app, Application.cf_api_get_list_by_space(self.test_space.guid))
+        self.assertNotIn(self.test_app, Application.cf_api_get_list(self.test_space.guid))
 
     def test_delete_space_and_org_after_app_creation_and_deletion(self):
         """DPNG-2683 Cannot delete space where an app used to be"""
@@ -77,21 +77,21 @@ class Apps(ApiTestCase):
         self.step("Delete the space using platform api")
         self.test_space.api_delete()
         self.step("Check that the space is gone")
-        self.assertNotInListWithRetry(self.test_space, Space.api_get_list)
+        self.assertNotInWithRetry(self.test_space, Space.api_get_list)
         self.step("Delete the organization using platform api")
         self.test_org.api_delete()
         self.step("Check that the organization is gone")
         org_list = Organization.api_get_list()
-        self.assertNotInListWithRetry(self.test_org, Organization.api_get_list)
+        self.assertNotInWithRetry(self.test_org, org_list, "Organization {} has not been deleted".format(self.test_org.name))
 
     def test_delete_space_and_org_without_deleting_an_app(self):
         """DPNG-2694 Cannot delete space with an running app"""
         self.step("Delete the space using platform api")
         self.test_space.api_delete()
         self.step("Check that the space is gone")
-        self.assertNotInListWithRetry(self.test_space, Space.api_get_list)
+        self.assertNotInWithRetry(self.test_space, Space.api_get_list)
         self.step("Delete the test organization using platform api")
         self.test_org.api_delete()
         self.step("Check that the organization is gone")
         org_list = Organization.api_get_list()
-        self.assertNotInListWithRetry(self.test_org, Organization.api_get_list)
+        self.assertNotInWithRetry(self.test_org, org_list, "Organization {} has not been deleted".format(self.test_org.name))

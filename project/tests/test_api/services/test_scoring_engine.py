@@ -47,11 +47,11 @@ class TestScoringEngineInstance(ApiTestCase):
             params={"TAR_ARCHIVE": self.hdfs_path}
         )
         instances_list = ServiceInstance.api_get_list(self.test_space.guid)
-        self.assertInList(se_instance, instances_list, "Scoring-engine was not created")
+        self.assertIn(se_instance, instances_list, "Scoring-engine was not created")
         self.step("Delete scoring engine instance and check it does not show on the list")
         se_instance.api_delete()
         instances = ServiceInstance.api_get_list(space_guid=self.test_space.guid)
-        self.assertNotInList(se_instance, instances, "Scoring engine instance was not deleted")
+        self.assertNotIn(se_instance, instances, "Scoring engine instance was not deleted")
 
     def test_create_scoring_engine_service_instance_key(self):
         """DPNG-5389 User cannot create scoring-engine instance (permission denied for user vcap)"""
@@ -70,4 +70,4 @@ class TestScoringEngineInstance(ApiTestCase):
         self.step("Create a key for the instance and check it")
         instance_key = ServiceInstanceKey.cf_api_create(se_instance.guid)
         summary = ServiceInstance.api_get_keys(self.test_space.guid)
-        self.assertInList(instance_key, summary[se_instance], "Key not found")
+        self.assertIn(instance_key, summary[se_instance], "Key not found")

@@ -55,7 +55,7 @@ class BaseOrgUserClass(ApiTestCase):
     def _assert_user_not_in_org(self, user, org_guid):
         self.step("Check that the user is not in the organization.")
         org_users = User.api_get_list_via_organization(org_guid)
-        self.assertNotInList(user, org_users, "User is among org users, although they shouldn't")
+        self.assertNotIn(user, org_users, "User is among org users, although they shouldn't")
 
 
 class AddExistingUserToOrganization(BaseOrgUserClass):

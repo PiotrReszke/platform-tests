@@ -39,19 +39,19 @@ class TestServiceInstancesDeletion(ApiTestCase):
         )
         self.step("Check that the instance was created")
         instances = ServiceInstance.api_get_list(space_guid=space_guid)
-        self.assertInList(instance, instances)
+        self.assertIn(instance, instances)
         return instance
 
     def _delete_service_instance(self, instance):
         instance.api_delete()
         service_instances = ServiceInstance.api_get_list(self.test_space.guid)
-        self.assertNotInList(instance, service_instances)
+        self.assertNotIn(instance, service_instances)
 
     @retry(AssertionError, tries=10, delay=5)
     def _check_data_science_service_instance(self, instance_name, label):
         ds_instances = ServiceInstance.api_get_data_science_service_instances(self.test_space.guid, self.test_org.guid,
                                                                               label)
-        self.assertInList(instance_name, ds_instances.keys())
+        self.assertIn(instance_name, ds_instances.keys())
 
     def test_create_and_delete_service_instances(self):
         services = ["ipython", "rstudio"]
@@ -79,7 +79,7 @@ class TestServiceInstancesDeletion(ApiTestCase):
                                                  plan["guid"])
         self.step("Check that created atk instance exists in data science atk list")
         data_science_atk_list = AtkInstance.api_get_list_from_data_science_atk(self.test_org.guid)
-        self.assertInList(instance.name, [i.name for i in data_science_atk_list],
+        self.assertIn(instance.name, [i.name for i in data_science_atk_list],
                           "Atk not found in data science atk list")
         self.step("Check that atk exists in application list")
         atk_app_name = instance.name + "-{}".format(instance.guid[:8])
@@ -92,12 +92,12 @@ class TestServiceInstancesDeletion(ApiTestCase):
         self.step("Check that all bound service instances exist")
         service_instances = [s.name for s in ServiceInstance.api_get_list(self.test_space.guid)]
         for s_name in bound_services.values():
-            self.assertInList(s_name, service_instances)
+            self.assertIn(s_name, service_instances)
         self.step("Delete service instance and check it does not show on the service list")
         self._delete_service_instance(instance)
         self.step("Check that atk instance was deleted from data science atk list")
         data_science_atk_list = AtkInstance.api_get_list_from_data_science_atk(self.test_org.guid)
-        self.assertNotInList(instance.name, [i.name for i in data_science_atk_list],
+        self.assertNotIn(instance.name, [i.name for i in data_science_atk_list],
                              "Atk found in data science atk list")
         self.step("Check that atk was deleted from application list")
         atk_app = next((a for a in Application.api_get_list(self.test_space.guid) if a.name == atk_app_name), None)
@@ -105,5 +105,5 @@ class TestServiceInstancesDeletion(ApiTestCase):
         self.step("Check that all bound service instances were deleted")
         service_instances = [s.name for s in ServiceInstance.api_get_list(self.test_space.guid)]
         for s_name in bound_services.values():
-            self.assertNotInList(s_name, service_instances)
+            self.assertNotIn(s_name, service_instances)
 

@@ -52,4 +52,4 @@ class ServiceInstancesMonitoring(ApiTestCase):
                     instance.api_delete()
                     instances = ServiceInstance.api_get_list(space_guid=service_type.space_guid,
                                                              service_type_guid=service_type.guid)
-                    self.assertNotInList(instance, instances, "{} instance was not deleted".format(service_type))
+                    self.assertNotIn(instance, instances, "{} instance was not deleted".format(service_type))
