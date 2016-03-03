@@ -17,7 +17,7 @@
 import os
 import re
 
-from . import get_logger, config, SshClient, HdfsException
+from . import get_logger, config, NestedSshClient, HdfsException
 
 
 
@@ -36,8 +36,9 @@ class Hdfs(object):
         path_to_key = os.path.expanduser(config.CONFIG["cdh_key_path"])
 
         via_hostname = "cdh.{}".format(config.CONFIG["domain"])
-        self.ssh_client = SshClient(hostname=hostname, username=username, path_to_key=path_to_key,
-                                    via_hostname=via_hostname, via_username=username, via_path_to_key=path_to_key)
+        self.ssh_client = NestedSshClient(hostname=hostname, username=username, path_to_key=path_to_key,
+                                          via_hostname=via_hostname, via_username=username, via_path_to_key=path_to_key)
+        self.ssh_client.connect()
         logger.info("Accessing HDFS on {} via {}".format(hostname, via_hostname))
         self.hadoop_fs = ["hadoop", "fs"]
 
