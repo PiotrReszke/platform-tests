@@ -13,16 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import unittest
+
 import websocket
+from constants.services import ServiceLabels
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, CfApiClient
-from objects import Organization, ServiceInstance, User, Application, ServiceBinding
+from objects import Organization, ServiceInstance, User
+from objects.service_instance_validator import ServiceInstanceValidator
 
 
 class Gateway(ApiTestCase):
-    LABEL = "gateway"
-    KAFKA_LABEL = "kafka"
     PLAN_NAME = "Simple"
     gateway_instance = None
     kafka_instance = None
@@ -45,25 +45,14 @@ class Gateway(ApiTestCase):
     @ApiTestCase.mark_prerequisite(is_first=True)
     def test_0_create_gateway_instance(self):
         self.step("Create gateway instance")
-        self.__class__.gateway_instance = ServiceInstance.api_create(self.test_org.guid, self.test_space.guid,
-                                                                     self.LABEL, service_plan_name=self.PLAN_NAME,
-                                                                     client=self.space_developer_client)
-        self.step("Check that instance was created")
-        self.assertInWithRetry(self.gateway_instance, ServiceInstance.api_get_list, self.test_space.guid)
-        app_list = Application.api_get_list(self.test_space.guid)
-        self.__class__.gateway_app = next((app for app in app_list if app.name.startswith(self.gateway_instance.name)),
-                                          None)
-        self.assertIsNotNone(self.gateway_app, "Gateway app not found")
-        self.gateway_app.ensure_started()
-        self.step("Check bound kafka instance")
-        bound_services = ServiceBinding.api_get_list(self.gateway_app.guid)
-        self.assertEqual(len(bound_services), 1, "Found more than one binding")
-        service_list = ServiceInstance.api_get_list(self.test_space.guid)
-        self.__class__.kafka_instance = next((si for si in service_list
-                                              if si.guid == bound_services[0].service_instance_guid), None)
-        self.assertIsNotNone(self.kafka_instance, "Bound kafka service instance not found")
-        self.assertEqual(self.kafka_instance.service_label, self.KAFKA_LABEL,
-                         "Gateway app is not bound to kafka instance")
+        gateway_instance = ServiceInstance.api_create(
+            self.test_org.guid, self.test_space.guid, ServiceLabels.GATEWAY,
+            service_plan_name=self.PLAN_NAME, client=self.space_developer_client)
+        validator = ServiceInstanceValidator(self, gateway_instance)
+        validator.validate(expected_bindings=[ServiceLabels.KAFKA])
+        self.__class__.gateway_instance = gateway_instance
+        self.__class__.gateway_app = validator.application
+        self.__class__.kafka_instance = validator.application_bindings[ServiceLabels.KAFKA]
 
     @ApiTestCase.mark_prerequisite()
     def test_1_send_message_to_gateway_app_instance(self):
