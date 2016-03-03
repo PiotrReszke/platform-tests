@@ -15,13 +15,34 @@
 #
 
 import uuid
+
+from constants.priority_levels import Priority
 from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils, cloud_foundry as cf
-from test_utils import application_broker as broker_client, get_test_name
+from test_utils import application_broker as broker_client, get_test_name, incremental, priority
 from objects import Organization, Application, ServiceInstance, ServiceType
 from constants.HttpStatus import HttpStatus
 
 
-class TestCatalog(ApiTestCase):
+
+class ApplicationBroker(ApiTestCase):
+
+    @priority.medium
+    def test_get_catalog(self):
+        self.step("Getting catalog.")
+        response = broker_client.app_broker_get_catalog()
+
+        self.assertIsNotNone(response)
+
+    @priority.low
+    def test_cannot_delete_non_existing_service(self):
+        self.step("Deleting random service.")
+        guid = uuid.uuid4()
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, "", broker_client.app_broker_delete_service,
+                                            service_id=guid)
+
+
+@incremental(Priority.medium)
+class ApplicationBrokerFlow(ApiTestCase):
 
     APP_REPO_PATH = "../../cf-env-demo"
     APP_COMMIT_ID = "f36c111"
@@ -48,21 +69,8 @@ class TestCatalog(ApiTestCase):
     def tearDownClass(cls):
         if cls.cf_service is not None:
             broker_client.app_broker_delete_service(cls.cf_service.guid)
-        super(TestCatalog, cls).tearDownClass()
+        super().tearDownClass()
 
-    def test_get_catalog(self):
-        self.step("Getting catalog.")
-        response = broker_client.app_broker_get_catalog()
-
-        self.assertIsNotNone(response)
-
-    def test_delete_non_existing_service(self):
-        self.step("Deleting random service.")
-        guid = uuid.uuid4()
-
-        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, "", broker_client.app_broker_delete_service, service_id=guid)
-
-    @ApiTestCase.mark_prerequisite(is_first=True)
     def test_0_register_service(self):
         self.step("Registering new service.")
         self.__class__.cf_service = ServiceType.app_broker_create_service_in_catalog(self.SERVICE_NAME,
@@ -74,7 +82,6 @@ class TestCatalog(ApiTestCase):
         services = [service['name'] for service in response["services"]]
         self.assertIn(self.SERVICE_NAME, services)
 
-    @ApiTestCase.mark_prerequisite()
     def test_1_create_service_instance(self):
         self.step("Provisioning new service instance.")
         self.__class__.instance = ServiceInstance.app_broker_create_instance(self.test_org.guid,
@@ -82,23 +89,20 @@ class TestCatalog(ApiTestCase):
                                                   self.cf_service.guid,
                                                   self.test_space.guid)
 
-
-    @ApiTestCase.mark_prerequisite()
     def test_2_bind_service_instance_to_app(self):
         self.step("Binding service instance to app.")
         response = broker_client.app_broker_bind_service_instance(self.instance.guid, self.test_app.guid)
 
         self.assertIsNotNone(response["credentials"]["url"])
 
-    @ApiTestCase.mark_prerequisite()
     def test_3_cannot_delete_service_with_instance(self):
         self.step("Deleting service who have existing instance.")
-        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_INTERNAL_SERVER_ERROR, "", broker_client.app_broker_delete_service, service_id=self.cf_service.guid)
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_INTERNAL_SERVER_ERROR, "",
+                                            broker_client.app_broker_delete_service, service_id=self.cf_service.guid)
         response = broker_client.app_broker_get_catalog()
         services = [service['name'] for service in response["services"]]
         self.assertIn(self.SERVICE_NAME, services)
 
-    @ApiTestCase.mark_prerequisite()
     def test_4_delete_service_instance(self):
         self.step("Deleting service instance.")
         broker_client.app_broker_delete_service_instance(self.instance.guid)
