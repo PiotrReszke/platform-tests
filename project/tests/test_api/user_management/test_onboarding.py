@@ -237,8 +237,7 @@ class PendingInvitations(ApiTestCase):
 
     @priority.low
     def test_cannot_resend_invitation_providing_empty_name(self):
-        """DPNG-4657 http 500 when trying to use unsupported api endpoints"""
-        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_NOT_FOUND,
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_METHOD_NOT_ALLOWED, HttpStatus.MSG_METHOD_NOT_SUPPORTED.format("POST"),
                                             User.api_resend_user_invitation, "")
 
     @priority.medium
@@ -266,8 +265,7 @@ class PendingInvitations(ApiTestCase):
 
     @priority.low
     def test_cannot_delete_pending_invitation_providing_empty_name(self):
-        """DPNG-4657 http 500 when trying to use unsupported api endpoints"""
-        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_NOT_FOUND, HttpStatus.MSG_NOT_FOUND,
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_METHOD_NOT_ALLOWED, HttpStatus.MSG_METHOD_NOT_SUPPORTED.format("DELETE"),
                                             User.api_delete_user_invitation, "")
 
     @priority.medium

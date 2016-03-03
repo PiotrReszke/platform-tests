@@ -80,6 +80,7 @@ class HttpStatus(object):
     MSG_NOT_FOUND = "Not Found"
     CODE_NOT_FOUND = 404
     MSG_METHOD_NOT_ALLOWED = "Method Not Allowed"
+    MSG_METHOD_NOT_SUPPORTED = "Request method '{}' not supported"
     CODE_METHOD_NOT_ALLOWED = 405
     MSG_NOT_ACCEPTABLE = "Not Acceptable"
     CODE_NOT_ACCEPTABLE = 406
