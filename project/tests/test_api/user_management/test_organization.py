@@ -85,4 +85,4 @@ class TestOrganization(ApiTestCase):
         self.step("Delete the organization")
         org.api_delete()
         self.step("Check that the organization is not on org list")
-        self.assertNotInWithRetry(org, Organization.api_get_list, "Organization with user was not deleted.")
+        self.assertNotInWithRetry(org, Organization.api_get_list)
