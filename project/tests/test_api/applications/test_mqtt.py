@@ -22,11 +22,14 @@ import time
 
 import paho.mqtt.client as mqtt
 
-from test_utils import ApiTestCase, config, app_source_utils, cloud_foundry as cf, cleanup_after_failed_setup, priority
 from constants.services import ServiceLabels
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, config, app_source_utils, cloud_foundry as cf, cleanup_after_failed_setup, priority
+from test_utils import components
 from objects import Application, Organization, ServiceInstance
 
 
+@components(TAP.mqtt_demo, TAP.service_catalog)
 class Mqtt(ApiTestCase):
 
     INFLUX_INSTANCE_NAME = "mqtt-demo-db"

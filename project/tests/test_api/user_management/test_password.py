@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-from test_utils import ApiTestCase, gmail_api, get_logger, PasswordAPI, priority
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, gmail_api, PasswordAPI, priority, components
 from objects import User
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
 
 
+@components(TAP.user_management, TAP.auth_gateway)
 class PasswordTests(ApiTestCase):
 
     NEW_PASSWORD = "NEW_PASSWORD"

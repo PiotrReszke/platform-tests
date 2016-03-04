@@ -14,11 +14,13 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase
-from objects import User, Space, Organization, ServiceInstance, Application, Buildpack, Platform, ServiceType
 from constants.HttpStatus import HttpStatus
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, components
+from objects import User, Space, Organization, ServiceInstance, Application, Buildpack, Platform, ServiceType
 
 
+@components(TAP.platform_context)
 class NonAdminOperationsMetrics(ApiTestCase):
     @classmethod
     def setUpClass(cls):
@@ -37,6 +39,7 @@ class NonAdminOperationsMetrics(ApiTestCase):
                                             self.platform.refresh_data, self.non_admin_user.get_client())
 
 
+@components(TAP.platform_operations)
 class OperationsMetrics(ApiTestCase):
     """
     Operations Metrics test can be unstable when run parallel

@@ -16,12 +16,15 @@
 
 import itertools
 
-from test_utils import ApiTestCase, iPython, get_test_name, priority
 from constants.services import PARAMETRIZED_SERVICE_INSTANCES, ServiceLabels
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, iPython, get_test_name, priority, components
 from objects import ServiceInstance, ServiceType, Organization, User
 from constants.HttpStatus import ServiceCatalogHttpStatus as HttpStatus
 
 
+@components(TAP.service_catalog, TAP.application_broker, TAP.gearpump_broker, TAP.hbase_broker, TAP.hdfs_broker,
+            TAP.kafka_broker, TAP.smtp_broker, TAP.yarn_broker, TAP.zookeeper_broker, TAP.zookeeper_wssb_broker)
 class MarketplaceServices(ApiTestCase):
 
     @classmethod
@@ -86,7 +89,7 @@ class MarketplaceServices(ApiTestCase):
                                                              service_type.label, plan["guid"])
 
     @priority.low
-    def test_create_instance_with_extra_parameter(self):
+    def test_create_instance_with_non_required_parameter(self):
         param_key = "test_param"
         param_value = "test_value"
         terminal = self._create_ipython_instance_and_login(param_key, param_value)
@@ -95,7 +98,7 @@ class MarketplaceServices(ApiTestCase):
         self.assertIn("{}={}".format(param_key, param_value), output)
 
     @priority.medium
-    def test_cannot_create_service_instance_with_existing_name(self):
+    def test_cannot_create_service_instance_with_name_of_an_existing_instance(self):
         existing_name = get_test_name()
         self.step("Create service instance")
         instance = ServiceInstance.api_create(
@@ -120,7 +123,8 @@ class MarketplaceServices(ApiTestCase):
                                       "Some new services were created")
 
     @priority.low
-    def test_cannot_create_service_instance_without_name(self):
+    def test_cannot_create_instance_without_a_name(self):
+        """DPNG-5154 Http status 500 when trying to create a service instance without a name"""
         expected_instance_list = ServiceInstance.api_get_list(self.test_space.guid)
         self.step("Check that gateway instance cannot be created with empty name")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
@@ -131,7 +135,7 @@ class MarketplaceServices(ApiTestCase):
                                       "New instance was created")
 
     @priority.medium
-    def test_cannot_create_service_instances_as_non_space_developer(self):
+    def test_cannot_create_instance_as_non_space_developer(self):
         test_clients = {"space_auditor": self.space_auditor_client, "space_manager": self.space_manager_client}
         for service_type, (name, client) in itertools.product(self.marketplace, test_clients.items()):
             for plan in service_type.service_plans:

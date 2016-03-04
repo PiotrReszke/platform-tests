@@ -16,10 +16,11 @@
 
 import time
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, platform_api_calls as api, \
-    generate_csv_file, tear_down_test_files, get_test_name, generate_empty_file, priority
-from objects import Organization, Transfer, DataSet, User
 from constants.HttpStatus import DataCatalogHttpStatus as HttpStatus
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, cleanup_after_failed_setup, platform_api_calls as api, components
+from test_utils import generate_csv_file, tear_down_test_files, get_test_name, generate_empty_file, priority
+from objects import Organization, Transfer, DataSet, User
 
 
 class SubmitTransferBase(ApiTestCase):
@@ -35,6 +36,7 @@ class SubmitTransferBase(ApiTestCase):
         User.get_admin().api_add_to_organization(org_guid=cls.org.guid)
 
 
+@components(TAP.das, TAP.hdfs_downloader, TAP.metadata_parser)
 class SubmitTransfer(SubmitTransferBase):
     def _create_transfer(self, category):
         self.step("Create new transfers and wait until the finish")
@@ -86,6 +88,7 @@ class SubmitTransfer(SubmitTransferBase):
         self.assertTrue("token" not in response, "token field was returned in response")
 
 
+@components(TAP.das, TAP.hdfs_uploader, TAP.metadata_parser)
 class SubmitTransferFromLocalFile(SubmitTransfer):
     def _create_transfer(self, column_count=10, row_count=10, category="other", size=None, file_name=None):
         self.step("Generate sample csv file")
@@ -154,6 +157,7 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
                                             org_guid=self.org.guid, category="other")
 
 
+@components(TAP.das)
 class GetTransfers(SubmitTransferBase):
     @priority.high
     def test_admin_can_get_transfer_list(self):

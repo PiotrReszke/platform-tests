@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-from test_utils import ApiTestCase, PlatformApiClient, generate_csv_file, priority
 from constants.services import PARAMETRIZED_SERVICE_INSTANCES
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, PlatformApiClient, generate_csv_file, priority, components
 from objects import Organization, User, Space, Transfer, DataSet, ServiceType, ServiceInstance
 
 
@@ -32,6 +32,7 @@ class FunctionalSmokeTests(ApiTestCase):
         PlatformApiClient.get_admin_client()
 
     @priority.high
+    @components(TAP.user_management, TAP.auth_gateway)
     def test_create_and_delete_organization(self):
         self.step("Create organization")
         test_org = Organization.api_create()
@@ -44,6 +45,7 @@ class FunctionalSmokeTests(ApiTestCase):
         self.assertNotInWithRetry(test_org, Organization.api_get_list)
 
     @priority.high
+    @components(TAP.user_management, TAP.auth_gateway)
     def test_onboarding(self):
         self.step("Onboard new user")
         test_user, test_org = User.api_onboard()
@@ -55,6 +57,7 @@ class FunctionalSmokeTests(ApiTestCase):
         self.assertIn(test_org, orgs)
 
     @priority.high
+    @components(TAP.user_management, TAP.auth_gateway)
     def test_add_new_user_to_and_delete_from_org(self):
         self.step("Add new user to organization")
         test_user = User.api_create_by_adding_to_organization(org_guid=self.ref_org.guid,
@@ -69,6 +72,7 @@ class FunctionalSmokeTests(ApiTestCase):
         self.assertNotIn(test_user, users)
 
     @priority.high
+    @components(TAP.user_management)
     def test_create_and_delete_space(self):
         self.step("Create new space")
         test_space = Space.api_create(org=self.ref_org)
@@ -81,6 +85,7 @@ class FunctionalSmokeTests(ApiTestCase):
         self.assertNotInWithRetry(test_space, Space.api_get_list)
 
     @priority.high
+    @components(TAP.user_management, TAP.auth_gateway)
     def test_add_new_user_to_and_delete_from_space(self):
         self.step("Add new user to space")
         test_user = User.api_create_by_adding_to_space(org_guid=self.ref_org.guid, space_guid=self.ref_space.guid)
@@ -94,6 +99,7 @@ class FunctionalSmokeTests(ApiTestCase):
         self.assertNotIn(test_user, users)
 
     @priority.high
+    @components(TAP.das, TAP.hdfs_downloader, TAP.metadata_parser, TAP.data_catalog)
     def test_add_and_delete_transfer_from_link(self):
         self.step("Create a transfer and check it has finished")
         transfer = Transfer.api_create(category="other", source=self.TRANSFER_LINK, org=self.ref_org)
@@ -115,6 +121,7 @@ class FunctionalSmokeTests(ApiTestCase):
         self.assertNotIn(transfer, transfers)
 
     @priority.high
+    @components(TAP.das, TAP.hdfs_uploader, TAP.metadata_parser, TAP.data_catalog)
     def test_add_and_delete_transfer_from_file(self):
         self.step("Generate a test csv file")
         file_path = generate_csv_file(column_count=10, row_count=100)
@@ -138,6 +145,8 @@ class FunctionalSmokeTests(ApiTestCase):
         self.assertNotIn(transfer, transfers)
 
     @priority.high
+    @components(TAP.service_catalog, TAP.application_broker, TAP.gearpump_broker, TAP.hbase_broker, TAP.hdfs_broker,
+                TAP.kafka_broker, TAP.smtp_broker, TAP.yarn_broker, TAP.zookeeper_broker, TAP.zookeeper_wssb_broker)
     def test_create_and_delete_marketplace_service_instances(self):
         self.step("Get list of services in marketplace")
         marketplace = ServiceType.api_get_list_from_marketplace(space_guid=self.ref_space.guid)

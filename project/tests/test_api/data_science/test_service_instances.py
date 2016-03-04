@@ -14,13 +14,14 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, priority
+from constants.services import ServiceLabels
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, priority, components
 from objects import ServiceInstance, ServiceType, Organization, Application
 from objects.service_instance_validator import ServiceInstanceValidator
-from constants.services import ServiceLabels
 
 
-class ServiceInstances(ApiTestCase):
+class DataScienceInstancesBase(ApiTestCase):
     @classmethod
     def setUpClass(cls):
         cls.step("Create test organization and test space")
@@ -42,6 +43,10 @@ class ServiceInstances(ApiTestCase):
         self.step("Delete service instance")
         instance.api_delete()
 
+
+@components(TAP.service_catalog, TAP.service_exposer)
+class DataScienceInstances(DataScienceInstancesBase):
+
     @priority.high
     def test_create_and_delete_service_instances(self):
         services = [ServiceLabels.IPYTHON, ServiceLabels.RSTUDIO]
@@ -55,6 +60,9 @@ class ServiceInstances(ApiTestCase):
                 self._delete_instance(instance)
                 validator.validate_removed()
 
+
+@components(TAP.service_catalog, TAP.service_exposer, TAP.application_broker)
+class DataScienceAtk(DataScienceInstancesBase):
     @priority.high
     def test_create_and_delete_atk_instance(self):
         self.step("Get reference bound services")
@@ -70,3 +78,4 @@ class ServiceInstances(ApiTestCase):
         validator.validate(expected_bindings=expected_bindings)
         self._delete_instance(instance)
         validator.validate_removed()
+

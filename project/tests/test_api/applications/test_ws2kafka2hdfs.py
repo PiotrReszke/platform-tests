@@ -22,12 +22,14 @@ import websocket
 
 from constants.services import ServiceLabels
 from constants.priority_levels import Priority
-from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils, Hdfs, config, cloud_foundry as cf, \
-    incremental
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils, Hdfs, config, cloud_foundry as cf
+from test_utils import incremental, components
 from objects import Application, Organization, ServiceInstance
 
 
 @incremental(Priority.medium)
+@components(TAP.ingestion_ws_kafka_hdfs, TAP.service_catalog)
 class Ws2kafka2hdfs(ApiTestCase):
 
     MESSAGE_COUNT = 10

@@ -14,14 +14,15 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, priority
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, priority, components
 from objects import LatestEvent
 
 
+@components(TAP.latest_events_service)
 class LatestEventsService(ApiTestCase):
 
     @priority.low
     def test_latest_events(self):
         self.step("Check that latest events service does not crash after basic request")
-        event_summary = LatestEvent.api_get_latest_events()
-        self.assertLessEqual(0, len(event_summary))
+        LatestEvent.api_get_latest_events()

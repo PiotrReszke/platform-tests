@@ -18,10 +18,12 @@ import re
 
 from retry import retry
 
-from test_utils import ApiTestCase, iPython, cleanup_after_failed_setup, config, priority
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, iPython, cleanup_after_failed_setup, config, priority, components
 from objects import Organization, ServiceInstance, Application, User
 
 
+@components(TAP.service_catalog, TAP.service_exposer)
 class iPythonConsole(ApiTestCase):
 
     ATK_PLAN_NAME = "Simple"

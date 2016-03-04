@@ -74,6 +74,7 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         priority = getattr(test_method, "priority", None)
         super().__init__(methodName=methodName)
         self.priority = Priority.default() if priority is None else priority
+        self.components = getattr(test_method, "components", self.components)
 
     @classmethod
     def tearDownClass(cls):
@@ -112,8 +113,9 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         current_result = super().run(result=result)
         if self.incremental and self.get_errors_and_failures(current_result) > errors_and_failures:
             self.__class__.prerequisite_failed = True
-        global errors_and_failures
-        errors_and_failures = self.get_errors_and_failures(current_result)
+        if current_result is not None:
+            global errors_and_failures
+            errors_and_failures = self.get_errors_and_failures(current_result)
         return current_result
 
     def assertUnorderedListEqual(self, list1, list2, msg=None):

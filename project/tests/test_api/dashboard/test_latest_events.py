@@ -14,10 +14,12 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, priority
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, cleanup_after_failed_setup, priority, components
 from objects import LatestEvent, Organization, Transfer, User
 
 
+@components(TAP.latest_events_service)
 class DashboardLatestEvents(ApiTestCase):
 
     TEST_TRANSFER_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"

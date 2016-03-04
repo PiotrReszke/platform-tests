@@ -50,3 +50,4 @@ class ServiceLabels(object):
 
 
 PARAMETRIZED_SERVICE_INSTANCES = [ServiceLabels.SCORING_ENGINE, ServiceLabels.GEARPUMP_DASHBOARD]
+

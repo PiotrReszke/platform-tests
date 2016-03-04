@@ -13,11 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from test_utils import ApiTestCase, cleanup_after_failed_setup, priority
+
 from constants.services import ServiceLabels
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, cleanup_after_failed_setup, priority, components
 from objects import Organization, ServiceInstance, ServiceKey, Transfer, DataSet, User
 
 
+@components(TAP.scoring_engine, TAP.service_catalog, TAP.application_broker, TAP.das, TAP.hdfs_downloader,
+            TAP.metadata_parser)
 class TestScoringEngineInstance(ApiTestCase):
     MODEL_URL = "https://repo.gotapaas.eu/files/models_a8ab76353c2143509514da386d32a2f8.tar"
     SE_PLAN_NAME = "Simple"

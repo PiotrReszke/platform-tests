@@ -13,10 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, ConsoleClient, platform_api_calls as api, cleanup_after_failed_setup, priority
+from test_utils import components
 from objects import User, Organization
 
 
+@components(TAP.console)
 class AppDevelopmentPage(ApiTestCase):
 
     @classmethod

@@ -17,13 +17,17 @@
 import os
 
 from constants.priority_levels import Priority
-from test_utils import ApiTestCase, cleanup_after_failed_setup, ATKtools, get_test_name, incremental
+from constants.services import ServiceLabels
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, cleanup_after_failed_setup, ATKtools, get_test_name, incremental, components
 from objects import Organization, Transfer, DataSet, ServiceType, ServiceInstance, User
 from objects.service_instance_validator import ServiceInstanceValidator
-from constants.services import ServiceLabels
+
 
 
 @incremental(Priority.high)
+@components(TAP.atk, TAP.dataset_publisher, TAP.application_broker, TAP.service_catalog, TAP.das, TAP.hdfs_downloader,
+            TAP.metadata_parser)
 class Atk(ApiTestCase):
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     ATK_PLAN_NAME = "Simple"

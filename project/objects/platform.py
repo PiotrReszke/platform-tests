@@ -59,7 +59,7 @@ class Platform(object):
     @staticmethod
     def refresh_data(client=None):
         """
-        triger refresh operations.
+        trigger refresh operations.
         :param client: user used for refresh operations. Default
         :return:
         """

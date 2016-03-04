@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, config, priority
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, config, priority, components
 from objects import Organization, DataSet, User
 
 
@@ -23,6 +24,7 @@ expected_metrics_keys = ["appsDown", "appsRunning", "datasetCount", "domainsUsag
                          "serviceUsage", "serviceUsagePercent", "totalUsers"]
 
 
+@components(TAP.metrics_provider)
 class Metrics(ApiTestCase):
     @classmethod
     def setUpClass(cls):

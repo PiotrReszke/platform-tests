@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import unittest
 
-from test_utils import ApiTestCase, priority
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, priority, components
 from objects import ExternalTools
 
 
+@components(TAP.platform_context)
 class ExternalToolsStatus(ApiTestCase):
 
     @classmethod

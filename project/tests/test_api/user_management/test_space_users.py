@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from test_utils import ApiTestCase, cleanup_after_failed_setup, PlatformApiClient, platform_api_calls as api, \
-    get_test_name, priority
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, cleanup_after_failed_setup, PlatformApiClient, platform_api_calls as api
+from test_utils import get_test_name, priority, components
 from objects import User, Organization, Space
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
 
@@ -76,6 +77,7 @@ class BaseSpaceUserClass(ApiTestCase):
         self.assertIsNone(user_who_should_not_be_in_space, "Unexpectedly, {} was found in space".format(expected_user))
 
 
+@components(TAP.user_management)
 class GetSpaceUsers(BaseSpaceUserClass):
     @classmethod
     def setUpClass(cls):
@@ -90,6 +92,7 @@ class GetSpaceUsers(BaseSpaceUserClass):
                                             User.api_get_list_via_space, self.test_space.guid)
 
 
+@components(TAP.user_management, TAP.auth_gateway)
 class AddNewUserToSpace(BaseSpaceUserClass):
 
     @priority.high
@@ -164,6 +167,7 @@ class AddNewUserToSpace(BaseSpaceUserClass):
                              "User with incorrect roles was added to space")
 
 
+@components(TAP.user_management)
 class AddExistingUserToSpace(BaseSpaceUserClass):
     def setUp(self):
         self.step("Create test space")
@@ -218,6 +222,7 @@ class AddExistingUserToSpace(BaseSpaceUserClass):
                                             roles=invalid_role)
 
 
+@components(TAP.user_management)
 class UpdateSpaceUser(BaseSpaceUserClass):
     def setUp(self):
         self.step("Create test space")
@@ -281,6 +286,7 @@ class UpdateSpaceUser(BaseSpaceUserClass):
         self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
 
 
+@components(TAP.user_management)
 class DeleteSpaceUser(BaseSpaceUserClass):
     def setUp(self):
         self.step("Create test space")
@@ -304,6 +310,7 @@ class DeleteSpaceUser(BaseSpaceUserClass):
                                             USER.api_delete_from_space, self.test_space.guid)
 
 
+@components(TAP.user_management)
 class SpaceUserPermissions(BaseSpaceUserClass):
     @classmethod
     def setUpClass(cls):

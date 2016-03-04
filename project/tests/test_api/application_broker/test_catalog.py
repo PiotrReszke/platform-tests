@@ -17,20 +17,20 @@
 import uuid
 
 from constants.priority_levels import Priority
+from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils, cloud_foundry as cf
-from test_utils import application_broker as broker_client, get_test_name, incremental, priority
+from test_utils import application_broker as broker_client, get_test_name, incremental, priority, components
 from objects import Organization, Application, ServiceInstance, ServiceType
 from constants.HttpStatus import HttpStatus
 
 
-
+@components(TAP.application_broker)
 class ApplicationBroker(ApiTestCase):
 
     @priority.medium
     def test_get_catalog(self):
         self.step("Getting catalog.")
         response = broker_client.app_broker_get_catalog()
-
         self.assertIsNotNone(response)
 
     @priority.low
@@ -42,6 +42,7 @@ class ApplicationBroker(ApiTestCase):
 
 
 @incremental(Priority.medium)
+@components(TAP.application_broker)
 class ApplicationBrokerFlow(ApiTestCase):
 
     APP_REPO_PATH = "../../cf-env-demo"
@@ -52,7 +53,7 @@ class ApplicationBrokerFlow(ApiTestCase):
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
         cls.step("Clone example application repository from github")
-        app_source_utils.clone_repository("cf-env", cls.APP_REPO_PATH, owner="cloudfoundry-community")
+        app_source_utils.clone_or_pull_repository("cf-env", cls.APP_REPO_PATH, owner="cloudfoundry-community")
         # checkout to older commit where app uses the same version of Ruby as installed on the TC agents
         app_source_utils.checkout_branch_pointing_to_commit(cls.APP_REPO_PATH, cls.APP_COMMIT_ID)
         cls.step("Create test organization and space")

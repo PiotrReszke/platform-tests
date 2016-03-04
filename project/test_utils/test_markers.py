@@ -46,16 +46,14 @@ class PriorityGenerator(object):
 
 
 class ComponentDecorator(object):
-    """For wrapping test classes. Specify a list of components tested by this class."""
+    """For wrapping test classes and test methods. Specify a list of components tested by the class or method."""
 
     def __init__(self, *args):
         self.components = args
 
-    def __call__(self, c):
-        if not inspect.isclass(c):
-            raise TypeError("Component decorator should be used on an ApiTestCase class.")
-        c.components = self.components
-        return c
+    def __call__(self, wrapped):
+        wrapped.components = self.components
+        return wrapped
 
 
 class IncrementalTestDecorator(object):

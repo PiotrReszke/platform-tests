@@ -14,11 +14,13 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup, priority
-from objects import Organization, Space, User
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, cleanup_after_failed_setup, priority, components
+from objects import Organization, Space, User
 
 
+@components(TAP.user_management)
 class Spaces(ApiTestCase):
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)

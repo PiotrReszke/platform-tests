@@ -17,12 +17,14 @@ import websocket
 
 from constants.priority_levels import Priority
 from constants.services import ServiceLabels
-from test_utils import ApiTestCase, cleanup_after_failed_setup, CfApiClient, incremental
+from constants.tap_components import TapComponent as TAP
+from test_utils import ApiTestCase, cleanup_after_failed_setup, CfApiClient, incremental, components
 from objects.service_instance_validator import ServiceInstanceValidator
 from objects import Organization, ServiceInstance, User
 
 
 @incremental(Priority.high)
+@components(TAP.gateway, TAP.application_broker, TAP.service_catalog)
 class Gateway(ApiTestCase):
     PLAN_NAME = "Simple"
     gateway_instance = None

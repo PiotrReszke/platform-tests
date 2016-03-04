@@ -14,12 +14,13 @@
 # limitations under the License.
 #
 
+from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, app_source_utils, cleanup_after_failed_setup, cloud_foundry as cf, priority
+from test_utils import components
 from objects import Organization, Application, Space
 
 
-class Apps(ApiTestCase):
-
+class TestAppBase(ApiTestCase):
     APP_REPO_PATH = "../../cf-env-demo"
     APP_NAME_PREFIX = "cf_env"
     APP_COMMIT_ID = "f36c111"
@@ -45,6 +46,10 @@ class Apps(ApiTestCase):
         self.step("Check the application is running")
         self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
 
+
+@components(TAP.service_catalog)
+class TapApp(TestAppBase):
+
     @priority.high
     def test_api_push_stop_start_restage_delete(self):
         self.step("Stop the application and check that it is stopped")
@@ -57,6 +62,11 @@ class Apps(ApiTestCase):
         self.test_app.api_delete()
         self.assertNotIn(self.test_app, Application.cf_api_get_list_by_space(self.test_space.guid))
 
+
+@components(TAP.user_management, TAP.service_catalog)
+class SpaceDeletion(TestAppBase):
+
+    @priority.low
     def test_delete_space_and_org_after_app_creation_and_deletion(self):
         self.step("Delete the test application")
         self.test_app.api_delete()
