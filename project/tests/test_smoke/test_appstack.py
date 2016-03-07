@@ -16,6 +16,7 @@
 
 import yaml
 
+from constants.services import ServiceLabels
 from test_utils import ApiTestCase, get_logger, CONFIG, github_get_file_content, AppClient, UnexpectedResponseError
 from test_utils import priority
 from objects import Application, ServiceInstance, ServiceBroker, Organization
@@ -25,6 +26,9 @@ logger = get_logger(__name__)
 
 
 class TrustedAnalyticsSmokeTest(ApiTestCase):
+    EXCLUDED_APP_NAMES = {ServiceLabels.ATK}
+    # Gateway exposes all sensitive endpoints (request returns http status 200)
+    SENSITIVE_ENDPOINTS_EXCLUDED_APPS = {ServiceLabels.GATEWAY}
 
     @classmethod
     def setUpClass(cls):
@@ -55,10 +59,9 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
 
     @priority.high
     def test_all_required_apps_are_running_in_cf(self):
-        excluded_names = {"atk"}
         self.step("Check that all expected apps have running instances in cf")
         apps_not_running = {a.name for a in self.cf_apps
-                            if a.name in self.expected_app_names - excluded_names and not a.is_running}
+                            if a.name in self.expected_app_names - self.EXCLUDED_APP_NAMES and not a.is_running}
         self.assertEqual(apps_not_running, set(), "Apps with no running instances in cf")
 
     def test_all_required_apps_are_present_on_platform(self):
@@ -69,10 +72,9 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
 
     @priority.high
     def test_all_required_apps_are_running_on_platform(self):
-        excluded_names = {"atk"}
         self.step("Check that all expected apps have running instances on the Platform")
         apps_not_running = {a.name for a in self.platform_apps
-                            if a.name in self.expected_app_names - excluded_names and not a.is_running}
+                            if a.name in self.expected_app_names - self.EXCLUDED_APP_NAMES and not a.is_running}
         self.assertEqual(apps_not_running, set(), "Apps with no running instances on the Platform")
 
     @priority.high
@@ -110,9 +112,9 @@ class TrustedAnalyticsSmokeTest(ApiTestCase):
     def test_spring_services_dont_expose_sensitive_endpoints(self):
         SENSITIVE_ENDPOINTS = ["actuator", "autoconfig", "beans", "configprops", "docs", "dump", "env", "flyway",
                                "info", "liquidbase", "logfile", "metrics", "mappings", "shutdown", "trace"]
-        skipped_apps = {"gateway"}
         client = AppClient.get_admin_client()
-        for url in [a.urls[0] for a in self.platform_apps if a.name in self.expected_app_names - skipped_apps]:
+        for url in [a.urls[0] for a in self.platform_apps
+                    if a.name in self.expected_app_names - self.SENSITIVE_ENDPOINTS_EXCLUDED_APPS]:
             app_name = url.split(".")[0]
             try:
                 client.request(method="GET", endpoint="health", app_name=app_name)

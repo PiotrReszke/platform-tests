@@ -27,6 +27,7 @@ import websocket
 
 from test_utils import get_logger, UnexpectedResponseError, log_http_request, log_http_response, config
 from objects import ServiceInstance
+from constants.services import ServiceLabels
 
 
 logger = get_logger("iPython")
@@ -155,14 +156,12 @@ class iPythonNotebook(iPythonWSBase):
 
 
 class iPython(object):
-
-    IPYTHON_SERVICE_LABEL = "ipython"
     WS_TIMEOUT = 5  # (seconds) - timeout for unresponsive socket
 
     def __init__(self, org_guid, space_guid, instance_name=None, params=None):
         """Create iPython service instance"""
         if instance_name is None:
-            instance_name = self.IPYTHON_SERVICE_LABEL + datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+            instance_name = ServiceLabels.IPYTHON + datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
         self.cookie = None
         self.password = None
         self.instance_url = None
@@ -173,8 +172,8 @@ class iPython(object):
             self.http_session.verify = False
             self.ws_sslopt = {"cert_reqs": ssl.CERT_NONE}
         self.instance = ServiceInstance.api_create(org_guid=org_guid, space_guid=space_guid, name=instance_name,
-                                                   service_label=self.IPYTHON_SERVICE_LABEL, service_plan_name="free",
-                                                   params=params)
+                                                   service_label=ServiceLabels.IPYTHON,
+                                                   service_plan_name="free", params=params)
 
     def __repr__(self):
         return "{} (instance_url={})".format(self.__class__.__name__, self.instance_url)

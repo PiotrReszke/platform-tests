@@ -16,15 +16,15 @@
 
 
 from . import DataScience
+from constants.services import ServiceLabels
 
 
 class Gearpump(object):
-    GEARPUMP_SERVICE_LABEL = "gearpump"
 
     def __init__(self, org_guid, space_guid, service_plan_name, instance_name=None, params=None):
         """Create Gearpump service instance"""
         self.data_science = DataScience(org_guid=org_guid, space_guid=space_guid,
-                                        service_label=self.GEARPUMP_SERVICE_LABEL, service_plan_name=service_plan_name,
+                                        service_label=ServiceLabels.GEARPUMP, service_plan_name=service_plan_name,
                                         instance_name=instance_name, params=params)
 
     def login(self):

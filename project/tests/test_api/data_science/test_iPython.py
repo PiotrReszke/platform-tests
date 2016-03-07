@@ -24,8 +24,6 @@ from objects import Organization, ServiceInstance, Application, User
 
 class iPythonConsole(ApiTestCase):
 
-    IPYTHON_SERVICE_LABEL = "ipython"
-    ATK_SERVICE_LABEL = "atk"
     ATK_PLAN_NAME = "Simple"
     TERMINAL_NO = 0
 

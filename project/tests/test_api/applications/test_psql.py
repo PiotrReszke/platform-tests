@@ -18,13 +18,13 @@ from collections import namedtuple
 from datetime import datetime
 import os
 
+from constants.services import ServiceLabels
 from test_utils import ApiTestCase, cleanup_after_failed_setup, cloud_foundry as cf, app_source_utils, config, priority
 from objects import Organization, Application, ServiceInstance, ServiceType
 
 
 class Postgres(ApiTestCase):
 
-    DB_SERVICE_LABEL = "postgresql93"
     APP_REPO_NAME = "psql-api-example"
     PSQL_APP_DIR = os.path.normpath(os.path.join("../../{}/psql-api-example".format(config.CONFIG["repository"])))
     NAME_PREFIX = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -43,11 +43,11 @@ class Postgres(ApiTestCase):
     def _create_postgres_instance(cls, test_org, test_space):
         cls.step("Create postgres instance")
         marketplace = ServiceType.api_get_list_from_marketplace(test_space.guid)
-        psql = next(s for s in marketplace if s.label == cls.DB_SERVICE_LABEL)
+        psql = next(s for s in marketplace if s.label == ServiceLabels.PSQL)
         psql_instance = ServiceInstance.api_create(
             org_guid=test_org.guid,
             space_guid=test_space.guid,
-            service_label=cls.DB_SERVICE_LABEL,
+            service_label=ServiceLabels.PSQL,
             name="psql_" + cls.NAME_PREFIX,
             service_plan_guid=psql.service_plan_guids[0]
         )

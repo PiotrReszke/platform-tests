@@ -13,15 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import json
 import os
 import ssl
 import time
-import unittest
 
 from retry import retry
 import websocket
 
+from constants.services import ServiceLabels
 from constants.priority_levels import Priority
 from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils, Hdfs, config, cloud_foundry as cf, \
     incremental
@@ -65,21 +64,21 @@ class Ws2kafka2hdfs(ApiTestCase):
         ServiceInstance.api_create(
             org_guid=org_guid,
             space_guid=space_guid,
-            service_label="kafka",
+            service_label=ServiceLabels.KAFKA,
             name="kafka-inst",
             service_plan_name="shared"
         )
         ServiceInstance.api_create(
             org_guid=org_guid,
             space_guid=space_guid,
-            service_label="zookeeper",
+            service_label=ServiceLabels.ZOOKEEPER,
             name="zookeeper-inst",
             service_plan_name="shared"
         )
         ServiceInstance.api_create(
             org_guid=org_guid,
             space_guid=space_guid,
-            service_label="hdfs",
+            service_label=ServiceLabels.HDFS,
             name="hdfs-inst",
             service_plan_name="shared"
         )

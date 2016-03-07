@@ -15,6 +15,7 @@
 #
 
 from test_utils import ApiTestCase, PlatformApiClient, generate_csv_file, priority
+from constants.services import PARAMETRIZED_SERVICE_INSTANCES
 from objects import Organization, User, Space, Transfer, DataSet, ServiceType, ServiceInstance
 
 
@@ -140,7 +141,7 @@ class FunctionalSmokeTests(ApiTestCase):
     def test_create_and_delete_marketplace_service_instances(self):
         self.step("Get list of services in marketplace")
         marketplace = ServiceType.api_get_list_from_marketplace(space_guid=self.ref_space.guid)
-        marketplace = [s for s in marketplace if s.label not in ("scoring-engine", "gearpump-dashboard")]
+        marketplace = [s for s in marketplace if s.label not in PARAMETRIZED_SERVICE_INSTANCES]
         for service in marketplace:
             for plan in service.service_plans:
                 with self.subTest(service=service.label, plan=plan["name"]):

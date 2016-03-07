@@ -23,14 +23,13 @@ import time
 import paho.mqtt.client as mqtt
 
 from test_utils import ApiTestCase, config, app_source_utils, cloud_foundry as cf, cleanup_after_failed_setup, priority
+from constants.services import ServiceLabels
 from objects import Application, Organization, ServiceInstance
 
 
 class Mqtt(ApiTestCase):
 
-    INFLUX_LABEL = "influxdb088"
     INFLUX_INSTANCE_NAME = "mqtt-demo-db"
-    MQTT_LABEL = "mosquitto14"
     MQTT_INSTANCE_NAME = "mqtt-demo-messages"
     APP_REPO_PATH = "../../{}/mqtt-demo".format(config.CONFIG["repository"])
     TEST_DATA_FILE = os.path.join(os.path.dirname(__file__), "shuttle_scale_cut_val.csv")
@@ -62,24 +61,24 @@ class Mqtt(ApiTestCase):
         self.step("Create test organization and space")
         test_org = Organization.api_create(space_names=("test-space",))
         test_space = test_org.spaces[0]
-        self.step("Create service instances of {} and {}".format(self.INFLUX_LABEL, self.MQTT_LABEL))
+        self.step("Create service instances of {} and {}".format(ServiceLabels.INFLUX_DB, ServiceLabels.MOSQUITTO))
         ServiceInstance.api_create(
             org_guid=test_org.guid,
             space_guid=test_space.guid,
-            service_label=self.INFLUX_LABEL,
+            service_label=ServiceLabels.INFLUX_DB,
             name=self.INFLUX_INSTANCE_NAME,
             service_plan_name="free"
         )
         ServiceInstance.api_create(
             org_guid=test_org.guid,
             space_guid=test_space.guid,
-            service_label=self.MQTT_LABEL,
+            service_label=ServiceLabels.MOSQUITTO,
             name=self.MQTT_INSTANCE_NAME,
             service_plan_name="free"
         )
         mqtt_demo_app = self._push_app(test_org, test_space)
         self.step("Retrieve credentials for mqtt service instance")
-        self.credentials = mqtt_demo_app.get_credentials(service_name=self.MQTT_LABEL)
+        self.credentials = mqtt_demo_app.get_credentials(service_name=ServiceLabels.MOSQUITTO)
 
     @priority.medium
     def test_mqtt_demo(self):

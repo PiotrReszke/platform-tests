@@ -22,6 +22,7 @@ from retry import retry
 from test_utils import platform_api_calls as api, cloud_foundry as cf, get_test_name, UnexpectedResponseError,\
     application_broker as broker_client, config
 from objects import ServiceInstanceKey
+from constants.services import ServiceLabels
 
 __all__ = ["ServiceInstance", "AtkInstance"]
 
@@ -201,8 +202,8 @@ class ServiceInstance(object):
 class AtkInstance(ServiceInstance):
     started_status = "STARTED"
 
-    def __init__(self, guid, name, space_guid, service_label, org_guid=None, scoring_engine=None, state=None):
-        super().__init__(guid, name, space_guid, "atk")
+    def __init__(self, guid, name, space_guid, org_guid=None, scoring_engine=None, state=None):
+        super().__init__(guid, name, space_guid, ServiceLabels.ATK)
         self.state = state.upper() if state is not None else state
         self.scoring_engine = scoring_engine
         self.org_guid = org_guid
@@ -213,7 +214,7 @@ class AtkInstance(ServiceInstance):
         atk_instances = []
         if response["instances"] is not None:
             for data in response["instances"]:
-                instance = cls(guid=data["guid"], name=data["name"], space_guid=None, service_label="atk",
+                instance = cls(guid=data["guid"], name=data["name"], space_guid=None, service_label=ServiceLabels.ATK,
                                org_guid=org_guid, scoring_engine=data["scoring_engine"], state=data["state"])
                 atk_instances.append(instance)
         return atk_instances

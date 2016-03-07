@@ -14,12 +14,12 @@
 # limitations under the License.
 #
 from test_utils import ApiTestCase, cleanup_after_failed_setup, priority
+from constants.services import ServiceLabels
 from objects import Organization, ServiceInstance, ServiceInstanceKey, Transfer, DataSet, User
 
 
 class TestScoringEngineInstance(ApiTestCase):
     MODEL_URL = "https://repo.gotapaas.eu/files/models_a8ab76353c2143509514da386d32a2f8.tar"
-    SE_LABEL = "scoring-engine"
     SE_PLAN_NAME = "Simple"
 
     @classmethod
@@ -43,7 +43,7 @@ class TestScoringEngineInstance(ApiTestCase):
         se_instance = ServiceInstance.api_create(
             org_guid=self.test_org.guid,
             space_guid=self.test_space.guid,
-            service_label=self.SE_LABEL,
+            service_label=ServiceLabels.SCORING_ENGINE,
             service_plan_name=self.SE_PLAN_NAME,
             params={"TAR_ARCHIVE": self.hdfs_path}
         )
@@ -61,7 +61,7 @@ class TestScoringEngineInstance(ApiTestCase):
         se_instance = ServiceInstance.api_create(
             org_guid=self.test_org.guid,
             space_guid=self.test_space.guid,
-            service_label=self.SE_LABEL,
+            service_label=ServiceLabels.SCORING_ENGINE,
             service_plan_name=self.SE_PLAN_NAME,
             params={"TAR_ARCHIVE": self.hdfs_path}
         )

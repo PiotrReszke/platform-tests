@@ -17,13 +17,12 @@
 import itertools
 
 from test_utils import ApiTestCase, iPython, get_test_name, priority
+from constants.services import PARAMETRIZED_SERVICE_INSTANCES, ServiceLabels
 from objects import ServiceInstance, ServiceType, Organization, User
 from constants.HttpStatus import ServiceCatalogHttpStatus as HttpStatus
 
 
 class MarketplaceServices(ApiTestCase):
-
-    SERVICES_TESTED_SEPARATELY = ("atk", "hdfs", "scoring-engine", "gearpump-dashboard")
 
     @classmethod
     def setUpClass(cls):
@@ -79,23 +78,12 @@ class MarketplaceServices(ApiTestCase):
 
     @priority.high
     def test_create_and_delete_service_instance(self):
-        tested_service_types = [st for st in self.marketplace if st.label not in self.SERVICES_TESTED_SEPARATELY]
+        tested_service_types = [st for st in self.marketplace if st.label not in PARAMETRIZED_SERVICE_INSTANCES]
         for service_type in tested_service_types:
             for plan in service_type.service_plans:
                 with self.subTest(service=service_type.label, plan=plan["name"]):
                     self._create_and_delete_service_instance(self.test_org.guid, self.test_space.guid,
                                                              service_type.label, plan["guid"])
-
-    @priority.medium
-    def test_create_hdfs_instance(self):
-        """DPNG-2580 Creating instance of hdfs with plan encrypted fails with 502 Bad Gateway"""
-        label = "hdfs"
-        self.step("Check that {} service is available in Marketplace".format(label))
-        service_type = next((st for st in self.marketplace if st.label == label), None)
-        self.assertIsNotNone(service_type, "{} service is not available in Marketplace".format(label))
-        for plan in service_type.service_plans:
-            with self.subTest(service=label, plan=plan["name"]):
-                self._create_and_delete_service_instance(self.test_org.guid, self.test_space.guid, label, plan["guid"])
 
     @priority.low
     def test_create_instance_with_extra_parameter(self):
@@ -113,7 +101,7 @@ class MarketplaceServices(ApiTestCase):
         instance = ServiceInstance.api_create(
             org_guid=self.test_org.guid,
             space_guid=self.test_space.guid,
-            service_label="kafka",
+            service_label=ServiceLabels.KAFKA,
             name=existing_name,
             service_plan_name="shared"
         )
@@ -138,7 +126,8 @@ class MarketplaceServices(ApiTestCase):
         self.step("Check that gateway instance cannot be created with empty name")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
                                             ServiceInstance.api_create, self.test_org.guid, self.test_space.guid,
-                                            "kafka", "", service_plan_name="shared", client=self.space_developer_client)
+                                            ServiceLabels.KAFKA, "", service_plan_name="shared",
+                                            client=self.space_developer_client)
         self.assertUnorderedListEqual(expected_instance_list, ServiceInstance.api_get_list(self.test_space.guid),
                                       "New instance was created")
 

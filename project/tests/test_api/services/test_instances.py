@@ -15,11 +15,13 @@
 #
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, priority
+from constants.services import PARAMETRIZED_SERVICE_INSTANCES, ServiceLabels
 from objects import Organization, ServiceType, ServiceInstance, ServiceInstanceKey
 
 
 class ServiceInstanceKeys(ApiTestCase):
-    SERVICES_TESTED_SEPARATELY = ['yarn', 'hdfs', 'hbase', "scoring-engine", "gearpump-dashboard"]
+    FAILING_SERVICES = [ServiceLabels.YARN, ServiceLabels.HDFS, ServiceLabels.HBASE, ServiceLabels.GEARPUMP]
+    SERVICES_TESTED_SEPARATELY = FAILING_SERVICES + PARAMETRIZED_SERVICE_INSTANCES
 
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
@@ -49,8 +51,7 @@ class ServiceInstanceKeys(ApiTestCase):
     @priority.low
     def test_get_service_instance_summary_from_empty_space(self):
         self.step("Create a service instance in one space")
-        service_type = next(iter([s for s in self.marketplace_services
-                                  if s.label not in self.SERVICES_TESTED_SEPARATELY]))
+        service_type = next(s for s in self.marketplace_services if s.label not in self.SERVICES_TESTED_SEPARATELY)
         ServiceInstance.api_create(org_guid=self.test_org.guid, space_guid=self.test_org.spaces[0].guid,
                                    service_label=service_type.label,
                                    service_plan_guid=service_type.service_plan_guids[0])
@@ -72,8 +73,8 @@ class ServiceInstanceKeys(ApiTestCase):
     @priority.low
     def test_create_yarn_service_instance_keys(self):
         """DPNG-3474 Command cf create-service-key does not work for yarn broker"""
-        label = 'yarn'
-        yarn = next(iter(s for s in self.marketplace_services if s.label == label))
+        label = ServiceLabels.YARN
+        yarn = next(s for s in self.marketplace_services if s.label == label)
         test_space = self.test_org.spaces[2]
         for plan in yarn.service_plans:
             with self.subTest(service=label, plan=plan["name"]):
@@ -81,9 +82,9 @@ class ServiceInstanceKeys(ApiTestCase):
 
     @priority.low
     def test_create_hdfs_service_instance_keys(self):
-        """TASK DPNG-3273 Enable HDFS broker to use Service Keys"""
-        label = "hdfs"
-        hdfs = next(iter(s for s in self.marketplace_services if s.label == label))
+        """DPNG-3273 Enable HDFS broker to use Service Keys"""
+        label = ServiceLabels.HDFS
+        hdfs = next(s for s in self.marketplace_services if s.label == label)
         test_space = self.test_org.spaces[2]
         for plan in hdfs.service_plans:
             with self.subTest(service=label, plan=plan["name"]):
@@ -91,9 +92,9 @@ class ServiceInstanceKeys(ApiTestCase):
 
     @priority.low
     def test_create_hbase_service_instance_keys(self):
-        """TASK DPNG-2798 Enable HBase broker to use Service Keys"""
-        label = "hbase"
-        hbase = next(iter(s for s in self.marketplace_services if s.label == label))
+        """DPNG-2798 Enable HBase broker to use Service Keys"""
+        label = ServiceLabels.HBASE
+        hbase = next(s for s in self.marketplace_services if s.label == label)
         test_space = self.test_org.spaces[2]
         for plan in hbase.service_plans:
             with self.subTest(service=label, plan=plan["name"]):
