@@ -21,20 +21,12 @@ from objects import ExternalTools
 
 class ExternalToolsStatus(ApiTestCase):
 
-<<<<<<< HEAD
-    @priority.medium
-    @unittest.skip("Fix me! DPNG-5105")
-=======
     @classmethod
     def setUpClass(cls):
         cls.step("Get list of external tools")
         cls.tools_list = ExternalTools.api_get_external_tools()
 
-<<<<<<< HEAD
->>>>>>> 1958c9c... DPNG-5105 Fix external tools test
-=======
     @priority.medium
->>>>>>> f605b47... DPNG-5105 after review
     def test_check_status_code_of_external_tools(self):
         """DPNG-2306 Availability of Arcadia and Hue should be discovered automatically"""
         for tool in self.tools_list:
@@ -49,10 +41,11 @@ class ExternalToolsStatus(ApiTestCase):
 
     @priority.medium
     def test_check_tools_urls(self):
-        self.step("Check URL availability of tools")
         for tool in self.tools_list:
             with self.subTest(tool=tool.name, url_present=tool.should_have_url):
                 if tool.should_have_url:
+                    self.step("Check that URL is specified")
                     self.assertIsNotNone(tool.url)
                 else:
+                    self.step("Check that URL is not specified (null)")
                     self.assertIsNone(tool.url)
