@@ -18,13 +18,14 @@ import os
 
 from constants.priority_levels import Priority
 from test_utils import ApiTestCase, cleanup_after_failed_setup, ATKtools, get_test_name, incremental
-from objects import Organization, Transfer, DataSet, ServiceType, ServiceInstance, Application, User
+from objects import Organization, Transfer, DataSet, ServiceType, ServiceInstance, User
+from objects.service_instance_validator import ServiceInstanceValidator
+from constants.services import ServiceLabels
 
 
 @incremental(Priority.high)
 class Atk(ApiTestCase):
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
-    ATK_SERVICE_LABEL = "atk"
     ATK_PLAN_NAME = "Simple"
     atk_virtualenv = None
     atk_url = None
@@ -57,29 +58,20 @@ class Atk(ApiTestCase):
     def test_1_create_atk_instance(self):
         self.step("Check that atk service is available in Marketplace")
         marketplace = ServiceType.api_get_list_from_marketplace(self.test_space.guid)
-        atk_service = next((s for s in marketplace if s.label == self.ATK_SERVICE_LABEL), None)
+        atk_service = next((s for s in marketplace if s.label == ServiceLabels.ATK), None)
         self.assertIsNotNone(atk_service, msg="No atk service found in marketplace.")
         self.step("Create atk service instance")
         atk_instance_name = get_test_name()
         atk_instance = ServiceInstance.api_create(
             org_guid=self.test_org.guid,
             space_guid=self.test_space.guid,
-            service_label=self.ATK_SERVICE_LABEL,
+            service_label=ServiceLabels.ATK,
             name=atk_instance_name,
             service_plan_name=self.ATK_PLAN_NAME
         )
-        self.step("Check that atk instance has been created")
-        instances = ServiceInstance.api_get_list(space_guid=self.test_space.guid, service_type_guid=atk_service.guid)
-        self.assertIn(atk_instance, instances)
-        self.step("Check that atk application is created and started")
-        atk_app = self.get_from_list_by_attribute_with_retry(
-            attr_name="name",
-            attr_value=ATKtools.get_expected_atk_app_name(atk_instance),
-            get_list_method=Application.api_get_list,
-            space_guid=self.test_space.guid
-        )
-        atk_app.ensure_started()
-        self.__class__.atk_url = atk_app.urls[0]
+        validator = ServiceInstanceValidator(self, atk_instance)
+        validator.validate()
+        self.__class__.atk_url = validator.application.urls[0]
 
     def test_2_install_atk_client(self):
         self.step("Install atk client package")

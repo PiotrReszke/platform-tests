@@ -38,12 +38,19 @@ class ServiceInstanceValidator(object):
         """Service bindings created for given application."""
         return self.__application_bindings
 
-    def validate(self, expected_bindings=None):
+    def validate(self, expected_bindings=None, validate_application=True):
         """Validate service instance."""
         self._validate_instance_created()
-        self._validate_application_created()
+        if validate_application:
+            self._validate_application_created()
         if expected_bindings:
             self._validate_application_bound(expected_bindings)
+
+    def validate_removed(self):
+        """Validate that service instance and all its bindings have been properly removed."""
+        self._validate_instance_has_been_removed()
+        self._validate_application_has_been_removed()
+        self._validate_bindings_have_been_removed()
 
     def _validate_instance_created(self):
         """Check if service instance has been properly created."""
@@ -63,6 +70,29 @@ class ServiceInstanceValidator(object):
         self.__api_test.step("Check that application has been properly bound")
         self.__validate_bound_services(expected_bindings)
         self.__validate_requested_bound(expected_bindings)
+
+    def _validate_instance_has_been_removed(self):
+        """Validate that service instance has been properly removed."""
+        self.__api_test.step("Check that service instance was deleted from services list")
+        service_list = ServiceInstance.api_get_list(self.__service.space_guid)
+        self.__api_test.assertNotIn(
+            self.__service.name, [i.name for i in service_list], "Service found on services list")
+
+    def _validate_application_has_been_removed(self):
+        """Validate that application has been properly removed."""
+        if self.application:
+            self.__api_test.step("Check that application was deleted from application list")
+            app_name = self.__service.name + "-{}".format(self.__service.guid[:8])
+            app = next((a for a in Application.api_get_list(self.__service.space_guid) if a.name == app_name), None)
+            self.__api_test.assertIsNone(app, "Application was found")
+
+    def _validate_bindings_have_been_removed(self):
+        """Validate that all bindings have been properly removed."""
+        if self.application_bindings:
+            self.__api_test.step("Check that all bound service instances were deleted")
+            service_instances = [s.name for s in ServiceInstance.api_get_list(self.__service.space_guid)]
+            for service in self.application_bindings.keys():
+                self.__api_test.assertNotIn(service, service_instances)
 
     def __validate_bound_services(self, expected_bindings):
         """Check if all bound services are in requested application bindings."""
