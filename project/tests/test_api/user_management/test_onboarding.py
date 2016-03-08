@@ -134,7 +134,7 @@ class Onboarding(ApiTestCase):
     def test_invite_user_with_non_email_username(self):
         self.step("Check that passing invalid email results in error")
         username = "non_mail_username"
-        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_EMAIL_ADDRESS_NOT_VALID,
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_EMAIL_ADDRESS_NOT_VALID,
                                             User.api_invite, username)
 
     @priority.medium

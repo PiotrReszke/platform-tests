@@ -121,7 +121,6 @@ class MarketplaceServices(ApiTestCase):
 
     @priority.low
     def test_cannot_create_service_instance_without_name(self):
-        """DPNG-5154 Http status 500 when trying to create a service instance without a name"""
         expected_instance_list = ServiceInstance.api_get_list(self.test_space.guid)
         self.step("Check that gateway instance cannot be created with empty name")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_BAD_REQUEST,
