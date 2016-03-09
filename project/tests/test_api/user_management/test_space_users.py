@@ -108,6 +108,7 @@ class AddNewUserToSpace(BaseSpaceUserClass):
 
     @priority.low
     def test_cannot_create_new_user_with_long_username(self):
+        """DPNG-5743 Adding a user with long username to space throws 500 while expected 400"""
         long_username = "x" * 300 + get_test_name(email=True)
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_EMPTY,
                                             User.api_create_by_adding_to_space, TEST_ORG.guid, TEST_SPACE.guid,
