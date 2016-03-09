@@ -15,9 +15,12 @@
 #
 
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, config, priority, components
-from objects import Organization, DataSet, User
+from test_utils import config
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Organization, DataSet, User
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
+
 
 expected_metrics_keys = ["appsDown", "appsRunning", "datasetCount", "domainsUsage", "domainsUsagePercent",
                          "latestEvents", "memoryUsage", "memoryUsageAbsolute", "privateDatasets", "publicDatasets",
@@ -26,8 +29,10 @@ expected_metrics_keys = ["appsDown", "appsRunning", "datasetCount", "domainsUsag
 
 @log_components()
 @components(TAP.metrics_provider)
-class Metrics(ApiTestCase):
+class Metrics(TapTestCase):
+
     @classmethod
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
         cls.step("Retrieve metrics for {}".format(config.CONFIG["ref_org_name"]))
         cls.ref_org, _ = Organization.get_ref_org_and_space()

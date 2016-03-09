@@ -15,14 +15,15 @@
 #
 
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, priority, components
-from objects import LatestEvent
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import LatestEvent
+from runner.tap_test_case import TapTestCase
+from runner.decorators import components, priority
 
 
 @log_components()
 @components(TAP.latest_events_service)
-class LatestEventsService(ApiTestCase):
+class LatestEventsService(TapTestCase):
 
     @priority.low
     def test_latest_events(self):

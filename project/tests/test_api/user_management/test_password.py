@@ -13,20 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, gmail_api, PasswordAPI, priority, components
-from objects import User
+
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
+from constants.tap_components import TapComponent as TAP
+from test_utils import gmail_api, PasswordAPI
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import User
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
 
 
 @log_components()
 @components(TAP.user_management, TAP.auth_gateway)
-class PasswordTests(ApiTestCase):
+class PasswordTests(TapTestCase):
 
     NEW_PASSWORD = "NEW_PASSWORD"
 
     @classmethod
+    @cleanup_after_failed_setup(User.cf_api_tear_down_test_users)
     def setUpClass(cls):
         cls.step("Create users for password tests")
         cls.users, _ = User.api_create_users_for_tests(2)

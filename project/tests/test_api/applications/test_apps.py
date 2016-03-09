@@ -15,13 +15,14 @@
 #
 
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, app_source_utils, cleanup_after_failed_setup, cloud_foundry as cf, priority
-from test_utils import components
-from objects import Organization, Application, Space
+from test_utils import app_source_utils, cloud_foundry as cf
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Organization, Application, Space
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import priority, components
 
 
-class TestAppBase(ApiTestCase):
+class TestAppBase(TapTestCase):
     APP_REPO_PATH = "../../cf-env-demo"
     APP_NAME_PREFIX = "cf_env"
     APP_COMMIT_ID = "f36c111"

@@ -14,26 +14,27 @@
 # limitations under the License.
 #
 
-from enum import Enum
-from functools import total_ordering
+from .db_runner import DBTestRunner, BaseResultClass, BaseRunnerClass
+from test_utils import config
 
 
-@total_ordering
-class Priority(Enum):
-    high = 2
-    medium = 1
-    low = 0
+UNITTEST_RUNNER_VERBOSITY = 3
 
-    def __eq__(self, other):
-        return self.value == other.value
 
-    def __lt__(self, other):
-        return self.value < other.value
+class TapTestResult(BaseResultClass):
+    pass
 
-    @classmethod
-    def default(cls):
-        return cls.medium
 
-    @classmethod
-    def names(cls):
-        return [i.name for i in list(cls)]
+class TapTestRunner(BaseRunnerClass):
+    pass
+
+
+class TestRunner(object):
+
+    def __new__(cls):
+        # select test runner class depending on database configuration
+        if config.CONFIG.get("database_url") is None:
+            return TapTestRunner(verbosity=UNITTEST_RUNNER_VERBOSITY)
+        else:
+            return DBTestRunner(verbosity=UNITTEST_RUNNER_VERBOSITY)
+

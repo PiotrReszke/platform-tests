@@ -16,15 +16,16 @@
 
 from constants.services import PARAMETRIZED_SERVICE_INSTANCES, ServiceLabels
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, cleanup_after_failed_setup, priority, components
-from objects import Organization, ServiceType, ServiceInstance, ServiceKey
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Organization, ServiceType, ServiceInstance, ServiceKey
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
 
 
 @log_components()
 @components(TAP.service_catalog, TAP.application_broker, TAP.gearpump_broker, TAP.hbase_broker, TAP.hdfs_broker,
             TAP.kafka_broker, TAP.smtp_broker, TAP.yarn_broker, TAP.zookeeper_broker, TAP.zookeeper_wssb_broker)
-class ServiceKeys(ApiTestCase):
+class ServiceKeys(TapTestCase):
     FAILING_SERVICES = [ServiceLabels.YARN, ServiceLabels.HDFS, ServiceLabels.HBASE, ServiceLabels.GEARPUMP]
     SERVICES_TESTED_SEPARATELY = FAILING_SERVICES + PARAMETRIZED_SERVICE_INSTANCES
 

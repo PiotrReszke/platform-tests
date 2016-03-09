@@ -15,16 +15,15 @@
 #
 
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, get_logger, priority, components
 from objects import Organization, User
 from test_utils.remote_logger.remote_logger_decorator import log_components
-
-logger = get_logger("test organization")
+from runner.tap_test_case import TapTestCase
+from runner.decorators import components, priority
 
 
 @log_components()
 @components(TAP.user_management, TAP.auth_gateway)
-class TestOrganization(ApiTestCase):
+class TestOrganization(TapTestCase):
 
     @classmethod
     def tearDownClass(cls):

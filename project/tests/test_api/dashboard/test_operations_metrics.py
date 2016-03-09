@@ -16,15 +16,17 @@
 
 from constants.HttpStatus import HttpStatus
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, components
-from objects import User, Space, Organization, ServiceInstance, Application, Buildpack, Platform, ServiceType
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import User, Space, Organization, ServiceInstance, Application, Buildpack, Platform, ServiceType
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components
 
 
 @log_components()
 @components(TAP.platform_context)
-class NonAdminOperationsMetrics(ApiTestCase):
+class NonAdminOperationsMetrics(TapTestCase):
     @classmethod
+    @cleanup_after_failed_setup(User.cf_api_tear_down_test_users)
     def setUpClass(cls):
         cls.platform = Platform()
         users, _ = User.api_create_users_for_tests(1)
@@ -43,7 +45,7 @@ class NonAdminOperationsMetrics(ApiTestCase):
 
 @log_components()
 @components(TAP.platform_operations)
-class OperationsMetrics(ApiTestCase):
+class OperationsMetrics(TapTestCase):
     """
     Operations Metrics test can be unstable when run parallel
     with other tests since it check for resources count

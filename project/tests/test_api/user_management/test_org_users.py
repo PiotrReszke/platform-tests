@@ -17,13 +17,15 @@ import time
 import itertools
 
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, get_logger, platform_api_calls as api, cleanup_after_failed_setup, priority
-from test_utils import components
+from test_utils import get_logger, platform_api_calls as api
+from test_utils.remote_logger.remote_logger_decorator import log_components
 from objects import Organization, User
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
-from test_utils.remote_logger.remote_logger_decorator import log_components
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
 
-logger = get_logger("test org users")
+
+logger = get_logger(__name__)
 
 USERS = []
 TEST_ORG = None
@@ -46,7 +48,7 @@ def setUpModule():
         USERS.append({"user": user, "client": client})
 
 
-class BaseOrgUserClass(ApiTestCase):
+class BaseOrgUserClass(TapTestCase):
     ALL_ROLES = {role for role_set in User.ORG_ROLES.values() for role in role_set}
     NON_MANAGER_ROLES = ALL_ROLES - User.ORG_ROLES["manager"]
 

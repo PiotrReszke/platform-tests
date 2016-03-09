@@ -18,13 +18,15 @@ import time
 
 from constants.HttpStatus import DataCatalogHttpStatus as HttpStatus
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, cleanup_after_failed_setup, platform_api_calls as api, components
-from test_utils import generate_csv_file, tear_down_test_files, get_test_name, generate_empty_file, priority
-from objects import Organization, Transfer, DataSet, User
+from test_utils import platform_api_calls as api, generate_csv_file, tear_down_test_files, get_test_name, \
+    generate_empty_file
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Organization, Transfer, DataSet, User
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
 
 
-class SubmitTransferBase(ApiTestCase):
+class SubmitTransferBase(TapTestCase):
     EXAMPLE_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
 
     @classmethod

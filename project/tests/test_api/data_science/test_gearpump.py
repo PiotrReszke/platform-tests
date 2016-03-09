@@ -15,19 +15,22 @@
 #
 
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, download_file, Gearpump, priority, components
-from objects import Organization, ServiceInstance
+from test_utils import download_file, Gearpump
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Organization, ServiceInstance
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
 
 
 @log_components()
 @components(TAP.gearpump_broker, TAP.application_broker, TAP.service_catalog)
-class GearpumpConsole(ApiTestCase):
+class GearpumpConsole(TapTestCase):
     COMPLEXDAG_APP_URL = "https://repo.gotapaas.eu/files/complexdag-2.11.5-0.7.1-SNAPSHOT-assembly.jar"
     COMPLEXDAG_APP_NAME = "dag"
     ONE_WORKER_PLAN_NAME = "1 worker"
 
     @classmethod
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
         cls.step("Download file complexdag")
         cls.complexdag_app_path = download_file(url=cls.COMPLEXDAG_APP_URL,

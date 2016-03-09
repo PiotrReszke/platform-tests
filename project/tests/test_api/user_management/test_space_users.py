@@ -13,12 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, cleanup_after_failed_setup, PlatformApiClient, platform_api_calls as api
-from test_utils import get_test_name, priority, components
-from objects import User, Organization, Space
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
+from constants.tap_components import TapComponent as TAP
+from test_utils import PlatformApiClient, platform_api_calls as api, get_test_name
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import User, Organization, Space
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
+
 
 USERS_CLIENTS = {}
 TEST_ORG = None
@@ -49,7 +51,7 @@ def setUpModule():
     USERS_CLIENTS["other_user"] = User.api_create_by_adding_to_organization(other_test_org.guid, roles=[]).login()
 
 
-class BaseSpaceUserClass(ApiTestCase):
+class BaseSpaceUserClass(TapTestCase):
     ALL_ROLES = {role for role_set in User.ORG_ROLES.values() for role in role_set}
     NON_MANAGER_ROLES = ALL_ROLES - User.ORG_ROLES["manager"]
     ALL_SPACE_ROLES = {role for role_set in User.SPACE_ROLES.values() for role in role_set}
@@ -57,7 +59,7 @@ class BaseSpaceUserClass(ApiTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # silence tearDownClass method inherited from ApiTestCase class, so users are not deleted before tearDownModule
+        # silence tearDownClass method inherited from TapTestCase class, so users are not deleted before tearDownModule
         pass
 
     def _assert_user_in_space_with_roles(self, expected_user, space_guid):

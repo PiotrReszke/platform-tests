@@ -16,14 +16,16 @@
 
 from constants.services import ServiceLabels
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, priority, components
+from test_utils.remote_logger.remote_logger_decorator import log_components
 from objects import ServiceInstance, ServiceType, Organization, Application
 from objects.service_instance_validator import ServiceInstanceValidator
-from test_utils.remote_logger.remote_logger_decorator import log_components
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
 
 
-class DataScienceInstancesBase(ApiTestCase):
+class DataScienceInstancesBase(TapTestCase):
     @classmethod
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):
         cls.step("Create test organization and test space")
         cls.test_org = Organization.api_create(space_names=("test-space",))

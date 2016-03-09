@@ -24,16 +24,17 @@ import websocket
 from constants.services import ServiceLabels
 from constants.priority_levels import Priority
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils, Hdfs, config, cloud_foundry as cf
-from test_utils import incremental, components
-from objects import Application, Organization, ServiceInstance
+from test_utils import app_source_utils, Hdfs, config, cloud_foundry as cf
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Application, Organization, ServiceInstance
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, incremental
 
 
 @log_components()
 @incremental(Priority.medium)
 @components(TAP.ingestion_ws_kafka_hdfs, TAP.service_catalog)
-class Ws2kafka2hdfs(ApiTestCase):
+class Ws2kafka2hdfs(TapTestCase):
 
     MESSAGE_COUNT = 10
     APP_REPO_PATH = "../../{}/ingestion-ws-kafka-hdfs".format(config.CONFIG["repository"])

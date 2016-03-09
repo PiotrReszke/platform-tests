@@ -20,15 +20,16 @@ import os
 
 from constants.services import ServiceLabels
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, cleanup_after_failed_setup, cloud_foundry as cf, app_source_utils, config, priority
-from test_utils import components
-from objects import Organization, Application, ServiceInstance, ServiceType
+from test_utils import cloud_foundry as cf, app_source_utils, config
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Organization, Application, ServiceInstance, ServiceType
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import priority, components
 
 
 @log_components()
 @components(TAP.service_catalog)
-class Postgres(ApiTestCase):
+class Postgres(TapTestCase):
 
     APP_REPO_NAME = "psql-api-example"
     PSQL_APP_DIR = os.path.normpath(os.path.join("../../{}/psql-api-example".format(config.CONFIG["repository"])))

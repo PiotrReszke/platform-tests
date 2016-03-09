@@ -19,19 +19,21 @@ import unittest
 
 from retry import retry
 
-from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, cleanup_after_failed_setup, get_csv_record_count
-from test_utils import tear_down_test_files, get_csv_data, download_file, ATKtools, priority, components
-from objects import Organization, Transfer, DataSet, User, Application
 from constants.HttpStatus import HttpStatus
+from constants.tap_components import TapComponent as TAP
+from test_utils import get_csv_record_count, tear_down_test_files, get_csv_data, download_file, ATKtools
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Organization, Transfer, DataSet, User, Application
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
+
 
 EXAMPLE_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
 
 
 @log_components()
 @components(TAP.data_catalog, TAP.das, TAP.hdfs_downloader, TAP.metadata_parser)
-class GetDataSets(ApiTestCase):
+class GetDataSets(TapTestCase):
 
     def _filter_datasets(self, org, filters=(), only_private=False, only_public=False):
         ds_list = DataSet.api_get_list(org_list=[org], filters=filters, only_private=only_private,
@@ -152,7 +154,7 @@ class GetDataSets(ApiTestCase):
 
 @log_components()
 @components(TAP.data_catalog, TAP.das, TAP.hdfs_downloader, TAP.metadata_parser)
-class UpdateDeleteDataSet(ApiTestCase):
+class UpdateDeleteDataSet(TapTestCase):
 
     @classmethod
     @cleanup_after_failed_setup(DataSet.api_teardown_test_datasets, Transfer.api_teardown_test_transfers,
@@ -219,7 +221,7 @@ class UpdateDeleteDataSet(ApiTestCase):
 
 @log_components()
 @components(TAP.data_catalog, TAP.das, TAP.hdfs_downloader, TAP.metadata_parser)
-class CreateDatasets(ApiTestCase):
+class CreateDatasets(TapTestCase):
     DETAILS_TO_COMPARE = {"accessibility", "title", "category", "sourceUri", "size", "orgUUID", "targetUri", "format",
                           "dataSample", "isPublic", "creationTime"}
     ACCESSIBILITIES = {True: "PUBLIC", False: "PRIVATE"}
@@ -293,7 +295,7 @@ class CreateDatasets(ApiTestCase):
 
 @log_components()
 @components(TAP.data_catalog, TAP.das, TAP.hdfs_downloader, TAP.metadata_parser)
-class DataSetFromHdfs(ApiTestCase):
+class DataSetFromHdfs(TapTestCase):
     atk_virtualenv = None
     atk_url = None
 

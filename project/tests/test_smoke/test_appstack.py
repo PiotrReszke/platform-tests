@@ -17,15 +17,16 @@
 import yaml
 
 from constants.services import ServiceLabels
-from test_utils import ApiTestCase, get_logger, CONFIG, github_get_file_content, AppClient, UnexpectedResponseError
-from test_utils import priority
+from test_utils import get_logger, CONFIG, github_get_file_content, AppClient, UnexpectedResponseError
 from objects import Application, ServiceInstance, ServiceBroker, Organization
+from runner.tap_test_case import TapTestCase
+from runner.decorators import priority
 
 
 logger = get_logger(__name__)
 
 
-class TrustedAnalyticsSmokeTest(ApiTestCase):
+class TrustedAnalyticsSmokeTest(TapTestCase):
     EXCLUDED_APP_NAMES = {ServiceLabels.ATK}
     # Gateway exposes all sensitive endpoints (request returns http status 200)
     SENSITIVE_ENDPOINTS_EXCLUDED_APPS = {ServiceLabels.GATEWAY}

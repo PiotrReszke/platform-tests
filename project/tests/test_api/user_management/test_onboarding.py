@@ -17,16 +17,18 @@
 import re
 import time
 
-from constants.tap_components import TapComponent as TAP
-from test_utils import config, gmail_api, ApiTestCase, platform_api_calls as api, get_test_name, priority, components
-from objects import User, Organization
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
+from constants.tap_components import TapComponent as TAP
+from test_utils import config, gmail_api, platform_api_calls as api, get_test_name
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import User, Organization
+from runner.tap_test_case import TapTestCase
+from runner.decorators import components, priority
 
 
 @log_components()
 @components(TAP.user_management, TAP.auth_gateway)
-class Onboarding(ApiTestCase):
+class Onboarding(TapTestCase):
     EXPECTED_EMAIL_SUBJECT = "Invitation to join Trusted Analytics platform"
     CLIENT_ID = "intel.data.tests@gmail.com"
     SENDER_PATTERN = "TrustedAnalytics <support@{}>"
@@ -182,7 +184,7 @@ class Onboarding(ApiTestCase):
 
 @log_components()
 @components(TAP.user_management)
-class PendingInvitations(ApiTestCase):
+class PendingInvitations(TapTestCase):
 
     @priority.high
     def test_add_new_pending_invitation(self):

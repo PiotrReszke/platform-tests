@@ -16,18 +16,19 @@
 
 import uuid
 
+from constants.HttpStatus import HttpStatus
 from constants.priority_levels import Priority
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils, cloud_foundry as cf
-from test_utils import application_broker as broker_client, get_test_name, incremental, priority, components
-from objects import Organization, Application, ServiceInstance, ServiceType
-from constants.HttpStatus import HttpStatus
+from test_utils import app_source_utils, cloud_foundry as cf, application_broker as broker_client, get_test_name
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Organization, Application, ServiceInstance, ServiceType
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import priority, components, incremental
 
 
 @log_components()
 @components(TAP.application_broker)
-class ApplicationBroker(ApiTestCase):
+class ApplicationBroker(TapTestCase):
 
     @priority.medium
     def test_get_catalog(self):
@@ -46,7 +47,7 @@ class ApplicationBroker(ApiTestCase):
 @log_components()
 @incremental(Priority.medium)
 @components(TAP.application_broker)
-class ApplicationBrokerFlow(ApiTestCase):
+class ApplicationBrokerFlow(TapTestCase):
 
     APP_REPO_PATH = "../../cf-env-demo"
     APP_COMMIT_ID = "f36c111"

@@ -15,12 +15,12 @@
 #
 from datetime import datetime
 
-from test_utils import ApiTestCase, cleanup_after_failed_setup
 from objects import Organization, ServiceInstance, ServiceType
 from constants.services import ServiceLabels
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
 
 
-class ServiceInstancesMonitoring(ApiTestCase):
+class ServiceInstancesMonitoring(TapTestCase):
 
     TESTED_APP_NAMES = {ServiceLabels.RSTUDIO}
 

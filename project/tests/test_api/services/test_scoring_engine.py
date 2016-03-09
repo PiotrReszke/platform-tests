@@ -16,15 +16,16 @@
 
 from constants.services import ServiceLabels
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, cleanup_after_failed_setup, priority, components
-from objects import Organization, ServiceInstance, ServiceKey, Transfer, DataSet, User
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Organization, ServiceInstance, ServiceKey, Transfer, DataSet, User
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
 
 
 @log_components()
 @components(TAP.scoring_engine, TAP.service_catalog, TAP.application_broker, TAP.das, TAP.hdfs_downloader,
             TAP.metadata_parser)
-class TestScoringEngineInstance(ApiTestCase):
+class TestScoringEngineInstance(TapTestCase):
     MODEL_URL = "https://repo.gotapaas.eu/files/models_a8ab76353c2143509514da386d32a2f8.tar"
     SE_PLAN_NAME = "Simple"
 

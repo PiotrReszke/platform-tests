@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015 Intel Corporation
+# Copyright (c) 2016 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,20 +14,18 @@
 # limitations under the License.
 #
 
-from .exceptions import *
-from .logger import *
-from .config import *
-from .gmail_api import *
-from .api_client import *
-from .ssh_client import *
-from .hdfs import *
-from .atk_tools import ATKtools
-from .app_source_utils import *
-from .cloud_foundry import *
-from .platform_api_calls import *
-from .data_science_tools import DataScience
-from .ipython_tools import iPython
-from .gearpump_tools import Gearpump
-from .file_utils import *
-from .api_password import *
-from .arcadia_tools import *
+from enum import Enum
+
+
+class TestResult(Enum):
+    success = "pass"
+    error = "error"
+    failure = "fail"
+    unexpected_success = "unexpected_success"
+    expected_failure = "expected_failure"
+    skip = "skip"
+
+    @classmethod
+    def values(cls):
+        return [i.value for i in list(cls)]
+

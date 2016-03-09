@@ -76,12 +76,16 @@ __CONFIG.read_string("""
 CONFIG = {
     "github_auth": (__SECRETS["github"]["username"], __SECRETS["github"]["password"]),
     "ssh_key_passphrase": __SECRETS["ssh"].get("passphrase", ""),
-    "test_user_email": "intel.data.tests@gmail.com"
+    "test_user_email": "intel.data.tests@gmail.com",
+    "database_url": None
 }
 
+LOGGED_CONFIG_KEYS = ["domain", "admin_username", "client_type", "proxy", "ssl_validation", "platfom_version",
+                      "database_url"]
 
 def update_test_config(domain=None, proxy=None, client_type=None, logged_response_body_length=None,
-                       logging_level=None, repository=None, platform_version="master"):
+                       logging_level=None, repository=None, platform_version="master", database_url=None,
+                       test_suite=None):
     defaults = __CONFIG.defaults()
     defaults.update(__SECRETS.defaults())
     CONFIG["platform_version"] = platform_version
@@ -103,6 +107,7 @@ def update_test_config(domain=None, proxy=None, client_type=None, logged_respons
         CONFIG["arcadia_password"] = __SECRETS.get(domain, "arcadia_password", fallback=defaults["arcadia_password"])
         CONFIG["cf_api_version"] = __CONFIG.get(domain, "cf_api_version", fallback=defaults["cf_api_version"])
     CONFIG["proxy"] = proxy
+    CONFIG["test_suite"] = test_suite
     if logged_response_body_length is not None:
         logger.LOGGED_RESPONSE_BODY_LENGTH = logged_response_body_length
     if client_type is not None:
@@ -111,6 +116,8 @@ def update_test_config(domain=None, proxy=None, client_type=None, logged_respons
         logger.set_level(logging_level)
     if repository is not None:
         CONFIG["repository"] = repository
+    if database_url is not None:
+        CONFIG["database_url"] = database_url
 
 
 # update settings using default values
@@ -125,7 +132,8 @@ update_test_config(domain=os.environ.get("TEST_ENVIRONMENT"),
                    proxy=os.environ.get("TEST_PROXY"),
                    client_type=os.environ.get("TEST_CLIENT_TYPE"),
                    logged_response_body_length=os.environ.get("LOGGED_RESPONSE_BODY_LENGTH"),
-                   platform_version=os.environ.get("PLATFORM_VERSION", "master"))
+                   platform_version=os.environ.get("PLATFORM_VERSION", "master"),
+                   database_url=os.environ.get("DATABASE_URL"))
 
 
 def parse_arguments():
@@ -171,6 +179,9 @@ def parse_arguments():
                         choices=["intel-data", "trustedanalytics"],
                         default="intel-data",
                         help="Repository from which the applications source code is cloned.")
+    parser.add_argument("--database-url",
+                        default=None,
+                        help="URL to database for storing test results")
     return parser.parse_args()
 
 

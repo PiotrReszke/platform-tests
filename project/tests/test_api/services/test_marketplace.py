@@ -16,20 +16,23 @@
 
 import itertools
 
+from constants.HttpStatus import ServiceCatalogHttpStatus as HttpStatus
 from constants.services import PARAMETRIZED_SERVICE_INSTANCES, ServiceLabels
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, iPython, get_test_name, priority, components
-from objects import ServiceInstance, ServiceType, Organization, User
-from constants.HttpStatus import ServiceCatalogHttpStatus as HttpStatus
+from test_utils import iPython, get_test_name
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import ServiceInstance, ServiceType, Organization, User
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
 
 
 @log_components()
 @components(TAP.service_catalog, TAP.application_broker, TAP.gearpump_broker, TAP.hbase_broker, TAP.hdfs_broker,
             TAP.kafka_broker, TAP.smtp_broker, TAP.yarn_broker, TAP.zookeeper_broker, TAP.zookeeper_wssb_broker)
-class MarketplaceServices(ApiTestCase):
+class MarketplaceServices(TapTestCase):
 
     @classmethod
+    @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs, User.cf_api_tear_down_test_users)
     def setUpClass(cls):
         cls.step("Create test organization and test space")
         cls.test_org = Organization.api_create(space_names=("test-space",))

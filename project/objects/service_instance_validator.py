@@ -14,12 +14,12 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase
 from objects import ServiceInstance, Application, ServiceBinding
+from runner.tap_test_case import TapTestCase
 
 
 class ServiceInstanceValidator(object):
-    def __init__(self, api_test: ApiTestCase, service: ServiceInstance):
+    def __init__(self, api_test: TapTestCase, service: ServiceInstance):
         self.__validate_property("name", service.name)
         self.__validate_property("guid", service.guid)
         self.__validate_property("space_guid", service.space_guid)

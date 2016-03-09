@@ -19,17 +19,19 @@ import os
 from constants.priority_levels import Priority
 from constants.services import ServiceLabels
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, cleanup_after_failed_setup, ATKtools, get_test_name, incremental, components
+from test_utils import ATKtools, get_test_name
+from test_utils.remote_logger.remote_logger_decorator import log_components
 from objects import Organization, Transfer, DataSet, ServiceType, ServiceInstance, User
 from objects.service_instance_validator import ServiceInstanceValidator
-from test_utils.remote_logger.remote_logger_decorator import log_components
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, incremental
 
 
 @log_components()
 @incremental(Priority.high)
 @components(TAP.atk, TAP.dataset_publisher, TAP.application_broker, TAP.service_catalog, TAP.das, TAP.hdfs_downloader,
             TAP.metadata_parser)
-class Atk(ApiTestCase):
+class Atk(TapTestCase):
     DATA_SOURCE = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     ATK_PLAN_NAME = "Simple"
     atk_virtualenv = None

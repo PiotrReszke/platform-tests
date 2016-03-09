@@ -14,11 +14,12 @@
 # limitations under the License.
 #
 
-from test_utils import ApiTestCase, PlatformApiClient
+from test_utils import PlatformApiClient
 from objects import Application, Organization
+from runner.tap_test_case import TapTestCase
 
 
-class AppMonitoring(ApiTestCase):
+class AppMonitoring(TapTestCase):
 
     TESTED_APP_NAMES = {"das", "metrics-provider", "router-metrics-provider", "user-management"}
 

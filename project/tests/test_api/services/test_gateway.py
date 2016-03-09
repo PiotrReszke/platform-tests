@@ -18,16 +18,18 @@ import websocket
 from constants.priority_levels import Priority
 from constants.services import ServiceLabels
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, cleanup_after_failed_setup, CfApiClient, incremental, components
+from test_utils import CfApiClient
+from test_utils.remote_logger.remote_logger_decorator import log_components
 from objects.service_instance_validator import ServiceInstanceValidator
 from objects import Organization, ServiceInstance, User
-from test_utils.remote_logger.remote_logger_decorator import log_components
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, incremental
 
 
 @log_components()
 @incremental(Priority.high)
 @components(TAP.gateway, TAP.application_broker, TAP.service_catalog)
-class Gateway(ApiTestCase):
+class Gateway(TapTestCase):
     PLAN_NAME = "Simple"
     gateway_instance = None
     kafka_instance = None

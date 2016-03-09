@@ -16,14 +16,15 @@
 
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, cleanup_after_failed_setup, priority, components
-from objects import Organization, Space, User
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Organization, Space, User
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, priority
 
 
 @log_components()
 @components(TAP.user_management)
-class Spaces(ApiTestCase):
+class Spaces(TapTestCase):
     @classmethod
     @cleanup_after_failed_setup(Organization.cf_api_tear_down_test_orgs)
     def setUpClass(cls):

@@ -20,8 +20,6 @@ import re
 from . import get_logger, config, NestedSshClient, HdfsException
 
 
-
-
 __all__ = ["Hdfs"]
 
 

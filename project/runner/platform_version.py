@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015 Intel Corporation
+# Copyright (c) 2016 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,20 +14,18 @@
 # limitations under the License.
 #
 
-from .exceptions import *
-from .logger import *
-from .config import *
-from .gmail_api import *
-from .api_client import *
-from .ssh_client import *
-from .hdfs import *
-from .atk_tools import ATKtools
-from .app_source_utils import *
-from .cloud_foundry import *
-from .platform_api_calls import *
-from .data_science_tools import DataScience
-from .ipython_tools import iPython
-from .gearpump_tools import Gearpump
-from .file_utils import *
-from .api_password import *
-from .arcadia_tools import *
+from constants.tap_components import TapComponent
+
+
+class VersionedComponent(object):
+    def __init__(self, component: TapComponent, version: str):
+        self.__component = component
+        self.__version = version
+
+    @property
+    def to_db_format(self):
+        return {"name": self.__component.name, "version": self.__version}
+
+    @staticmethod
+    def list_to_db_format(component_list):
+        return [c.to_db_format for c in component_list]

@@ -16,15 +16,17 @@
 
 from constants.tap_components import TapComponent as TAP
 from constants.priority_levels import Priority
-from test_utils import ApiTestCase, cleanup_after_failed_setup, Arcadia, incremental, components
-from objects import Organization, User, Transfer, DataSet
+from test_utils import Arcadia
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Organization, User, Transfer, DataSet
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import components, incremental
 
 
 @log_components()
 @incremental(Priority.high)
 @components(TAP.dataset_publisher, TAP.das, TAP.hdfs_downloader, TAP.metadata_parser)
-class ArcadiaTest(ApiTestCase):
+class ArcadiaTest(TapTestCase):
     LINK_TO_CSV = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
     arcadia = None
 

@@ -24,15 +24,16 @@ import paho.mqtt.client as mqtt
 
 from constants.services import ServiceLabels
 from constants.tap_components import TapComponent as TAP
-from test_utils import ApiTestCase, config, app_source_utils, cloud_foundry as cf, cleanup_after_failed_setup, priority
-from test_utils import components
-from objects import Application, Organization, ServiceInstance
+from test_utils import config, app_source_utils, cloud_foundry as cf
 from test_utils.remote_logger.remote_logger_decorator import log_components
+from objects import Application, Organization, ServiceInstance
+from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
+from runner.decorators import priority, components
 
 
 @log_components()
 @components(TAP.mqtt_demo, TAP.service_catalog)
-class Mqtt(ApiTestCase):
+class Mqtt(TapTestCase):
 
     INFLUX_INSTANCE_NAME = "mqtt-demo-db"
     MQTT_INSTANCE_NAME = "mqtt-demo-messages"

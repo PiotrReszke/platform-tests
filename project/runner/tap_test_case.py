@@ -22,10 +22,10 @@ from retry import retry
 
 from constants.priority_levels import Priority
 from objects import organization as org, user as usr, transfer as tr, dataset as ds
-from . import get_logger, UnexpectedResponseError
+from test_utils import get_logger, UnexpectedResponseError
 
 
-__all__ = ["ApiTestCase", "cleanup_after_failed_setup"]
+__all__ = ["TapTestCase", "cleanup_after_failed_setup"]
 
 logger = get_logger(__name__)
 
@@ -61,7 +61,7 @@ class SeparatorMeta(type):
         return super(SeparatorMeta, mcs).__new__(mcs, name, bases, namespace)
 
 
-class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
+class TapTestCase(unittest.TestCase, metaclass=SeparatorMeta):
     step_number = 0
     sub_test_number = 0
     incremental = False
