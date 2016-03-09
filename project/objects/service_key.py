@@ -15,15 +15,14 @@
 #
 
 import functools
-import datetime
 
-from test_utils import cloud_foundry as cf
+from test_utils import platform_api_calls as api, get_test_name
 
-__all__ = ["ServiceInstanceKey"]
+__all__ = ["ServiceKey"]
 
 
 @functools.total_ordering
-class ServiceInstanceKey(object):
+class ServiceKey(object):
 
     COMPARABLE_ATTRIBUTES = ["guid", "name", "credentials", "service_instance_guid"]
 
@@ -46,10 +45,12 @@ class ServiceInstanceKey(object):
         return hash((self.guid, self.name, self.credentias, self.service_instance_guid))
 
     @classmethod
-    def cf_api_create(cls, service_instance_guid, service_key_name=None):
-        service_key_name = service_key_name or "test_key_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        response = cf.cf_api_create_service_key(service_instance_guid, service_key_name)
-        return cls(guid=response["metadata"]["guid"], name=response["entity"]["name"],
-                   credentials=response["entity"]["credentials"],
-                   service_instance_guid=response["entity"]["service_instance_guid"])
+    def api_create(cls, service_instance_guid, service_key_name=None, client=None):
+        service_key_name = get_test_name() if service_key_name is None else service_key_name
+        response = api.api_create_service_key(service_instance_guid, service_key_name, client=client)
+        return cls(guid=response["guid"], name=response["name"], credentials=response["credentials"],
+                   service_instance_guid=response["service_instance_guid"])
+
+    def api_delete(self, client=None):
+        api.api_delete_service_key(self.guid, client=client)
 

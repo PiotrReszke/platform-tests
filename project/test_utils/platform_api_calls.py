@@ -283,6 +283,23 @@ def api_get_service_instances_summary(space_guid=None, service_keys=True, client
                           log_msg="PLATFORM: get service instances summary")
 
 
+def api_create_service_key(service_instance_guid, service_key_name, client=None):
+    """POST /rest/service_keys"""
+    client = client or PlatformApiClient.get_admin_client()
+    body = {
+        "name": service_key_name,
+        "service_instance_guid": service_instance_guid
+    }
+    return client.request(method="POST", endpoint="rest/service_keys", body=body,
+                          log_msg="Platform: create service key")
+
+
+def api_delete_service_key(service_key_guid, client=None):
+    """DELETE /rest/service_keys/{service_key_guid}"""
+    client = client or PlatformApiClient.get_admin_client()
+    return client.request(method="DELETE", endpoint="rest/service_keys/{}".format(service_key_guid),
+                          log_msg="Platform: delete service key")
+
 # --------------------------------------------------- Applications --------------------------------------------------- #
 
 

@@ -21,7 +21,7 @@ from retry import retry
 
 from test_utils import platform_api_calls as api, cloud_foundry as cf, get_test_name, UnexpectedResponseError,\
     application_broker as broker_client, config
-from objects import ServiceInstanceKey
+from objects import ServiceKey
 from constants.services import ServiceLabels
 
 __all__ = ["ServiceInstance", "AtkInstance"]
@@ -115,9 +115,9 @@ class ServiceInstance(object):
                                service_label=service_data["label"])
                 service_keys = []
                 for key_data in instance_data["service_keys"]:
-                    service_keys.append(ServiceInstanceKey(guid=key_data["guid"], name=key_data["name"],
-                                                           credentials=key_data["credentials"],
-                                                           service_instance_guid=key_data["service_instance_guid"]))
+                    service_keys.append(ServiceKey(guid=key_data["guid"], name=key_data["name"],
+                                                   credentials=key_data["credentials"],
+                                                   service_instance_guid=key_data["service_instance_guid"]))
                 keys[instance] = service_keys
         return keys
 

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from .service_instance_key import ServiceInstanceKey
+from .service_key import ServiceKey
 from .application import Application
 from .service_instance import ServiceInstance, AtkInstance
 from .space import Space

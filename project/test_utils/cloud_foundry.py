@@ -274,21 +274,6 @@ def cf_api_delete_route(route_guid):
                                      log_msg="CF: delete route")
 
 
-# -------------------------------------------------- service keys ---------------------------------------------------- #
-
-
-def cf_api_create_service_key(service_instance_guid, service_key_name):
-    """POST /v2/service_keys"""
-    return CfApiClient.get_client().request(
-        method="POST",
-        endpoint="service_keys",
-        body={"name": service_key_name, "service_instance_guid": service_instance_guid},
-        log_msg="CF: create service instance key"
-    )
-
-# -------------------------------------------------------------------------------------------------------------------- #
-
-
 def cf_get_ref_org_and_space_guids():
     """Return tuple or org_guid and space_guid for reference org and space (e.g. seedorg, seedspace)."""
     if CONFIG.get("ref_org_guid") is None or CONFIG.get("ref_space_guid") is None:

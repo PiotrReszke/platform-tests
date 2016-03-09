@@ -16,10 +16,10 @@
 
 from test_utils import ApiTestCase, cleanup_after_failed_setup, priority
 from constants.services import PARAMETRIZED_SERVICE_INSTANCES, ServiceLabels
-from objects import Organization, ServiceType, ServiceInstance, ServiceInstanceKey
+from objects import Organization, ServiceType, ServiceInstance, ServiceKey
 
 
-class ServiceInstanceKeys(ApiTestCase):
+class ServiceKeys(ApiTestCase):
     FAILING_SERVICES = [ServiceLabels.YARN, ServiceLabels.HDFS, ServiceLabels.HBASE, ServiceLabels.GEARPUMP]
     SERVICES_TESTED_SEPARATELY = FAILING_SERVICES + PARAMETRIZED_SERVICE_INSTANCES
 
@@ -44,14 +44,18 @@ class ServiceInstanceKeys(ApiTestCase):
         self.assertIn(instance, summary)
         self.assertEqual(summary[instance], [])  # there are no keys for this instance
         self.step("Create a key for the instance and check it's correct")
-        instance_key = ServiceInstanceKey.cf_api_create(instance.guid)
+        instance_key = ServiceKey.api_create(instance.guid)
         summary = ServiceInstance.api_get_keys(test_space.guid)
         self.assertEqual(summary[instance][0], instance_key)
+        self.step("Delete key and check that it's deleted")
+        instance_key.api_delete()
+        summary = ServiceInstance.api_get_keys(test_space.guid)
+        self.assertEqual(summary[instance], [])
 
     @priority.low
     def test_get_service_instance_summary_from_empty_space(self):
         self.step("Create a service instance in one space")
-        service_type = next(s for s in self.marketplace_services if s.label not in self.SERVICES_TESTED_SEPARATELY)
+        service_type = next(s for s in self.marketplace_services if s.label == "kafka")
         ServiceInstance.api_create(org_guid=self.test_org.guid, space_guid=self.test_org.spaces[0].guid,
                                    service_label=service_type.label,
                                    service_plan_guid=service_type.service_plan_guids[0])
@@ -62,7 +66,7 @@ class ServiceInstanceKeys(ApiTestCase):
         self.assertEqual(summary, {})
 
     @priority.medium
-    def test_create_service_instance_keys(self):
+    def test_create_delete_service_keys(self):
         working_services = [s for s in self.marketplace_services if s.label not in self.SERVICES_TESTED_SEPARATELY]
         test_space = self.test_org.spaces[2]
         for service_type in working_services:
@@ -71,7 +75,7 @@ class ServiceInstanceKeys(ApiTestCase):
                     self._create_instance_and_key(service_type.label, plan["guid"], self.test_org, test_space)
 
     @priority.low
-    def test_create_yarn_service_instance_keys(self):
+    def test_create_yarn_service_keys(self):
         """DPNG-3474 Command cf create-service-key does not work for yarn broker"""
         label = ServiceLabels.YARN
         yarn = next(s for s in self.marketplace_services if s.label == label)
@@ -81,7 +85,7 @@ class ServiceInstanceKeys(ApiTestCase):
                 self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
 
     @priority.low
-    def test_create_hdfs_service_instance_keys(self):
+    def test_create_hdfs_service_keys(self):
         """DPNG-3273 Enable HDFS broker to use Service Keys"""
         label = ServiceLabels.HDFS
         hdfs = next(s for s in self.marketplace_services if s.label == label)
@@ -91,7 +95,7 @@ class ServiceInstanceKeys(ApiTestCase):
                 self._create_instance_and_key(label, plan["guid"], self.test_org, test_space)
 
     @priority.low
-    def test_create_hbase_service_instance_keys(self):
+    def test_create_hbase_service_keys(self):
         """DPNG-2798 Enable HBase broker to use Service Keys"""
         label = ServiceLabels.HBASE
         hbase = next(s for s in self.marketplace_services if s.label == label)

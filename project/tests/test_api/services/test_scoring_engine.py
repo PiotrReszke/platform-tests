@@ -15,7 +15,7 @@
 #
 from test_utils import ApiTestCase, cleanup_after_failed_setup, priority
 from constants.services import ServiceLabels
-from objects import Organization, ServiceInstance, ServiceInstanceKey, Transfer, DataSet, User
+from objects import Organization, ServiceInstance, ServiceKey, Transfer, DataSet, User
 
 
 class TestScoringEngineInstance(ApiTestCase):
@@ -55,7 +55,7 @@ class TestScoringEngineInstance(ApiTestCase):
         self.assertNotIn(se_instance, instances, "Scoring engine instance was not deleted")
 
     @priority.medium
-    def test_create_scoring_engine_service_instance_key(self):
+    def test_create_scoring_engine_service_key(self):
         """DPNG-5389 User cannot create scoring-engine instance (permission denied for user vcap)"""
         self.step("Create test service instance")
         se_instance = ServiceInstance.api_create(
@@ -70,6 +70,6 @@ class TestScoringEngineInstance(ApiTestCase):
         self.assertIn(se_instance, summary, "Instance not found in summary")
         self.assertEqual(summary[se_instance], [], "There are keys for the instance")
         self.step("Create a key for the instance and check it")
-        instance_key = ServiceInstanceKey.cf_api_create(se_instance.guid)
+        instance_key = ServiceKey.api_create(se_instance.guid)
         summary = ServiceInstance.api_get_keys(self.test_space.guid)
         self.assertIn(instance_key, summary[se_instance], "Key not found")
