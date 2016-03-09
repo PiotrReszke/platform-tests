@@ -254,7 +254,7 @@ class AddNewUserToOrganization(BaseOrgUserClass):
         org_users = User.api_get_list_via_organization(org.guid)
         username = "non-valid-username{}".format(time.time())
         roles = self.ALL_ROLES
-        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_CONFLICT, HttpStatus.MSG_EMAIL_ADDRESS_NOT_VALID,
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_EMAIL_ADDRESS_NOT_VALID,
                                             User.api_create_by_adding_to_organization, org_guid=org.guid,
                                             username=username, roles=roles)
         # assert user list did not change
