@@ -105,14 +105,14 @@ class SubmitTransferFromLocalFile(SubmitTransfer):
         DataSet.api_get_matching_to_transfer([self.org], transfer.title)
 
     @priority.low
-    def test_cannot_create_transfer_when_providing_wrong_org_guid(self):
+    def test_cannot_create_transfer_when_providing_invalid_org_guid(self):
         """DPNG-3896 Wrong response when trying to create transfer by file upload in non existing org"""
-        org_guid = "wrong_guid"
+        org_guid = "invalid_guid"
         category = "other"
         self.step("Generate sample csv file")
         file_path = generate_csv_file(column_count=10, row_count=10)
         self.step("Create a transfer")
-        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_ORGANIZATION_NOT_EXIST,
+        self.assertRaisesUnexpectedResponse(HttpStatus.CODE_BAD_REQUEST, HttpStatus.MSG_INVALID_REQUEST,
                                             api.api_create_transfer_by_file_upload, source=file_path,
                                             title="test-transfer-{}".format(time.time()), is_public=False,
                                             org_guid=org_guid, category=category)

@@ -154,7 +154,7 @@ class DataCatalogHttpStatus(HttpStatus):
     """Data catalog http status messages"""
 
     MSG_NOT_VALID_UUID = "not a valid UUID"
-    MSG_ORGANIZATION_NOT_EXIST = "org does not exist"
+    MSG_INVALID_REQUEST = "Invalid request"
 
 
 class ServiceCatalogHttpStatus(HttpStatus):
