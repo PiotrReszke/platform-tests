@@ -64,7 +64,7 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
     step_number = 0
     sub_test_number = 0
     incremental = False
-    prerequisite_failed = False
+
     maxDiff = None
     components = tuple()
 
@@ -105,7 +105,7 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         self.__class__.step_number = self.__class__.sub_test_number = 0
         logger.debug("\n{0}\n\n{1}\n\n{0}\n".format(separator, test_name))
         current_result = super().run(result=result)
-        if self.incremental and (len(current_result.failures) > 0 or len(current_result.errors) > 0):
+        if self.incremental and current_result.current_failed:
             self.__class__.prerequisite_failed = True
         return current_result
 
@@ -133,22 +133,6 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         status_first_digit = e.exception.status // 100
         self.assertIn(status_first_digit, (4, 5), "Status code: {}. Expected: 4XX or 5XX".format(e.exception.status))
 
-    def assertAttributesEqual(self, obj, expected_obj):
-        if getattr(obj, "COMPARABLE_ATTRIBUTES", None) is None:
-            raise ValueError("Object of type {} does not have attribute COMPARABLE_ATTRIBUTES".format(type(obj)))
-        if type(obj) != type(expected_obj):
-            raise TypeError(
-                "Cannot compare object of type {} with object of type {}".format(type(obj), type(expected_obj)))
-        differences = []
-        for attribute in obj.COMPARABLE_ATTRIBUTES:
-            obj_val = getattr(obj, attribute)
-            expected_val = getattr(expected_obj, attribute)
-            if obj_val != expected_val:
-                differences.append(
-                    "{0}.{1}={2} not equal to {0}.{1}={3}".format(type(obj), attribute, obj_val, expected_val))
-        if differences != []:
-            self.fail("Objects are not equal:\n{}".format("\n".join(differences)))
-
     def assertEqualWithinTimeout(self, timeout, expected_result, callable_obj, *args, **kwargs):
         now = time.time()
         while time.time() - now < timeout:
@@ -157,19 +141,6 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
                 return
             time.sleep(5)
         self.fail("{} and {} are not equal - within {}s".format(result, expected_result, timeout))
-
-    def exec_within_timeout(self, timeout, callable_obj, *args, **kwargs):
-        """Execute a callable until it does not raise an exception or until timeout"""
-        now = time.time()
-        exception = None
-        while time.time() - now < timeout:
-            try:
-                return callable_obj(*args, **kwargs)
-            except Exception as e:
-                exception = e
-                logger.warning("Exception {}".format(e))
-                time.sleep(5)
-        raise exception
 
     def assert_user_in_org_and_roles(self, invited_user, org_guid, expected_roles):
         self.step("Check that the user is in the organization with expected roles ({}).".format(expected_roles))

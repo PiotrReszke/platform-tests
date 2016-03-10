@@ -75,6 +75,7 @@ class IncrementalTestDecorator(object):
             raise TypeError("Incremental decorator should be used on an ApiTestCase class.")
         self.wrapped_class = wrapped_class
         self.wrapped_class.incremental = True
+        self.wrapped_class.prerequisite_failed = False
         self.__wrap_test_methods()
         return self.wrapped_class
 
