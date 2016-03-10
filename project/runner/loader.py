@@ -16,6 +16,7 @@
 import os
 import unittest
 
+from .decorators import MARK_DECORATOR_NAME
 from .tap_test_case import TapTestCase
 from constants.priority_levels import Priority
 
@@ -92,19 +93,23 @@ class TapTestLoader(unittest.TestLoader):
         self.__filter_test_suite(has_component)
 
     def __filter_only_tagged(self, tags: list):
-        """Future implementation"""
-        raise NotImplementedError()
+        def is_tagged(test: TapTestCase):
+            mark = getattr(test, MARK_DECORATOR_NAME, "")
+            return mark in tags
+        self.__filter_test_suite(is_tagged)
 
     def __filter_not_tagged(self, tags: list):
-        """Future implementation"""
-        raise NotImplementedError()
+        def is_not_tagged(test: TapTestCase):
+            mark = getattr(test, MARK_DECORATOR_NAME, "")
+            return mark not in tags
+        self.__filter_test_suite(is_not_tagged)
 
     def __apply_filters(self, components=None, priority=None, only_tags=None, excluded_tags=None):
         if components is not None and components != []:
             self.__filter_components(components)
         if priority is not None:
             self.__filter_priority(priority)
-        if only_tags is not None:
+        if only_tags is not None and only_tags != []:
             self.__filter_only_tagged(only_tags)
-        if excluded_tags is not None:
+        if excluded_tags is not None and excluded_tags != []:
             self.__filter_not_tagged(excluded_tags)

@@ -72,5 +72,7 @@ if __name__ == "__main__":
     runner = TestRunner()
     components = [getattr(TapComponent, c) for c in args.components]
     priority = getattr(Priority, args.priority)
-    loader = TapTestLoader(path=args.suite, test_name=args.test, priority=priority, components=components)
+    loader = TapTestLoader(path=args.suite, test_name=args.test, priority=priority, components=components,
+                           only_tags=args.only_tagged, excluded_tags=args.not_tagged)
     runner.run(loader.test_suite)
+

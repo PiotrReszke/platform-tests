@@ -23,6 +23,7 @@ import socket
 
 from constants.tap_components import TapComponent
 from constants.priority_levels import Priority
+from runner.decorators import MARK_NAMES
 from . import logger
 
 
@@ -159,6 +160,16 @@ def parse_arguments():
                         action="append",
                         choices=TapComponent.names(),
                         help="Limit tests to those which use specified components")
+    parser.add_argument("--only-tagged",
+                        default=[],
+                        action="append",
+                        choices=MARK_NAMES,
+                        help="Limit tests to those which are included in specified group")
+    parser.add_argument("--not-tagged",
+                        default=[],
+                        action="append",
+                        choices=MARK_NAMES,
+                        help="Limit tests to those which are not included in specified group")
     parser.add_argument("--proxy",
                         default=None,
                         help="set proxy for api client")

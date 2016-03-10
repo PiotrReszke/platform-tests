@@ -21,28 +21,35 @@ import unittest
 from constants.priority_levels import Priority
 
 
-__all__ = ["components", "incremental", "priority"]
+__all__ = ["components", "incremental", "priority", "mark", "MARK_NAMES"]
+
+MARK_NAMES = ["long"]
+MARK_DECORATOR_NAME = "mark"
 
 
-class PriorityDecorator(object):
-
-    def __init__(self, priority_level):
-        if not isinstance(priority_level, Priority):
-            raise TypeError("Only members of Priority Enum are allowed")
-        self.priority_level = priority_level
+class GenericDecorator(object):
+    def __init__(self, value, decorator_name, possible_values):
+        if value not in possible_values:
+            raise TypeError("Only members {} are allowed".format(possible_values))
+        self.decorator_value = value
+        self.decorator_name = decorator_name
 
     def __call__(self, f):
         if not inspect.isfunction(f) or not f.__name__.startswith("test"):
-            raise TypeError("Priority decorator can only be used on a test method.")
-        f.priority = self.priority_level
+            raise TypeError("{} decorator can only be used on a test method.".format(self.decorator_name))
+        setattr(f, self.decorator_name, self.decorator_value)
         return f
 
 
-class PriorityGenerator(object):
+class DecoratorGenerator(object):
+    def __init__(self, possible_values, name):
+        self.possible_values = possible_values
+        self.name = name
 
-    def __getattr__(self, priority_level):
-        priority = getattr(Priority, priority_level)
-        return PriorityDecorator(priority)
+    def __getattr__(self, item):
+        if type(self.possible_values) != list:
+            item = getattr(self.possible_values, item)
+        return GenericDecorator(item, self.name, self.possible_values)
 
 
 class ComponentDecorator(object):
@@ -94,6 +101,7 @@ class IncrementalTestDecorator(object):
         return wrap
 
 
-priority = PriorityGenerator()
+priority = DecoratorGenerator(Priority, "priority")
 components = ComponentDecorator
 incremental = IncrementalTestDecorator
+mark = DecoratorGenerator(MARK_NAMES, MARK_DECORATOR_NAME)

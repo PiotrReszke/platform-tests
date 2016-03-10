@@ -75,6 +75,7 @@ class TapTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         super().__init__(methodName=methodName)
         self.priority = Priority.default() if priority is None else priority
         self.components = getattr(test_method, "components", self.components)
+        self.mark = getattr(test_method, "mark", None)
 
     @classmethod
     def tearDownClass(cls):
