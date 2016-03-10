@@ -32,6 +32,7 @@ logger = get_logger(__name__)
 
 FUNCTIONS_TO_LOG = ('setUp', 'tearDown', 'setUpClass', 'tearDownClass')
 SEPARATOR = "****************************** {} {} {} ******************************"
+errors_and_failures = 0
 
 def log_fixture_separator(func):
     func_is_classmethod = type(func) is classmethod
@@ -83,6 +84,10 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         usr.User.api_tear_down_test_invitations()
 
     @classmethod
+    def get_errors_and_failures(cls, result):
+        return len(result.errors) + len(result.failures)
+
+    @classmethod
     def step(cls, message):
         """Log message as nth test step"""
         separator = "=" * 20
@@ -105,8 +110,10 @@ class ApiTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         self.__class__.step_number = self.__class__.sub_test_number = 0
         logger.debug("\n{0}\n\n{1}\n\n{0}\n".format(separator, test_name))
         current_result = super().run(result=result)
-        if self.incremental and current_result.current_failed:
+        if self.incremental and self.get_errors_and_failures(current_result) > errors_and_failures:
             self.__class__.prerequisite_failed = True
+        global errors_and_failures
+        errors_and_failures = self.get_errors_and_failures(current_result)
         return current_result
 
     def assertUnorderedListEqual(self, list1, list2, msg=None):
