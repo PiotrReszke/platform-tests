@@ -17,8 +17,10 @@
 from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, priority, components
 from objects import ExternalTools
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.platform_context)
 class ExternalToolsStatus(ApiTestCase):
 

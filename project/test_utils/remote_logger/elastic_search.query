@@ -1,0 +1,54 @@
+{
+  "size": _LIMIT_,
+  "from": _OFFSET_,
+  "sort": [
+    {
+      "@timestamp": {
+        "order": "desc",
+        "unmapped_type": "boolean"
+      }
+    }
+  ],
+  "query": {
+    "filtered": {
+      "query": {
+        "query_string": {
+          "analyze_wildcard": true,
+          "query": "*"
+        }
+      },
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "query": {
+                "match": {
+                  "cf_app_name": {
+                    "query": "_APP_NAME_",
+                    "type": "phrase"
+                  }
+                }
+              }
+            },
+            {
+              "range": {
+                "@timestamp": {
+                  "gte": _DATE_FROM_,
+                  "lte": _DATE_TO_
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "fields": [
+    "*",
+    "_source"
+  ],
+  "fielddata_fields": [
+    "@timestamp",
+    "received_at"
+  ]
+}

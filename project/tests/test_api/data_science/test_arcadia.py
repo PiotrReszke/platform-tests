@@ -18,8 +18,10 @@ from constants.tap_components import TapComponent as TAP
 from constants.priority_levels import Priority
 from test_utils import ApiTestCase, cleanup_after_failed_setup, Arcadia, incremental, components
 from objects import Organization, User, Transfer, DataSet
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @incremental(Priority.high)
 @components(TAP.dataset_publisher, TAP.das, TAP.hdfs_downloader, TAP.metadata_parser)
 class ArcadiaTest(ApiTestCase):

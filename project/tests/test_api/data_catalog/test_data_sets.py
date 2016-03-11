@@ -24,11 +24,12 @@ from test_utils import ApiTestCase, cleanup_after_failed_setup, get_csv_record_c
 from test_utils import tear_down_test_files, get_csv_data, download_file, ATKtools, priority, components
 from objects import Organization, Transfer, DataSet, User, Application
 from constants.HttpStatus import HttpStatus
-
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 EXAMPLE_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
 
 
+@log_components()
 @components(TAP.data_catalog, TAP.das, TAP.hdfs_downloader, TAP.metadata_parser)
 class GetDataSets(ApiTestCase):
 
@@ -149,6 +150,7 @@ class GetDataSets(ApiTestCase):
         self.assertUnorderedListEqual(self.missing_public_ds, [], "Not all public data sets from another org returned")
 
 
+@log_components()
 @components(TAP.data_catalog, TAP.das, TAP.hdfs_downloader, TAP.metadata_parser)
 class UpdateDeleteDataSet(ApiTestCase):
 
@@ -215,6 +217,7 @@ class UpdateDeleteDataSet(ApiTestCase):
         self._assert_updated(self.dataset.id, "category", new_category)
 
 
+@log_components()
 @components(TAP.data_catalog, TAP.das, TAP.hdfs_downloader, TAP.metadata_parser)
 class CreateDatasets(ApiTestCase):
     DETAILS_TO_COMPARE = {"accessibility", "title", "category", "sourceUri", "size", "orgUUID", "targetUri", "format",
@@ -288,6 +291,7 @@ class CreateDatasets(ApiTestCase):
                 self.assertEqual(dataset.record_count, get_csv_record_count(self.file_path))
 
 
+@log_components()
 @components(TAP.data_catalog, TAP.das, TAP.hdfs_downloader, TAP.metadata_parser)
 class DataSetFromHdfs(ApiTestCase):
     atk_virtualenv = None

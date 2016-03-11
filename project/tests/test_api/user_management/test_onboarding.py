@@ -21,8 +21,10 @@ from constants.tap_components import TapComponent as TAP
 from test_utils import config, gmail_api, ApiTestCase, platform_api_calls as api, get_test_name, priority, components
 from objects import User, Organization
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.user_management, TAP.auth_gateway)
 class Onboarding(ApiTestCase):
     EXPECTED_EMAIL_SUBJECT = "Invitation to join Trusted Analytics platform"
@@ -178,6 +180,7 @@ class Onboarding(ApiTestCase):
         self.assertNotIn(username, username_list, "User was created")
 
 
+@log_components()
 @components(TAP.user_management)
 class PendingInvitations(ApiTestCase):
 

@@ -14,11 +14,18 @@
 # limitations under the License.
 #
 
-__all__ = ["LoggerType"]
+from .base_configuration import BaseConfiguration
 
 
-class LoggerType(object):
-    """Logger types definitions"""
+class LogProviderConfiguration(BaseConfiguration):
+    """Log provider configuration object."""
 
-    SHELL_COMMAND = "shell command"
-    REMOTE_LOGGER = "remote logger"
+    def __init__(self, from_date, to_date, app_name):
+        super().__init__(from_date, to_date)
+        self._validate("app_name", str, app_name)
+        self.__app_name = app_name
+
+    @property
+    def app_name(self):
+        """Application name."""
+        return self.__app_name

@@ -21,6 +21,7 @@ from test_utils import ApiTestCase, get_logger, platform_api_calls as api, clean
 from test_utils import components
 from objects import Organization, User
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 logger = get_logger("test org users")
 
@@ -60,6 +61,7 @@ class BaseOrgUserClass(ApiTestCase):
         self.assertNotIn(user, org_users, "User is among org users, although they shouldn't")
 
 
+@log_components()
 @components(TAP.user_management, TAP.auth_gateway)
 class AddExistingUserToOrganization(BaseOrgUserClass):
     @classmethod
@@ -190,6 +192,7 @@ class AddExistingUserToOrganization(BaseOrgUserClass):
         self._assert_user_not_in_org(invited_user, org.guid)
 
 
+@log_components()
 @components(TAP.user_management, TAP.auth_gateway)
 class AddNewUserToOrganization(BaseOrgUserClass):
     @classmethod
@@ -284,6 +287,7 @@ class AddNewUserToOrganization(BaseOrgUserClass):
         self.assertListEqual(User.api_get_list_via_organization(org.guid), org_users)
 
 
+@log_components()
 @components(TAP.user_management)
 class UpdateOrganizationUser(BaseOrgUserClass):
     client_permission = {
@@ -543,6 +547,7 @@ class UpdateOrganizationUser(BaseOrgUserClass):
         self.assert_user_in_org_and_roles(test_user, TEST_ORG.guid, expected_roles)
 
 
+@log_components()
 @components(TAP.user_management, TAP.auth_gateway)
 class DeleteOrganizationUser(BaseOrgUserClass):
     @classmethod
@@ -693,6 +698,7 @@ class DeleteOrganizationUser(BaseOrgUserClass):
                 self.assert_user_in_org_and_roles(deleted_user, org.guid, deleted_user_roles)
 
 
+@log_components()
 @components(TAP.user_management)
 class GetOrganizationUsers(BaseOrgUserClass):
     @classmethod

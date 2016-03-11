@@ -17,13 +17,14 @@
 from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, config, priority, components
 from objects import Organization, DataSet, User
-
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 expected_metrics_keys = ["appsDown", "appsRunning", "datasetCount", "domainsUsage", "domainsUsagePercent",
                          "latestEvents", "memoryUsage", "memoryUsageAbsolute", "privateDatasets", "publicDatasets",
                          "serviceUsage", "serviceUsagePercent", "totalUsers"]
 
 
+@log_components()
 @components(TAP.metrics_provider)
 class Metrics(ApiTestCase):
     @classmethod

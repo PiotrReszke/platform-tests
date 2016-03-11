@@ -17,8 +17,10 @@
 from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, download_file, Gearpump, priority, components
 from objects import Organization, ServiceInstance
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.gearpump_broker, TAP.application_broker, TAP.service_catalog)
 class GearpumpConsole(ApiTestCase):
     COMPLEXDAG_APP_URL = "https://repo.gotapaas.eu/files/complexdag-2.11.5-0.7.1-SNAPSHOT-assembly.jar"

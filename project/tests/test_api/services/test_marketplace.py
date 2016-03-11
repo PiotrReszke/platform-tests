@@ -21,8 +21,10 @@ from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, iPython, get_test_name, priority, components
 from objects import ServiceInstance, ServiceType, Organization, User
 from constants.HttpStatus import ServiceCatalogHttpStatus as HttpStatus
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.service_catalog, TAP.application_broker, TAP.gearpump_broker, TAP.hbase_broker, TAP.hdfs_broker,
             TAP.kafka_broker, TAP.smtp_broker, TAP.yarn_broker, TAP.zookeeper_broker, TAP.zookeeper_wssb_broker)
 class MarketplaceServices(ApiTestCase):

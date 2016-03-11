@@ -22,8 +22,10 @@ from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils
 from test_utils import application_broker as broker_client, get_test_name, incremental, priority, components
 from objects import Organization, Application, ServiceInstance, ServiceType
 from constants.HttpStatus import HttpStatus
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.application_broker)
 class ApplicationBroker(ApiTestCase):
 
@@ -41,6 +43,7 @@ class ApplicationBroker(ApiTestCase):
                                             service_id=guid)
 
 
+@log_components()
 @incremental(Priority.medium)
 @components(TAP.application_broker)
 class ApplicationBrokerFlow(ApiTestCase):

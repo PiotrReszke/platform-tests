@@ -18,8 +18,10 @@ from constants.services import ServiceLabels
 from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, cleanup_after_failed_setup, priority, components
 from objects import Organization, ServiceInstance, ServiceKey, Transfer, DataSet, User
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.scoring_engine, TAP.service_catalog, TAP.application_broker, TAP.das, TAP.hdfs_downloader,
             TAP.metadata_parser)
 class TestScoringEngineInstance(ApiTestCase):

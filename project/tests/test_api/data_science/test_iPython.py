@@ -21,8 +21,10 @@ from retry import retry
 from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, iPython, cleanup_after_failed_setup, config, priority, components
 from objects import Organization, ServiceInstance, Application, User
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.service_catalog, TAP.service_exposer)
 class iPythonConsole(ApiTestCase):
 

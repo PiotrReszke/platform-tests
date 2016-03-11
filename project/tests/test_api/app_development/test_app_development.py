@@ -18,8 +18,10 @@ from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, ConsoleClient, platform_api_calls as api, cleanup_after_failed_setup, priority
 from test_utils import components
 from objects import User, Organization
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.console)
 class AppDevelopmentPage(ApiTestCase):
 

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import os
 import ssl
 import time
@@ -26,8 +27,10 @@ from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, cleanup_after_failed_setup, app_source_utils, Hdfs, config, cloud_foundry as cf
 from test_utils import incremental, components
 from objects import Application, Organization, ServiceInstance
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @incremental(Priority.medium)
 @components(TAP.ingestion_ws_kafka_hdfs, TAP.service_catalog)
 class Ws2kafka2hdfs(ApiTestCase):

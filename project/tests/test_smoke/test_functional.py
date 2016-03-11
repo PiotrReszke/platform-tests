@@ -13,12 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 from constants.services import PARAMETRIZED_SERVICE_INSTANCES
 from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, PlatformApiClient, generate_csv_file, priority, components
 from objects import Organization, User, Space, Transfer, DataSet, ServiceType, ServiceInstance
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components(TAP.user_management, TAP.auth_gateway, TAP.das, TAP.hdfs_downloader, TAP.metadata_parser,
+                TAP.data_catalog, TAP.service_catalog, TAP.application_broker, TAP.gearpump_broker, TAP.hbase_broker,
+                TAP.hdfs_broker, TAP.kafka_broker, TAP.smtp_broker, TAP.yarn_broker, TAP.zookeeper_broker,
+                TAP.zookeeper_wssb_broker)
 class FunctionalSmokeTests(ApiTestCase):
     TRANSFER_LINK = "http://fake-csv-server.gotapaas.eu/fake-csv/2"
 

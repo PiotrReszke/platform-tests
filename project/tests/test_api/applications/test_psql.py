@@ -23,8 +23,10 @@ from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, cleanup_after_failed_setup, cloud_foundry as cf, app_source_utils, config, priority
 from test_utils import components
 from objects import Organization, Application, ServiceInstance, ServiceType
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.service_catalog)
 class Postgres(ApiTestCase):
 

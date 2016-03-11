@@ -17,8 +17,10 @@
 from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, cleanup_after_failed_setup, priority, components
 from objects import LatestEvent, Organization, Transfer, User
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.latest_events_service)
 class DashboardLatestEvents(ApiTestCase):
 

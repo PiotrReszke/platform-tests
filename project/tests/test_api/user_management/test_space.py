@@ -18,8 +18,10 @@ from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
 from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, cleanup_after_failed_setup, priority, components
 from objects import Organization, Space, User
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.user_management)
 class Spaces(ApiTestCase):
     @classmethod

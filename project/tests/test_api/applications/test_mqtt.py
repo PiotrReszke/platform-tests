@@ -27,8 +27,10 @@ from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, config, app_source_utils, cloud_foundry as cf, cleanup_after_failed_setup, priority
 from test_utils import components
 from objects import Application, Organization, ServiceInstance
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.mqtt_demo, TAP.service_catalog)
 class Mqtt(ApiTestCase):
 

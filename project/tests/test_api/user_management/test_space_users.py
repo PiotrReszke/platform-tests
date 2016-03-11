@@ -18,6 +18,7 @@ from test_utils import ApiTestCase, cleanup_after_failed_setup, PlatformApiClien
 from test_utils import get_test_name, priority, components
 from objects import User, Organization, Space
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 USERS_CLIENTS = {}
 TEST_ORG = None
@@ -77,6 +78,7 @@ class BaseSpaceUserClass(ApiTestCase):
         self.assertIsNone(user_who_should_not_be_in_space, "Unexpectedly, {} was found in space".format(expected_user))
 
 
+@log_components()
 @components(TAP.user_management)
 class GetSpaceUsers(BaseSpaceUserClass):
     @classmethod
@@ -92,6 +94,7 @@ class GetSpaceUsers(BaseSpaceUserClass):
                                             User.api_get_list_via_space, self.test_space.guid)
 
 
+@log_components()
 @components(TAP.user_management, TAP.auth_gateway)
 class AddNewUserToSpace(BaseSpaceUserClass):
 
@@ -167,6 +170,7 @@ class AddNewUserToSpace(BaseSpaceUserClass):
                              "User with incorrect roles was added to space")
 
 
+@log_components()
 @components(TAP.user_management)
 class AddExistingUserToSpace(BaseSpaceUserClass):
     def setUp(self):
@@ -222,6 +226,7 @@ class AddExistingUserToSpace(BaseSpaceUserClass):
                                             roles=invalid_role)
 
 
+@log_components()
 @components(TAP.user_management)
 class UpdateSpaceUser(BaseSpaceUserClass):
     def setUp(self):
@@ -286,6 +291,7 @@ class UpdateSpaceUser(BaseSpaceUserClass):
         self._assert_user_in_space_with_roles(test_user, self.test_space.guid)
 
 
+@log_components()
 @components(TAP.user_management)
 class DeleteSpaceUser(BaseSpaceUserClass):
     def setUp(self):
@@ -310,6 +316,7 @@ class DeleteSpaceUser(BaseSpaceUserClass):
                                             USER.api_delete_from_space, self.test_space.guid)
 
 
+@log_components()
 @components(TAP.user_management)
 class SpaceUserPermissions(BaseSpaceUserClass):
     @classmethod

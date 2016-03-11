@@ -19,6 +19,7 @@ from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, priority, components
 from objects import ServiceInstance, ServiceType, Organization, Application
 from objects.service_instance_validator import ServiceInstanceValidator
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
 class DataScienceInstancesBase(ApiTestCase):
@@ -44,6 +45,7 @@ class DataScienceInstancesBase(ApiTestCase):
         instance.api_delete()
 
 
+@log_components()
 @components(TAP.service_catalog, TAP.service_exposer)
 class DataScienceInstances(DataScienceInstancesBase):
 
@@ -61,6 +63,7 @@ class DataScienceInstances(DataScienceInstancesBase):
                 validator.validate_removed()
 
 
+@log_components()
 @components(TAP.service_catalog, TAP.service_exposer, TAP.application_broker)
 class DataScienceAtk(DataScienceInstancesBase):
     @priority.high

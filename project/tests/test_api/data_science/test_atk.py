@@ -22,9 +22,10 @@ from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, cleanup_after_failed_setup, ATKtools, get_test_name, incremental, components
 from objects import Organization, Transfer, DataSet, ServiceType, ServiceInstance, User
 from objects.service_instance_validator import ServiceInstanceValidator
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
-
+@log_components()
 @incremental(Priority.high)
 @components(TAP.atk, TAP.dataset_publisher, TAP.application_broker, TAP.service_catalog, TAP.das, TAP.hdfs_downloader,
             TAP.metadata_parser)

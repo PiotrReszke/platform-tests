@@ -17,8 +17,10 @@ from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, gmail_api, PasswordAPI, priority, components
 from objects import User
 from constants.HttpStatus import UserManagementHttpStatus as HttpStatus
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
+@log_components()
 @components(TAP.user_management, TAP.auth_gateway)
 class PasswordTests(ApiTestCase):
 

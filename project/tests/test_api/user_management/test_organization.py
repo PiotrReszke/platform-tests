@@ -17,11 +17,12 @@
 from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, get_logger, priority, components
 from objects import Organization, User
-
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 logger = get_logger("test organization")
 
 
+@log_components()
 @components(TAP.user_management, TAP.auth_gateway)
 class TestOrganization(ApiTestCase):
 

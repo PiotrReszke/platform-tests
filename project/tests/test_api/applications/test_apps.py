@@ -18,6 +18,7 @@ from constants.tap_components import TapComponent as TAP
 from test_utils import ApiTestCase, app_source_utils, cleanup_after_failed_setup, cloud_foundry as cf, priority
 from test_utils import components
 from objects import Organization, Application, Space
+from test_utils.remote_logger.remote_logger_decorator import log_components
 
 
 class TestAppBase(ApiTestCase):
@@ -47,6 +48,7 @@ class TestAppBase(ApiTestCase):
         self.assertEqualWithinTimeout(120, True, self.test_app.cf_api_app_is_running)
 
 
+@log_components()
 @components(TAP.service_catalog)
 class TapApp(TestAppBase):
 
@@ -63,6 +65,7 @@ class TapApp(TestAppBase):
         self.assertNotIn(self.test_app, Application.cf_api_get_list_by_space(self.test_space.guid))
 
 
+@log_components()
 @components(TAP.user_management, TAP.service_catalog)
 class SpaceDeletion(TestAppBase):
 

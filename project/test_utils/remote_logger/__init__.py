@@ -13,12 +13,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-__all__ = ["LoggerType"]
-
-
-class LoggerType(object):
-    """Logger types definitions"""
-
-    SHELL_COMMAND = "shell command"
-    REMOTE_LOGGER = "remote logger"
