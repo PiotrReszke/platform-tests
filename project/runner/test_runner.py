@@ -14,19 +14,10 @@
 # limitations under the License.
 #
 
-from .db_runner import DBTestRunner, BaseResultClass, BaseRunnerClass
+from .custom_runners import TapTestRunner, DBTestRunner
 from test_utils import config
 
-
 UNITTEST_RUNNER_VERBOSITY = 3
-
-
-class TapTestResult(BaseResultClass):
-    pass
-
-
-class TapTestRunner(BaseRunnerClass):
-    pass
 
 
 class TestRunner(object):

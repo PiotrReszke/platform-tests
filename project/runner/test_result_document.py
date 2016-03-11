@@ -30,7 +30,7 @@ class TestResultDocument(object):
         self.__db_client = db_client
         self.__run_id = run_id
         self.__suite = suite
-        self.__name = self.__get_test_name(test_obj)
+        self.__name = test_obj.full_name
         self.__description = test_obj.shortDescription()
         self.__order = test_order
         self.__priority = test_obj.priority.name
@@ -57,11 +57,6 @@ class TestResultDocument(object):
         self.__stacktrace = error
         self.__reason_skipped = reason_skipped
         self.__insert()
-
-    @staticmethod
-    def __get_test_name(test_obj: TapTestCase):
-        test_name, test_class, _ = re.split("\(|\)", str(test_obj))
-        return "{}.{}".format(test_class, test_name)
 
     @staticmethod
     def __get_main_component_name(test_obj):

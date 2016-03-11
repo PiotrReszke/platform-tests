@@ -70,9 +70,14 @@ if __name__ == "__main__":
 
     # run tests
     runner = TestRunner()
-    components = [getattr(TapComponent, c) for c in args.components]
-    priority = getattr(Priority, args.priority)
-    loader = TapTestLoader(path=args.suite, test_name=args.test, priority=priority, components=components,
-                           only_tags=args.only_tagged, excluded_tags=args.not_tagged)
-    runner.run(loader.test_suite)
+    loader = TapTestLoader()
+    if args.file is not None:
+        suite = loader.load_from_file(args.file)
+    else:
+        components = [getattr(TapComponent, c) for c in args.components]
+        priority = getattr(Priority, args.priority)
+        suite = loader.load(path=args.suite, test_name=args.test, priority=priority, components=components,
+                            only_tags=args.only_tagged, excluded_tags=args.not_tagged)
+    runner.run(suite)
+
 

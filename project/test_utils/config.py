@@ -78,7 +78,8 @@ CONFIG = {
     "github_auth": (__SECRETS["github"]["username"], __SECRETS["github"]["password"]),
     "ssh_key_passphrase": __SECRETS["ssh"].get("passphrase", ""),
     "test_user_email": "intel.data.tests@gmail.com",
-    "database_url": None
+    "database_url": None,
+    "failed_tests_file_path": os.path.join("..", "failed_tests.log")
 }
 
 LOGGED_CONFIG_KEYS = ["domain", "admin_username", "client_type", "proxy", "ssl_validation", "platfom_version",
@@ -148,6 +149,9 @@ def parse_arguments():
     parser.add_argument("-t", "--test",
                         default=None,
                         help="pass single test name")
+    parser.add_argument("-f", "--file",
+                        default=None,
+                        help="path to a file with a list of tests to execute")
     parser.add_argument("-v", "--platform-version",
                         default="master",
                         help="Platform version tag name")

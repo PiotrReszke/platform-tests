@@ -32,7 +32,7 @@ logger = get_logger(__name__)
 
 FUNCTIONS_TO_LOG = ('setUp', 'tearDown', 'setUpClass', 'tearDownClass')
 SEPARATOR = "****************************** {} {} {} ******************************"
-errors_and_failures = 0
+
 
 def log_fixture_separator(func):
     func_is_classmethod = type(func) is classmethod
@@ -76,6 +76,8 @@ class TapTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         self.priority = Priority.default() if priority is None else priority
         self.components = getattr(test_method, "components", self.components)
         self.mark = getattr(test_method, "mark", None)
+        self.class_name = "{}.{}".format(self.__class__.__module__, self.__class__.__name__)
+        self.full_name = "{}.{}".format(self.class_name, self._testMethodName)
 
     @classmethod
     def tearDownClass(cls):
@@ -111,13 +113,7 @@ class TapTestCase(unittest.TestCase, metaclass=SeparatorMeta):
         separator = "*" * len(test_name)
         self.__class__.step_number = self.__class__.sub_test_number = 0
         logger.debug("\n{0}\n\n{1}\n\n{0}\n".format(separator, test_name))
-        current_result = super().run(result=result)
-        if self.incremental and self.get_errors_and_failures(current_result) > errors_and_failures:
-            self.__class__.prerequisite_failed = True
-        if current_result is not None:
-            global errors_and_failures
-            errors_and_failures = self.get_errors_and_failures(current_result)
-        return current_result
+        return super().run(result=result)
 
     def assertUnorderedListEqual(self, list1, list2, msg=None):
         self.assertListEqual(sorted(list1), sorted(list2), msg=msg)
