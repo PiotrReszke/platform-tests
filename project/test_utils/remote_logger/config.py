@@ -21,7 +21,7 @@ from test_utils.config import CONFIG
 
 class Config(object):
     # Root directory for storing remote log files
-    ROOT_DIRECTORY = "{}tmp".format(os.sep)
+    ROOT_DIRECTORY = os.path.join(os.path.dirname(__file__), "..", "..", "..", "logs")
 
     # Log file name format
     LOG_FILE_NAME = "{}.log"
