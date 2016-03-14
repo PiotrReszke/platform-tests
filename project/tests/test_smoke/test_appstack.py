@@ -65,6 +65,7 @@ class TrustedAnalyticsSmokeTest(TapTestCase):
                             if a.name in self.expected_app_names - self.EXCLUDED_APP_NAMES and not a.is_running}
         self.assertEqual(apps_not_running, set(), "Apps with no running instances in cf")
 
+    @priority.high
     def test_all_required_apps_are_present_on_platform(self):
         self.step("Check that all expected apps are present on the Platform")
         app_names = {a.name for a in self.platform_apps}

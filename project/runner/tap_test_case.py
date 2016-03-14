@@ -21,8 +21,8 @@ import unittest
 from retry import retry
 
 from constants.priority_levels import Priority
-from objects import organization as org, user as usr, transfer as tr, dataset as ds
 from test_utils import get_logger, UnexpectedResponseError
+from objects import organization as org, user as usr, transfer as tr, dataset as ds
 
 
 __all__ = ["TapTestCase", "cleanup_after_failed_setup"]

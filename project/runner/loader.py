@@ -43,6 +43,10 @@ class TapTestLoader(unittest.TestLoader):
     def test_suite(self):
         return self.__test_suite
 
+    @property
+    def tests(self):
+        return self.__test_suite._tests
+
     def __load_suite_from_path(self, path=None):
         path = "" if path is None else path
         path = os.path.join(self.ROOT_DIRECTORY, path)
