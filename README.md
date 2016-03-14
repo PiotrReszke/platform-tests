@@ -105,6 +105,10 @@ To run api tests:
 
 `-c` - components, run only tests which apply to the specified components, e.g. `./run_tests.sh -e <domain> -c user_management -c das` - the run will contain tests for user-management and das (full list of available components is available in `./run_tests.sh -help`.
 
+`--only-tagged` - run only tests with a particular tag, e.g. `./run_tests.sh -e <domain> --only-tagged long`
+
+`--not-tagged` - run only tests which are not tagged with a particular tag `./run_tests.sh -e <domain> --not-tagged long`
+
 `--proxy` - use proxy address with port, e.g. `--proxy proxy-mu.intel.com:911`. If you omit this parameter, requests will use http/https proxy retrieved from system settings.
 
 `-l` - specify logging level. There are 3 logging levels: DEBUG (default), INFO `-l INFO`, WARNING `-l WARNING`.
