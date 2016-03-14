@@ -101,6 +101,10 @@ To run api tests:
 
 `-t` - run single test: `./run_tests.sh -e <domain> -t <test_name>`, for example: `-t test_create_organization`.
 
+`-p` - priority (higth, medium, low), run only tests with as high priority as specified
+
+`-c` - components, run only tests which apply to the specified components, e.g. `./run_tests.sh -e <domain> -c user_management -c das` - the run will contain tests for user-management and das (full list of available components is available in `./run_tests.sh -help`.
+
 `--proxy` - use proxy address with port, e.g. `--proxy proxy-mu.intel.com:911`. If you omit this parameter, requests will use http/https proxy retrieved from system settings.
 
 `-l` - specify logging level. There are 3 logging levels: DEBUG (default), INFO `-l INFO`, WARNING `-l WARNING`.
@@ -122,11 +126,9 @@ Decrypt repository secrets: `git-crypt unlock %decryptor.key.path%`
 
 Create virtualenv `./deploy/create_virtualenv.sh`
 
-Appstack tests `./project/run_tests.sh -s "test_appstack" -e %test_platform%`
+Smoke tests `./project/run_tests.sh -s "test_smoke" -e %test_platform%`
 
 API tests: `./project/run_tests.sh -s %test_type% -e %test_platform% --client-type "$client_type"`
-
-Application tests: `./project/run_tests.sh -s "test_cf_applications" -e %test_platform%`
 
 ### Run smoke tests on bastion
 
