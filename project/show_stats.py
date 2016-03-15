@@ -25,8 +25,7 @@ from runner.loader import TapTestLoader
 
 
 ROOT_DIR = os.path.abspath("tests")
-TEST_PATHS = [os.path.abspath(os.path.join(ROOT_DIR, directory)) for directory in os.listdir(ROOT_DIR)
-              if os.path.isdir(os.path.join(ROOT_DIR, directory)) and directory.startswith("test_")]
+TEST_PATHS = [directory for directory in os.listdir(ROOT_DIR) if os.path.isdir(os.path.join(ROOT_DIR, directory))]
 
 
 def parse_args():
@@ -37,6 +36,10 @@ def parse_args():
     parser.add_argument("-c", "--show-components",
                         help="show statistics according to components",
                         action="store_true")
+    parser.add_argument("-d", "--directory",
+                        help="show statistics only in passed directory",
+                        choices=TEST_PATHS,
+                        default=None)
     return parser.parse_args()
 
 
@@ -68,9 +71,11 @@ def print_stats(stats: dict, stat_name: str):
 
 if __name__ == "__main__":
     args = parse_args()
-    for directory in TEST_PATHS:
-        loader = TapTestLoader(path=directory)
-        print("Tests in {}: {}".format(os.path.split(directory)[-1], len(loader.tests)))
+    directory_names = TEST_PATHS if args.directory is None else [args.directory]
+    for directory_name in directory_names:
+        loader = TapTestLoader()
+        loader.load(path=directory_name)
+        print("Tests in {}: {}".format(directory_name, len(loader.tests)))
         if args.show_priorities:
             print_stats(count_by_priority(loader), "Priority")
         if args.show_priorities:
