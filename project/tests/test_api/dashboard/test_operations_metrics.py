@@ -20,6 +20,7 @@ from test_utils.remote_logger.remote_logger_decorator import log_components
 from objects import User, Space, Organization, ServiceInstance, Application, Buildpack, Platform, ServiceType
 from runner.tap_test_case import TapTestCase, cleanup_after_failed_setup
 from runner.decorators import components
+import unittest
 
 
 @log_components()
@@ -32,11 +33,13 @@ class NonAdminOperationsMetrics(TapTestCase):
         users, _ = User.api_create_users_for_tests(1)
         cls.non_admin_user = users[0]
 
+    @unittest.skip("DPNG-5904")
     def test_non_admin_cannot_access_platform_operations(self):
         self.step("Checking if non-admin user cannot retrieve data")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_UNAUTHORIZED, HttpStatus.MSG_UNAUTHORIZED,
                                             self.platform.retrieve_metrics, self.non_admin_user.get_client())
 
+    @unittest.skip("DPNG-5904")
     def test_non_admin_user_cannot_access_refresh(self):
         self.step("Checking if non-admin user cannot refresh data")
         self.assertRaisesUnexpectedResponse(HttpStatus.CODE_UNAUTHORIZED, HttpStatus.MSG_UNAUTHORIZED,
