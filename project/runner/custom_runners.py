@@ -38,19 +38,37 @@ class TapTestResult(BaseResultClass):
     def failed_test_ids(self):
         failed_tests = []
         for test, _ in self.errors + self.failures:
-            if not isinstance(test, TapTestCase):
-                # failure in setUp or tearDown
-                if "setUp" in test.description:
-                    failed_tests.append(self.__test_name_from_setup(test.description))
-            elif getattr(test, "incremental", None) is not None:
+            if self.__is_setUpClass(test):
+                failed_tests.append(self.__test_name_from_setup(test.description))
+            elif self.__is_subTest(test):
+                failed_tests.append(test.test_case.full_name)
+            elif self.__is_incremental(test):
                 failed_tests.append(test.class_name)
             else:
                 failed_tests.append(test.full_name)
-        return failed_tests
+        return list(set(failed_tests))
 
     @staticmethod
     def __test_name_from_setup(description):
         return re.split("\(|\)", description)[1]
+
+    @staticmethod
+    def __is_setUpClass(obj):
+        description = getattr(obj, "description", "")
+        return "setUpClass" in description
+
+    @staticmethod
+    def __is_setUp(obj):
+        description = getattr(obj, "description", "")
+        return "setUpClass" not in description and "setUp" in description
+
+    @staticmethod
+    def __is_subTest(obj):
+        return obj.__class__.__name__ == "_SubTest"
+
+    @staticmethod
+    def __is_incremental(obj):
+        return getattr(obj, "incremental", False)
 
     def addError(self, test, err):
         super().addError(test, err)
