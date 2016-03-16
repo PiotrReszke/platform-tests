@@ -14,11 +14,11 @@
 # limitations under the License.
 #
 
-from collections import namedtuple
 from datetime import datetime
 import os
 
 from constants.services import ServiceLabels
+from service_tools import PsqlTable, PsqlColumn, PsqlRow
 from constants.tap_components import TapComponent as TAP
 from test_utils import cloud_foundry as cf, app_source_utils, config
 from test_utils.remote_logger.remote_logger_decorator import log_components
@@ -33,7 +33,7 @@ class Postgres(TapTestCase):
 
     APP_REPO_NAME = "psql-api-example"
     PSQL_APP_DIR = os.path.normpath(os.path.join("../../{}/psql-api-example".format(config.CONFIG["repository"])))
-    NAME_PREFIX = datetime.now().strftime("%Y%m%d_%H%M%S")
+    NAME = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     test_table_name = "oh_hai"
     test_columns = [{"name": "col0", "type": "character varying", "max_len": 15},
@@ -46,15 +46,15 @@ class Postgres(TapTestCase):
                        {"column_name": "col2", "value": None}]]
 
     @classmethod
-    def _create_postgres_instance(cls, test_org, test_space):
+    def create_postgres_instance(cls, test_org, test_space):
         cls.step("Create postgres instance")
         marketplace = ServiceType.api_get_list_from_marketplace(test_space.guid)
-        psql = next(s for s in marketplace if s.label == ServiceLabels.PSQL)
+        psql = next(service for service in marketplace if service.label == ServiceLabels.PSQL)
         psql_instance = ServiceInstance.api_create(
             org_guid=test_org.guid,
             space_guid=test_space.guid,
             service_label=ServiceLabels.PSQL,
-            name="psql_" + cls.NAME_PREFIX,
+            name="psql_" + cls.NAME,
             service_plan_guid=psql.service_plan_guids[0]
         )
         return psql_instance.name
@@ -69,7 +69,7 @@ class Postgres(TapTestCase):
         test_space = test_org.spaces[0]
         cls.step("Login to the new organization")
         cf.cf_login(test_org.name, test_space.name)
-        postgres_instance_name = cls._create_postgres_instance(test_org, test_space)
+        postgres_instance_name = cls.create_postgres_instance(test_org, test_space)
         cls.step("Push psql api app to cf")
         cls.psql_app = Application.push(
             space_guid=test_space.guid,
@@ -78,7 +78,7 @@ class Postgres(TapTestCase):
         )
 
     def tearDown(self):
-        for table in PsqlTable.TEST_TABLES:
+        for table in PsqlTable.TABLES:
             table.delete()
 
     @priority.medium
@@ -139,82 +139,3 @@ class Postgres(TapTestCase):
         posted_rows[1].delete()
         rows = PsqlRow.get_list(self.psql_app, self.test_table_name)
         self.assertNotIn(posted_rows[1], rows)
-
-
-
-class PsqlColumn(namedtuple("PsqlColumn", ["name", "data_type", "is_nullable", "max_len"])):
-
-    def __new__(cls, name, data_type, is_nullable=None, max_len=None):
-        is_nullable = True if is_nullable is None else is_nullable
-        return super().__new__(cls, name, data_type, is_nullable, max_len)
-
-    @classmethod
-    def from_json_definition(cls, column_json):
-        return cls(column_json["name"], column_json["type"], column_json.get("is_nullable"),
-                   column_json.get("max_len"))
-
-
-class PsqlTable(namedtuple("PsqlTable", ["psql_app", "name"])):
-
-    TEST_TABLES = []
-
-    @classmethod
-    def post(cls, psql_app, table_name, column_json):
-        body = {"table_name": table_name, "columns": column_json}
-        psql_app.api_request(method="POST", path="tables", body=body)
-        table = cls(psql_app, table_name)
-        cls.TEST_TABLES.append(table)
-        return table
-
-    @classmethod
-    def get_list(cls, psql_app):
-        response = psql_app.api_request(method="GET", path="tables")
-        tables = []
-        for item in response["tables"]:
-            tables.append(cls(psql_app, item["table_name"]))
-        return tables
-
-    def delete(self):
-        self.psql_app.api_request(method="DELETE", path="tables/{}".format(self.name))
-        self.TEST_TABLES.remove(self)
-
-    def get_columns(self):
-        response = self.psql_app.api_request(method="GET", path="tables/{}/columns".format(self.name))
-        columns = []
-        for item in response["columns"]:
-            columns.append(PsqlColumn(item["name"], item["data_type"], item["is_nullable"], item["max_len"]))
-        return columns
-
-
-class PsqlRow(namedtuple("PsqlRow", ["psql_app", "table_name", "id", "values"])):
-
-    @classmethod
-    def post(cls, psql_app, table_name, cols_and_values):
-        response = psql_app.api_request(method="POST", path="tables/{}/rows".format(table_name),
-                                        body=cols_and_values)
-        return cls(psql_app, table_name, response["id"], response["values"])
-
-    @classmethod
-    def get(cls, psql_app, table_name, row_id):
-        response = psql_app.api_request(method="GET", path="tables/{}/rows/{}".format(table_name, row_id))
-        return cls(psql_app, table_name, response["id"], response["values"])
-
-    @classmethod
-    def get_list(cls, psql_app, table_name):
-        response = psql_app.api_request(method="GET", path="tables/{}/rows".format(table_name))
-        return [cls(psql_app, table_name, item["id"], item["values"]) for item in response["rows"]]
-
-    def put(self, cols_and_values):
-        for new in cols_and_values:
-            for old in self.values:
-                if new["column_name"] == old["column_name"]:
-                   old["value"] = new["value"]
-        self.psql_app.api_request(method="PUT", path="tables/{}/rows/{}".format(self.table_name, self.id),
-                                  body=cols_and_values)
-
-    def delete(self):
-        self.psql_app.api_request(method="DELETE", path="tables/{}/rows/{}".format(self.table_name, self.id))
-
-
-
-
