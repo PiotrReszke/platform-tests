@@ -53,3 +53,5 @@ def assert_raises_http_exception(status, error_message_phrase, callableObj, *arg
                                                             status, error_message_phrase)
 
 
+def assert_no_errors(errors: list):
+    assert len(errors) == 0, "\n".join(errors)
