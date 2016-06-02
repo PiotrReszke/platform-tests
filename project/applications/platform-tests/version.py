@@ -15,5 +15,5 @@
 #
 
 # DO NOT TOUCH - version is changed automatically by Bumpversion
-VERSION = '0.5.54'
+VERSION = '0.5.55'
 
