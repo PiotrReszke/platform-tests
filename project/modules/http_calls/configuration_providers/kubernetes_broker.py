@@ -29,10 +29,9 @@ class KubernetesBrokerConfigurationProvider(BaseConfigurationProvider):
     def provide_configuration(cls):
         """Retrieve configuration form kubernetes-broker environment variables."""
         response = cf.cf_api_get_apps()
-        app_guid = None
-        for app in response:
-            if app["entity"]["name"] == TapComponent.kubernetes_broker.value:
-                app_guid = app["metadata"]["guid"]
+        app_guid = next((app["metadata"]["guid"] for app in response
+                         if app["entity"]["name"] == TapComponent.kubernetes_broker.value), None)
+        assert app_guid is not None, "No such app {}".format(TapComponent.kubernetes_broker.value)
         kubernetes_broker_env = cf.cf_api_get_app_env(app_guid)
         cls._configuration = HttpClientConfiguration(
             HttpClientType.BROKER,
