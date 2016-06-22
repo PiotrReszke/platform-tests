@@ -11,3 +11,5 @@
 /project/modules/gatling_runner/download/*
 .cache
 *.iml
+project/target/*
+target/*
