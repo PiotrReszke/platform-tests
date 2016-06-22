@@ -32,10 +32,9 @@ class Seahorse(TapTestCase):
         service_instance = ServiceInstance.api_create_with_plan_name(test_org_uuid, test_space_uuid, self.seahorse_label,
                                                       service_plan_name="free")
 
-        #seahorse_url = "https://"+service_instance.name + service_instance.guid + "." + self.tap_domain
-        #print(seahorse_url)
-
-        seahorse_url="https://pr_20160622_114623_851399-ca4a4be1-7cbd-4995-8725-308745b06a6c.seahorse-krb.gotapaas.eu/"
+        service_instance.ensure_created()
+        seahorse_url = "https://"+service_instance.name + service_instance.guid + "." + self.tap_domain
+        print(seahorse_url)
         session=self.create_session(seahorse_url, domain=self.tap_domain, login=self.username, password=self.password)
 
         resp=session.get(seahorse_url + '/v1/workflows')
