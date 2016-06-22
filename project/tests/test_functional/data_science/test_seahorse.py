@@ -29,15 +29,13 @@ class Seahorse(TapTestCase):
         test_org_uuid = '3761da19-692c-4afb-95b6-f20d2d37ec3f'
         test_space_uuid = 'b641e43e-b89b-4f32-b360-f1cf6bd1aa74'
 
-        service_instance = ServiceInstance.api_create_with_plan_name(test_org_uuid, test_space_uuid, self.seahorse_label,
-                                                      service_plan_name="free")
+        service_instance = ServiceInstance.api_create_with_plan_name(
+            test_org_uuid, test_space_uuid, self.seahorse_label, service_plan_name="free")
 
         service_instance.ensure_created()
-        seahorse_url = "https://"+service_instance.name + service_instance.guid + "." + self.tap_domain
+        seahorse_url="https://"+service_instance.name + service_instance.guid + "." + self.tap_domain
         print(seahorse_url)
         session=self.create_session(seahorse_url, domain=self.tap_domain, login=self.username, password=self.password)
 
         resp=session.get(seahorse_url + '/v1/workflows')
         print(resp.text)
-
-#{"ajk-test":{"guid":"c6078b05-491d-46a0-808f-8b500148b400","hostname":"ajk_test-c6078b05-491d-46a0-808f-8b500148b400.seahorse-krb.gotapaas.eu","login":"","password":""},"pr_20160622_120229_669492":{"guid":"9d05a0d5-8951-4283-9d7e-21b966fcc39c","hostname":"pr_20160622_120229_669492-9d05a0d5-8951-4283-9d7e-21b966fcc39c.seahorse-krb.gotapaas.eu","login":"","password":""},"test":{"guid":"c1d26a50-d20a-40d6-aba4-342123b1e75a","hostname":"test-c1d26a50-d20a-40d6-aba4-342123b1e75a.seahorse-krb.gotapaas.eu","login":"","password":""},"xyz":{"guid":"8eff882a-649d-4333-bb27-bbb20ff6b80b","hostname":"xyz-8eff882a-649d-4333-bb27-bbb20ff6b80b.seahorse-krb.gotapaas.eu","login":"","password":""},"piotr_test":{"guid":"c81c884c-2a29-44c6-b0ee-809fd5c61ad8","hostname":"piotr_test-c81c884c-2a29-44c6-b0ee-809fd5c61ad8.seahorse-krb.gotapaas.eu","login":"","password":""},"pr_20160622_114329_754114":{"guid":"681e29e5-2e78-4b9a-bd98-683710a1ff93","hostname":"pr_20160622_114329_754114-681e29e5-2e78-4b9a-bd98-683710a1ff93.seahorse-krb.gotapaas.eu","login":"","password":""},"pr_20160622_114142_861305":{"guid":"cef91405-32b0-4dd3-81ba-49224c538716","hostname":"pr_20160622_114142_861305-cef91405-32b0-4dd3-81ba-49224c538716.seahorse-krb.gotapaas.eu","login":"","password":""}}
