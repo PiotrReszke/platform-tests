@@ -1,15 +1,12 @@
-from modules.runner.tap_test_case import TapTestCase
-from modules.tap_object_model import ServiceInstance
-from configuration import config
-import requests
 import re
-import json
-import time
+
+import pytest
+import requests
+import websocket
 from retry import retry
-import websocket
 
-
-import websocket
+from configuration import config
+from modules.runner.tap_test_case import TapTestCase
 
 
 class Seahorse(TapTestCase):
@@ -18,31 +15,26 @@ class Seahorse(TapTestCase):
     username = config.CONFIG["admin_username"]
     password = config.CONFIG["admin_password"]
 
-    def _ignore_test_workflows_are_visible(self):
-        (session, seahorse_url) = self._create_session()
-        workflows = session.get(seahorse_url + '/v1/workflows').json()
+    def test_workflows_are_visible(self):
+        workflows = self.session.get(self.seahorse_http_url + '/v1/workflows').json()
         assert len(workflows) > 5
 
-    def _ignore_test_workflow_can_be_cloned(self):
-        (session, seahorse_url) = self._create_session()
+    def test_workflow_can_be_cloned(self):
+        workflows = self.session.get(self.workflows_url).json()
+        some_workflow = list(filter(lambda w: 'Mushrooms' in w['name'], workflows))[0]
 
-        workflows = session.get(seahorse_url + '/v1/workflows').json()
-
-        first_workflow = workflows[0]
-
-        clone_url = seahorse_url + '/v1/workflows/' + first_workflow["id"] + "/clone"
-        clone_resp = session.post(clone_url, json={'name': 'Cloned workflow', 'description': 'Some desc'})
+        clone_url = self.workflows_url + '/' + some_workflow["id"] + "/clone"
+        clone_resp = self.session.post(clone_url, json={'name': 'Cloned workflow', 'description': 'Some desc'})
         cloned_workflow_id = clone_resp.json()['workflowId']
 
-        session.get(seahorse_url + '/v1/workflows/' + cloned_workflow_id).json()
+        self.session.get(self.workflows_url + '/' + cloned_workflow_id).json()
         return cloned_workflow_id
 
     def test_workflow_can_be_launched(self):
-        (session, seahorse_url) = self._create_session()
         workflow_id = self.clone_some_workflow_and_start_executor()
 
         ws = websocket.WebSocket()
-        ws.connect("ws://localhost:8080/stomp/645/bg1ozddg/websocket")
+        ws.connect("ws://" + self.seahorse_url + "/stomp/645/bg1ozddg/websocket")
         ws.send("""["CONNECT\nlogin:guest\npasscode:guest\naccept-version:1.1,1.0\nheart-beat:0,0\n\n\u0000"]""")
         ws.send(
             """["SUBSCRIBE\nid:sub-0\ndestination:/exchange/seahorse/seahorse.{0}.to\n\n\u0000"]""".format(workflow_id))
@@ -56,18 +48,12 @@ class Seahorse(TapTestCase):
             self.ensure_node_executed_without_errors(ws)
 
         ws.close()
-
-        session.delete(seahorse_url + '/v1/sessions/' + workflow_id)
+        self.session.delete(self.sessions_url + '/' + workflow_id)
 
     def clone_some_workflow_and_start_executor(self):
-        (session, seahorse_url) = self._create_session()
-
-        cloned_workflow_id = self._ignore_test_workflow_can_be_cloned()
-
-        session_url = seahorse_url + '/v1/sessions'
-        session.post(session_url, json={'workflowId': cloned_workflow_id})
-
-        self.ensure_executor_is_running(session, seahorse_url, cloned_workflow_id)
+        cloned_workflow_id = self.test_workflow_can_be_cloned()
+        self.session.post(self.sessions_url, json={'workflowId': cloned_workflow_id})
+        self.ensure_executor_is_running(cloned_workflow_id)
         return cloned_workflow_id
 
     @retry(Exception, tries=5, delay=5)
@@ -81,27 +67,26 @@ class Seahorse(TapTestCase):
 
         # Fixed number of heartbeats to prevent infinite loop.
         # Roughly there should be at least one non-heartbeat message for 5 hearbeats.
-        numberOfHeatbeatsToSkip = 5
+        number_of_heatbeats_to_skip = 5
 
-        for x in range(0, numberOfHeatbeatsToSkip):
-            if "heartbeat" in msg:
+        for x in range(0, number_of_heatbeats_to_skip):
+            if "heartbeat" in msg or 'h' == msg or 'o' == msg:
                 msg = ws.next()
 
         return msg
 
     @retry(AssertionError, tries=15, delay=5)
-    def ensure_executor_is_running(self, session, url, workflow_id):
-        session_url = url + '/v1/sessions'
+    def ensure_executor_is_running(self, workflow_id):
         sessions = list(
-            filter(lambda s: s['workflowId'] == workflow_id, session.get(session_url).json()['sessions']))
+            filter(lambda s: s['workflowId'] == workflow_id, self.session.get(self.sessions_url).json()['sessions']))
         status = sessions[0]['status']
         assert status == 'running'
 
-    def _create_session(self):
-        return self._create_session_tap()
-        # return self._create_session_local()
+    @classmethod
+    @pytest.fixture(scope="class", autouse=True)
+    def seahorse(cls):
+        # TODO HARDCODED INSTANCE. FIX HTTPS ISSUE WHEN CREATING NEW ONE
 
-    def _create_session_tap(self):
         test_org_uuid = 'e06d477a-c8bb-48f0-baeb-3d709578d8af'
         test_space_uuid = 'b641e43e-b89b-4f32-b360-f1cf6bd1aa74'
         #
@@ -112,25 +97,18 @@ class Seahorse(TapTestCase):
         # print("BEFORE SLEEP")
         # time.sleep(30)
         # print("AFTER SLEEP")
+        #
+        # seahorse_url = "https://" + service_instance.name + '-' + service_instance.guid + "." + self.tap_domain
+        cls.seahorse_url = "test123-fc965481-39c0-4451-9269-ea5ffe1e8e64.seahorse-krb.gotapaas.eu"
+        cls.seahorse_http_url = 'https://' + cls.seahorse_url
+        cls.sessions_url = cls.seahorse_http_url + '/v1/sessions'
+        cls.workflows_url = cls.seahorse_http_url + '/v1/workflows'
 
-        #seahorse_url = "https://" + service_instance.name + '-' + service_instance.guid + "." + self.tap_domain
-        seahorse_url = "https://test123-fc965481-39c0-4451-9269-ea5ffe1e8e64.seahorse-krb.gotapaas.eu/"
-        print('Seahorse URL' + seahorse_url)
-
-        session = requests.Session()
-        print("!!!! LOGIN FORM !!!!")
-        login_form = session.get(seahorse_url, verify=False)
-
-        print('LOGIN FORM')
-        print(login_form.__dict__)
+        cls.session = requests.Session()
+        login_form = cls.session.get(cls.seahorse_http_url, verify=False)
 
         csrf_value_regex = r"x-uaa-csrf.*value=\"(.*)\""
         match = re.search(csrf_value_regex, login_form.text, re.IGNORECASE)
         csrf_value = match.group(1)
-        payload = {'username': self.username, 'password': self.password, 'X-Uaa-Csrf': csrf_value}
-        session.post(url='http://login.{0}/login.do'.format(self.tap_domain), data=payload)
-
-        return (session, seahorse_url)
-
-    def _create_session_local(self):
-        return (requests.Session(), "http://localhost:8080")
+        payload = {'username': Seahorse.username, 'password': Seahorse.password, 'X-Uaa-Csrf': csrf_value}
+        cls.session.post(url='http://login.{0}/login.do'.format(Seahorse.tap_domain), data=payload)
