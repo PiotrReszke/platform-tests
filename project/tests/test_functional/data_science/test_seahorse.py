@@ -7,6 +7,20 @@ import json
 import time
 from retry import retry
 import websocket
+import pika
+
+import websocket
+
+import stomp
+
+
+class MyListener(stomp.ConnectionListener):
+    def on_error(self, headers, message):
+        print('received an error "%s"' % message)
+
+    def on_message(self, headers, message):
+        print('received a message "%s"' % message)
+
 
 class Seahorse(TapTestCase):
     seahorse_label = "k-seahorse-dev"
@@ -14,12 +28,12 @@ class Seahorse(TapTestCase):
     username = config.CONFIG["admin_username"]
     password = config.CONFIG["admin_password"]
 
-    def test_workflows_are_visible(self):
+    def _ignore_test_workflows_are_visible(self):
         (session, seahorse_url) = self._create_session()
         workflows = session.get(seahorse_url + '/v1/workflows').json()
         assert len(workflows) > 5
 
-    def test_workflow_can_be_cloned(self):
+    def _ignore_test_workflow_can_be_cloned(self):
         (session, seahorse_url) = self._create_session()
 
         workflows = session.get(seahorse_url + '/v1/workflows').json()
@@ -27,24 +41,63 @@ class Seahorse(TapTestCase):
         first_workflow = workflows[0]
 
         clone_url = seahorse_url + '/v1/workflows/' + first_workflow["id"] + "/clone"
-        clone_resp = session.post(clone_url, json = {'name': 'Cloned workflow', 'description': 'Some desc'})
+        clone_resp = session.post(clone_url, json={'name': 'Cloned workflow', 'description': 'Some desc'})
         cloned_workflow_id = clone_resp.json()['workflowId']
 
         session.get(seahorse_url + '/v1/workflows/' + cloned_workflow_id).json()
         return cloned_workflow_id
 
-    def test_workflow_can_be_started(self):
+    def test_workflow_can_be_launched(self):
         (session, seahorse_url) = self._create_session()
-        
-        cloned_workflow_id = self.test_workflow_can_be_cloned()
+        workflow_id = self.clone_some_workflow_and_start_executor()
+
+        ws = websocket.WebSocket()
+        ws.connect("ws://localhost:8080/stomp/645/bg1ozddg/websocket")
+        ws.send("""["CONNECT\nlogin:guest\npasscode:guest\naccept-version:1.1,1.0\nheart-beat:0,0\n\n\u0000"]""")
+        ws.send(
+            """["SUBSCRIBE\nid:sub-0\ndestination:/exchange/seahorse/seahorse.{0}.to\n\n\u0000"]""".format(workflow_id))
+        ws.send("""["SUBSCRIBE\nid:sub-1\ndestination:/exchange/seahorse/workflow.{0}.{0}.to\n\n\u0000"]""".format(
+            workflow_id))
+        ws.send(
+            '["SEND\ndestination:/exchange/seahorse/workflow.' + workflow_id + '.' + workflow_id + '.from\n\n{\\"messageType\\":\\"launch\\",\\"messageBody\\":{\\"workflowId\\":\\"' + workflow_id + '\\",\\"nodesToExecute\\":[]}}\u0000"]')
+
+        for x in range(0, 5):
+            print('Waiting for execution status for {0}. node'.format(x))
+            self.ensure_node_executed_without_errors(ws)
+
+        ws.close()
+
+        session.delete(seahorse_url + '/v1/sessions/' + workflow_id)
+
+    def clone_some_workflow_and_start_executor(self):
+        (session, seahorse_url) = self._create_session()
+
+        cloned_workflow_id = self._ignore_test_workflow_can_be_cloned()
 
         session_url = seahorse_url + '/v1/sessions'
-        post_session_resp = session.post(session_url, json = {'workflowId': cloned_workflow_id})
+        session.post(session_url, json={'workflowId': cloned_workflow_id})
 
         self.ensure_executor_is_running(session, seahorse_url, cloned_workflow_id)
+        return cloned_workflow_id
 
-        # ws = websocket.WebSocket()
-        # ws.connect("ws://example.com/websocket", http_proxy_host="proxy_host_name", http_proxy_port=3128)
+    @retry(Exception, tries=5, delay=5)
+    def ensure_node_executed_without_errors(self, ws):
+        msg = self.next_message_skipping_few_heartbeats(ws)
+        assert "executionStatus" in msg
+        assert "FAILED" not in msg
+
+    def next_message_skipping_few_heartbeats(self, ws):
+        msg = ws.next()
+
+        # Fixed number of heartbeats to prevent infinite loop.
+        # Roughly there should be at least one non-heartbeat message for 5 hearbeats.
+        numberOfHeatbeatsToSkip = 5
+
+        for x in range(0, numberOfHeatbeatsToSkip):
+            if "heartbeat" in msg:
+                msg = ws.next()
+
+        return msg
 
     @retry(AssertionError, tries=15, delay=5)
     def ensure_executor_is_running(self, session, url, workflow_id):
@@ -60,7 +113,7 @@ class Seahorse(TapTestCase):
     def _create_session_tap(self):
         # TODO return session and url from TAP
         session = requests.Session()
-        login_form = session.get(instance_url, verify=False)
+        login_form = session.get(instanc2e_url, verify=False)
 
         print("LOGIN_FORM")
         print(login_form.text)
