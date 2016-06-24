@@ -13,15 +13,6 @@ import websocket
 
 import stomp
 
-
-class MyListener(stomp.ConnectionListener):
-    def on_error(self, headers, message):
-        print('received an error "%s"' % message)
-
-    def on_message(self, headers, message):
-        print('received a message "%s"' % message)
-
-
 class Seahorse(TapTestCase):
     seahorse_label = "k-seahorse-dev"
     tap_domain = config.CONFIG["domain"]
@@ -108,23 +99,36 @@ class Seahorse(TapTestCase):
         assert status == 'running'
 
     def _create_session(self):
-        return self._create_session_local()
+        return self._create_session_tap()
+        # return self._create_session_local()
 
     def _create_session_tap(self):
-        # TODO return session and url from TAP
-        session = requests.Session()
-        login_form = session.get(instanc2e_url, verify=False)
+        test_org_uuid = 'e06d477a-c8bb-48f0-baeb-3d709578d8af'
+        test_space_uuid = 'b641e43e-b89b-4f32-b360-f1cf6bd1aa74'
 
-        print("LOGIN_FORM")
-        print(login_form.text)
-        print(login_form)
+        service_instance = ServiceInstance.api_create_with_plan_name(test_org_uuid, test_space_uuid,
+                                                                     self.seahorse_label,
+                                                                     service_plan_name="free")
+
+        service_instance.ensure_created()
+
+        seahorse_url = "https://" + service_instance.name + '-' + service_instance.guid + "." + self.tap_domain
+
+        print('Seahorse URL' + seahorse_url)
+
+        session = requests.Session()
+        login_form = session.get(seahorse_url, verify=False)
+
+        print('LOGIN FORM')
+        print(login_form.__dict__)
+
         csrf_value_regex = r"x-uaa-csrf.*value=\"(.*)\""
         match = re.search(csrf_value_regex, login_form.text, re.IGNORECASE)
         csrf_value = match.group(1)
-        print("CSRF {0}".format(csrf_value))
-        payload = {'username': login, 'password': password, 'X-Uaa-Csrf': csrf_value}
-        session.post(url='http://login.{0}/login.do'.format(domain), data=payload)
-        return (session, url)
+        payload = {'username': self.username, 'password': self.password, 'X-Uaa-Csrf': csrf_value}
+        session.post(url='http://login.{0}/login.do'.format(self.domain), data=payload)
+
+        (session, seahorse_url)
 
     def _create_session_local(self):
         return (requests.Session(), "http://localhost:8080")
