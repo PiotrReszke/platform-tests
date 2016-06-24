@@ -7,11 +7,10 @@ import json
 import time
 from retry import retry
 import websocket
-import pika
+
 
 import websocket
 
-import stomp
 
 class Seahorse(TapTestCase):
     seahorse_label = "k-seahorse-dev"
@@ -105,18 +104,21 @@ class Seahorse(TapTestCase):
     def _create_session_tap(self):
         test_org_uuid = 'e06d477a-c8bb-48f0-baeb-3d709578d8af'
         test_space_uuid = 'b641e43e-b89b-4f32-b360-f1cf6bd1aa74'
+        #
+        # service_instance = ServiceInstance.api_create_with_plan_name(test_org_uuid, test_space_uuid,
+        #                                                              self.seahorse_label,
+        #                                                              service_plan_name="free")
+        #
+        # print("BEFORE SLEEP")
+        # time.sleep(30)
+        # print("AFTER SLEEP")
 
-        service_instance = ServiceInstance.api_create_with_plan_name(test_org_uuid, test_space_uuid,
-                                                                     self.seahorse_label,
-                                                                     service_plan_name="free")
-
-        service_instance.ensure_created()
-
-        seahorse_url = "https://" + service_instance.name + '-' + service_instance.guid + "." + self.tap_domain
-
+        #seahorse_url = "https://" + service_instance.name + '-' + service_instance.guid + "." + self.tap_domain
+        seahorse_url = "https://test123-fc965481-39c0-4451-9269-ea5ffe1e8e64.seahorse-krb.gotapaas.eu/"
         print('Seahorse URL' + seahorse_url)
 
         session = requests.Session()
+        print("!!!! LOGIN FORM !!!!")
         login_form = session.get(seahorse_url, verify=False)
 
         print('LOGIN FORM')
@@ -126,9 +128,9 @@ class Seahorse(TapTestCase):
         match = re.search(csrf_value_regex, login_form.text, re.IGNORECASE)
         csrf_value = match.group(1)
         payload = {'username': self.username, 'password': self.password, 'X-Uaa-Csrf': csrf_value}
-        session.post(url='http://login.{0}/login.do'.format(self.domain), data=payload)
+        session.post(url='http://login.{0}/login.do'.format(self.tap_domain), data=payload)
 
-        (session, seahorse_url)
+        return (session, seahorse_url)
 
     def _create_session_local(self):
         return (requests.Session(), "http://localhost:8080")
