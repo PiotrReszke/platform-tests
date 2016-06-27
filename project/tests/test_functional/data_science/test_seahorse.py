@@ -23,7 +23,7 @@ class Seahorse(TapTestCase):
 
     def test_1_workflow_can_be_cloned(self):
         workflows = self.session.get(self.workflows_url).json()
-        some_workflow = list(filter(lambda w: 'Mushrooms' in w['name'], workflows))[0]
+        some_workflow = list(filter(lambda w: 'Text Message Spam Detection' in w['name'], workflows))[0]
 
         clone_url = self.workflows_url + '/' + some_workflow["id"] + "/clone"
         clone_resp = self.session.post(clone_url, json={'name': 'Cloned workflow', 'description': 'Some desc'})
@@ -45,7 +45,7 @@ class Seahorse(TapTestCase):
         ws.send(
             '["SEND\ndestination:/exchange/seahorse/workflow.' + workflow_id + '.' + workflow_id + '.from\n\n{\\"messageType\\":\\"launch\\",\\"messageBody\\":{\\"workflowId\\":\\"' + workflow_id + '\\",\\"nodesToExecute\\":[]}}\u0000"]')
 
-        for x in range(0, 5):
+        for x in range(0, 14):
             print('Waiting for execution status for {0}. node'.format(x))
             self.ensure_node_executed_without_errors(ws)
 
