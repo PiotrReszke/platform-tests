@@ -7,6 +7,8 @@ from retry import retry
 
 from configuration import config
 from modules.runner.tap_test_case import TapTestCase
+from modules.tap_object_model import ServiceInstance
+import signal
 
 
 class Seahorse(TapTestCase):
@@ -15,11 +17,11 @@ class Seahorse(TapTestCase):
     username = config.CONFIG["admin_username"]
     password = config.CONFIG["admin_password"]
 
-    def test_workflows_are_visible(self):
+    def test_0_workflows_are_visible(self):
         workflows = self.session.get(self.seahorse_http_url + '/v1/workflows').json()
         assert len(workflows) > 5
 
-    def test_workflow_can_be_cloned(self):
+    def test_1_workflow_can_be_cloned(self):
         workflows = self.session.get(self.workflows_url).json()
         some_workflow = list(filter(lambda w: 'Mushrooms' in w['name'], workflows))[0]
 
@@ -30,7 +32,7 @@ class Seahorse(TapTestCase):
         self.session.get(self.workflows_url + '/' + cloned_workflow_id).json()
         return cloned_workflow_id
 
-    def test_workflow_can_be_launched(self):
+    def test_2_workflow_can_be_launched(self):
         workflow_id = self.clone_some_workflow_and_start_executor()
 
         ws = websocket.WebSocket()
@@ -51,7 +53,7 @@ class Seahorse(TapTestCase):
         self.session.delete(self.sessions_url + '/' + workflow_id)
 
     def clone_some_workflow_and_start_executor(self):
-        cloned_workflow_id = self.test_workflow_can_be_cloned()
+        cloned_workflow_id = self.test_1_workflow_can_be_cloned()
         self.session.post(self.sessions_url, json={'workflowId': cloned_workflow_id})
         self.ensure_executor_is_running(cloned_workflow_id)
         return cloned_workflow_id
@@ -85,30 +87,45 @@ class Seahorse(TapTestCase):
     @classmethod
     @pytest.fixture(scope="class", autouse=True)
     def seahorse(cls):
-        # TODO HARDCODED INSTANCE. FIX HTTPS ISSUE WHEN CREATING NEW ONE
-
         test_org_uuid = 'e06d477a-c8bb-48f0-baeb-3d709578d8af'
         test_space_uuid = 'b641e43e-b89b-4f32-b360-f1cf6bd1aa74'
-        #
-        # service_instance = ServiceInstance.api_create_with_plan_name(test_org_uuid, test_space_uuid,
-        #                                                              self.seahorse_label,
-        #                                                              service_plan_name="free")
-        #
-        # print("BEFORE SLEEP")
-        # time.sleep(30)
-        # print("AFTER SLEEP")
-        #
-        # seahorse_url = "https://" + service_instance.name + '-' + service_instance.guid + "." + self.tap_domain
-        cls.seahorse_url = "test123-fc965481-39c0-4451-9269-ea5ffe1e8e64.seahorse-krb.gotapaas.eu"
+
+        service_instance = ServiceInstance.api_create_with_plan_name(test_org_uuid, test_space_uuid,
+                                                                     cls.seahorse_label,
+                                                                     service_plan_name="free")
+
+        service_instance.ensure_created()
+
+        cls.seahorse_url = service_instance.name + '-' + service_instance.guid + "." + cls.tap_domain
         cls.seahorse_http_url = 'https://' + cls.seahorse_url
         cls.sessions_url = cls.seahorse_http_url + '/v1/sessions'
         cls.workflows_url = cls.seahorse_http_url + '/v1/workflows'
 
-        cls.session = requests.Session()
+        cls.ensure_seahorse_accessible()
         login_form = cls.session.get(cls.seahorse_http_url, verify=False)
-
         csrf_value_regex = r"x-uaa-csrf.*value=\"(.*)\""
         match = re.search(csrf_value_regex, login_form.text, re.IGNORECASE)
         csrf_value = match.group(1)
+
         payload = {'username': Seahorse.username, 'password': Seahorse.password, 'X-Uaa-Csrf': csrf_value}
         cls.session.post(url='http://login.{0}/login.do'.format(Seahorse.tap_domain), data=payload)
+
+    @classmethod
+    @retry(Exception, tries=100, delay=30)
+    def ensure_seahorse_accessible(cls):
+        # Somehow test sometimes freezes on HTTPS connection - thats why there is timeout here
+        with timeout(seconds=5):
+            cls.session = requests.Session() # przeniesc
+            cls.session.get(cls.seahorse_http_url, verify=False).raise_for_status()
+
+class timeout:
+    def __init__(self, seconds=1, error_message='Timeout'):
+        self.seconds = seconds
+        self.error_message = error_message
+    def handle_timeout(self, signum, frame):
+        raise TimeoutError(self.error_message)
+    def __enter__(self):
+        signal.signal(signal.SIGALRM, self.handle_timeout)
+        signal.alarm(self.seconds)
+    def __exit__(self, type, value, traceback):
+        signal.alarm(0)
