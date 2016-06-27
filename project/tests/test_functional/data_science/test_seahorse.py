@@ -18,11 +18,12 @@ class Seahorse(TapTestCase):
     password = config.CONFIG["admin_password"]
 
     def test_0_workflows_are_visible(self):
-        workflows = self.session.get(self.seahorse_http_url + '/v1/workflows').json()
+        workflows = self.getWorkflows()
         assert len(workflows) > 5
+        return workflows
 
     def test_1_workflow_can_be_cloned(self):
-        workflows = self.session.get(self.workflows_url).json()
+        workflows = self.getWorkflows()
         some_workflow = list(filter(lambda w: 'Text Message Spam Detection' in w['name'], workflows))[0]
 
         clone_url = self.workflows_url + '/' + some_workflow["id"] + "/clone"
@@ -57,6 +58,12 @@ class Seahorse(TapTestCase):
         self.session.post(self.sessions_url, json={'workflowId': cloned_workflow_id})
         self.ensure_executor_is_running(cloned_workflow_id)
         return cloned_workflow_id
+
+    @retry(Exception, tries=5, delay=10)
+    def getWorkflows(self):
+        response = self.session.get(self.seahorse_http_url + '/v1/workflows')
+        response.raise_for_status()
+        return response.json()
 
     @retry(Exception, tries=5, delay=5)
     def ensure_node_executed_without_errors(self, ws):
